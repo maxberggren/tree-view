@@ -1,4 +1,5 @@
 
+
 import React, { useMemo, useState } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
@@ -263,7 +264,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       
       {/* Hover tooltip */}
       {hoveredNode && 'id' in hoveredNode.data && (
-        <div className="absolute top-20 left-4 bg-black bg-opacity-90 text-white p-4 rounded-lg pointer-events-none z-30 max-w-xs">
+        <div className="absolute top-4 left-4 bg-black bg-opacity-90 text-white p-4 rounded-lg pointer-events-none z-30 max-w-xs">
           <div className="font-bold text-lg">{(hoveredNode.data as any).id}</div>
           <div className="text-sm opacity-90 mb-2">{(hoveredNode.data as any).name}</div>
           <div className="text-sm mb-2">
@@ -317,3 +318,4 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     </div>
   );
 };
+
