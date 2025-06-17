@@ -61,22 +61,10 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   };
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-50 bg-gray-800 border-b border-gray-700 shadow-lg">
-      {/* Toggle Bar */}
-      <div 
-        className="flex items-center justify-center py-1 cursor-pointer hover:bg-gray-700 transition-colors"
-        onClick={onToggle}
-      >
-        {isExpanded ? (
-          <ChevronUp size={16} className="text-white" />
-        ) : (
-          <ChevronDown size={16} className="text-white" />
-        )}
-      </div>
-
-      {/* Filter Panel */}
+    <div className="absolute top-0 left-0 right-0 z-50">
+      {/* Expanded Filter Panel - positioned above toggle bar */}
       {isExpanded && (
-        <div className="p-4 border-t border-gray-700">
+        <div className="bg-gray-800 border-b border-gray-700 shadow-lg p-4">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             
             {/* Color Mode */}
@@ -253,6 +241,20 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
           </div>
         </div>
       )}
+
+      {/* Toggle Bar - always at the bottom */}
+      <div className="bg-gray-800 border-b border-gray-700 shadow-lg">
+        <div 
+          className="flex items-center justify-center py-1 cursor-pointer hover:bg-gray-700 transition-colors"
+          onClick={onToggle}
+        >
+          {isExpanded ? (
+            <ChevronUp size={16} className="text-white" />
+          ) : (
+            <ChevronDown size={16} className="text-white" />
+          )}
+        </div>
+      </div>
     </div>
   );
 };

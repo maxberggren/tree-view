@@ -75,8 +75,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       .filter(client => client.children.length > 0);
   }, [filters]);
 
-  // Calculate filter bar height and adjust treemap accordingly
-  const filterBarHeight = filtersExpanded ? 200 : 25; // Approximate heights
+  // Use fixed height for filter bar since it expands upward
+  const filterBarHeight = 25; // Fixed height for the toggle bar
   const treemapHeight = height - filterBarHeight;
   const treemapTop = filterBarHeight;
 
@@ -271,7 +271,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         <div 
           className="absolute bg-black bg-opacity-90 text-white p-4 rounded-lg pointer-events-none z-50 max-w-xs"
           style={{
-            top: filtersExpanded ? '160px' : '40px',
+            top: '40px',
             left: '16px'
           }}
         >
