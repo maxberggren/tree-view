@@ -75,8 +75,10 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       .filter(client => client.children.length > 0);
   }, [filters]);
 
-  // Use full height for treemap, no space reserved for filters
-  const treemapHeight = height;
+  // Calculate filter bar height and adjust treemap accordingly
+  const filterBarHeight = filtersExpanded ? 200 : 25; // Approximate heights
+  const treemapHeight = height - filterBarHeight;
+  const treemapTop = filterBarHeight;
 
   const treemapData = useMemo(() => {
     if (filteredData.length === 0) return null;
@@ -243,7 +245,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
 
   return (
     <div className="relative w-full h-full bg-gray-900 overflow-hidden">
-      {/* Filter Panel - positioned absolutely */}
+      {/* Filter Panel - positioned absolutely at top */}
       <BuildingFilters
         isExpanded={filtersExpanded}
         onToggle={() => setFiltersExpanded(!filtersExpanded)}
@@ -252,9 +254,13 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         availableClients={availableClients}
       />
 
-      {/* Main treemap - uses full height */}
+      {/* Main treemap - positioned below filter bar */}
       <div 
-        className="relative w-full h-full cursor-pointer"
+        className="absolute w-full cursor-pointer"
+        style={{
+          top: treemapTop,
+          height: treemapHeight
+        }}
         onClick={handleGridClick}
       >
         {renderNodes(treemapData)}
