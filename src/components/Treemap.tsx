@@ -1,54 +1,148 @@
 
 import React, { useMemo, useState } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
-import { TreemapCell } from './TreemapCell';
+import { BuildingCell } from './BuildingCell';
+import { BuildingFilters } from './BuildingFilters';
 import { TreemapNode } from '@/types/TreemapData';
-import { mockStockData } from '@/data/mockStockData';
+import { mockBuildingData } from '@/data/mockBuildingData';
 
 interface TreemapProps {
   width: number;
   height: number;
 }
 
+interface FilterState {
+  clients: string[];
+  onlineOnly: boolean;
+  features: {
+    canHeat: boolean;
+    canCool: boolean;
+    hasAMM: boolean;
+    hasClimateBaseline: boolean;
+    hasReadWriteDiscrepancies: boolean;
+  };
+  temperatureRange: [number, number];
+}
+
+const initialFilters: FilterState = {
+  clients: [],
+  onlineOnly: false,
+  features: {
+    canHeat: false,
+    canCool: false,
+    hasAMM: false,
+    hasClimateBaseline: false,
+    hasReadWriteDiscrepancies: false,
+  },
+  temperatureRange: [15, 75],
+};
+
 export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [filters, setFilters] = useState<FilterState>(initialFilters);
+
+  const availableClients = useMemo(() => {
+    return mockBuildingData.map(client => client.name);
+  }, []);
+
+  const filteredData = useMemo(() => {
+    return mockBuildingData
+      .map(client => ({
+        ...client,
+        children: client.children.filter(building => {
+          // Client filter
+          if (filters.clients.length > 0 && !filters.clients.includes(building.client)) {
+            return false;
+          }
+
+          // Online filter
+          if (filters.onlineOnly && !building.isOnline) {
+            return false;
+          }
+
+          // Feature filters
+          if (filters.features.canHeat && !building.features.canHeat) return false;
+          if (filters.features.canCool && !building.features.canCool) return false;
+          if (filters.features.hasAMM && !building.features.hasAMM) return false;
+          if (filters.features.hasClimateBaseline && !building.features.hasClimateBaseline) return false;
+          if (filters.features.hasReadWriteDiscrepancies && !building.features.hasReadWriteDiscrepancies) return false;
+
+          return true;
+        })
+      }))
+      .filter(client => client.children.length > 0);
+  }, [filters]);
+
+  const filterPanelHeight = filtersExpanded ? 200 : 40;
+  const treemapHeight = height - filterPanelHeight;
 
   const treemapData = useMemo(() => {
-    // Transform data for d3-hierarchy
+    if (filteredData.length === 0) return null;
+
     const rootData = {
-      name: 'Market',
-      children: mockStockData.map(sector => ({
-        name: sector.name,
-        children: sector.children
+      name: 'Buildings',
+      children: filteredData.map(client => ({
+        name: client.name,
+        children: client.children
       }))
     };
 
     const root = hierarchy(rootData)
-      .sum((d: any) => d.value || 0)
+      .sum((d: any) => d.squareMeters || 0)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
     const treemapLayout = treemap<any>()
-      .size([width, height])
-      .padding(2)
+      .size([width, treemapHeight])
+      .padding(3)
       .round(true);
 
     return treemapLayout(root);
-  }, [width, height]);
+  }, [width, treemapHeight, filteredData]);
 
   const renderNodes = (node: any): React.ReactNode[] => {
     const nodes: React.ReactNode[] = [];
     
     if (node.children) {
+      // Render client border for grouping
+      if (node.depth === 1) {
+        const clientWidth = node.x1 - node.x0;
+        const clientHeight = node.y1 - node.y0;
+        
+        nodes.push(
+          <div
+            key={`client-${node.data.name}`}
+            className="absolute border-2 border-blue-400 border-opacity-30 rounded-lg pointer-events-none"
+            style={{
+              left: node.x0,
+              top: node.y0 + filterPanelHeight,
+              width: clientWidth,
+              height: clientHeight,
+            }}
+          >
+            <div className="absolute -top-6 left-2 text-blue-400 text-sm font-medium bg-gray-900 px-2 rounded">
+              {node.data.name}
+            </div>
+          </div>
+        );
+      }
+
       // Render children recursively
       node.children.forEach((child: any, index: number) => {
         nodes.push(...renderNodes(child));
       });
     } else {
-      // Render leaf node (stock)
+      // Render leaf node (building) with offset for filter panel
+      const adjustedNode = {
+        ...node,
+        y0: node.y0 + filterPanelHeight,
+        y1: node.y1 + filterPanelHeight,
+      };
+      
       nodes.push(
-        <TreemapCell
-          key={`${node.data.symbol}-${node.x0}-${node.y0}`}
-          node={node}
+        <BuildingCell
+          key={`${node.data.id}-${node.x0}-${node.y0}`}
+          node={adjustedNode}
           onHover={setHoveredNode}
         />
       );
@@ -57,59 +151,102 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     return nodes;
   };
 
+  if (!treemapData) {
+    return (
+      <div className="relative w-full h-full bg-gray-900 overflow-hidden">
+        <BuildingFilters
+          isExpanded={filtersExpanded}
+          onToggle={() => setFiltersExpanded(!filtersExpanded)}
+          filters={filters}
+          onFiltersChange={setFilters}
+          availableClients={availableClients}
+        />
+        <div className="flex items-center justify-center h-full text-white">
+          <p>No buildings match the current filters</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-full bg-gray-900 overflow-hidden">
+      {/* Filter Panel */}
+      <BuildingFilters
+        isExpanded={filtersExpanded}
+        onToggle={() => setFiltersExpanded(!filtersExpanded)}
+        filters={filters}
+        onFiltersChange={setFilters}
+        availableClients={availableClients}
+      />
+
       {/* Main treemap */}
       <div className="relative w-full h-full">
         {renderNodes(treemapData)}
       </div>
       
       {/* Hover tooltip */}
-      {hoveredNode && 'symbol' in hoveredNode.data && (
-        <div className="absolute top-4 left-4 bg-black bg-opacity-80 text-white p-3 rounded-lg pointer-events-none z-20">
-          <div className="font-bold text-lg">{(hoveredNode.data as any).symbol}</div>
-          <div className="text-sm opacity-90">{(hoveredNode.data as any).name}</div>
-          <div className="text-sm mt-1">
-            <span className="opacity-75">Sector: </span>
-            {(hoveredNode.data as any).sector}
+      {hoveredNode && 'id' in hoveredNode.data && (
+        <div className="absolute top-20 left-4 bg-black bg-opacity-90 text-white p-4 rounded-lg pointer-events-none z-20 max-w-xs">
+          <div className="font-bold text-lg">{(hoveredNode.data as any).id}</div>
+          <div className="text-sm opacity-90 mb-2">{(hoveredNode.data as any).name}</div>
+          <div className="text-sm mb-2">
+            <span className="opacity-75">Client: </span>
+            {(hoveredNode.data as any).client}
           </div>
-          <div className="text-sm">
-            <span className="opacity-75">Change: </span>
-            <span className={(hoveredNode.data as any).change >= 0 ? 'text-green-400' : 'text-red-400'}>
-              {(hoveredNode.data as any).change > 0 ? '+' : ''}{(hoveredNode.data as any).change.toFixed(2)}%
+          <div className="text-sm mb-2">
+            <span className="opacity-75">Status: </span>
+            <span className={(hoveredNode.data as any).isOnline ? 'text-green-400' : 'text-red-400'}>
+              {(hoveredNode.data as any).isOnline ? 'Online' : 'Offline'}
             </span>
           </div>
-          <div className="text-sm">
-            <span className="opacity-75">Market Cap: </span>
-            ${((hoveredNode.data as any).value).toLocaleString()}B
+          <div className="text-sm mb-2">
+            <span className="opacity-75">Temperature: </span>
+            <span className="text-blue-400">{(hoveredNode.data as any).temperature}°F</span>
+          </div>
+          <div className="text-sm mb-2">
+            <span className="opacity-75">Size: </span>
+            {(hoveredNode.data as any).squareMeters.toLocaleString()} m²
+          </div>
+          <div className="text-xs mt-3">
+            <div className="opacity-75 mb-1">Features:</div>
+            <div className="flex flex-wrap gap-1">
+              {(hoveredNode.data as any).features.canHeat && <span className="bg-blue-600 px-1 rounded">Heat</span>}
+              {(hoveredNode.data as any).features.canCool && <span className="bg-cyan-600 px-1 rounded">Cool</span>}
+              {(hoveredNode.data as any).features.hasAMM && <span className="bg-yellow-600 px-1 rounded">AMM</span>}
+              {(hoveredNode.data as any).features.hasClimateBaseline && <span className="bg-green-600 px-1 rounded">Baseline</span>}
+              {(hoveredNode.data as any).features.hasReadWriteDiscrepancies && <span className="bg-red-600 px-1 rounded">R/W Issues</span>}
+            </div>
           </div>
         </div>
       )}
 
       {/* Legend */}
-      <div className="absolute bottom-4 right-4 bg-black bg-opacity-80 text-white p-3 rounded-lg">
-        <div className="text-xs font-bold mb-2">Performance</div>
-        <div className="flex flex-col gap-1 text-xs">
+      <div className="absolute bottom-4 right-4 bg-black bg-opacity-90 text-white p-3 rounded-lg max-w-xs">
+        <div className="text-xs font-bold mb-2">Temperature Scale</div>
+        <div className="flex flex-col gap-1 text-xs mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-600"></div>
-            <span>+2% to +5%</span>
+            <div className="w-3 h-3 bg-blue-500"></div>
+            <span>Cold (&lt;20°F)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-cyan-500"></div>
+            <span>Cool (20-25°F)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-green-500"></div>
-            <span>+0.5% to +2%</span>
+            <span>Comfort (25-30°F)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-orange-500"></div>
-            <span>-0.5% to +0.5%</span>
+            <div className="w-3 h-3 bg-yellow-500"></div>
+            <span>Warm (30-35°F)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-500"></div>
-            <span>-1.5% to -0.5%</span>
+            <span>Hot (&gt;35°F)</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-800"></div>
-            <span>Below -1.5%</span>
-          </div>
+        </div>
+        <div className="text-xs opacity-75">
+          Offline buildings are dimmed
         </div>
       </div>
     </div>

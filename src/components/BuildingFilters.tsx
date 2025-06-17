@@ -1,0 +1,158 @@
+
+import React from 'react';
+import { ChevronUp, ChevronDown, Thermometer, Zap, Activity, AlertTriangle, Wifi } from 'lucide-react';
+
+interface FilterState {
+  clients: string[];
+  onlineOnly: boolean;
+  features: {
+    canHeat: boolean;
+    canCool: boolean;
+    hasAMM: boolean;
+    hasClimateBaseline: boolean;
+    hasReadWriteDiscrepancies: boolean;
+  };
+  temperatureRange: [number, number];
+}
+
+interface BuildingFiltersProps {
+  isExpanded: boolean;
+  onToggle: () => void;
+  filters: FilterState;
+  onFiltersChange: (filters: FilterState) => void;
+  availableClients: string[];
+}
+
+export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
+  isExpanded,
+  onToggle,
+  filters,
+  onFiltersChange,
+  availableClients
+}) => {
+  const toggleFeature = (feature: keyof FilterState['features']) => {
+    onFiltersChange({
+      ...filters,
+      features: {
+        ...filters.features,
+        [feature]: !filters.features[feature]
+      }
+    });
+  };
+
+  const toggleClient = (client: string) => {
+    const newClients = filters.clients.includes(client)
+      ? filters.clients.filter(c => c !== client)
+      : [...filters.clients, client];
+    
+    onFiltersChange({
+      ...filters,
+      clients: newClients
+    });
+  };
+
+  return (
+    <div className="absolute top-0 left-0 right-0 z-30 bg-gray-800 border-b border-gray-700">
+      {/* Toggle Bar */}
+      <div 
+        className="flex items-center justify-center p-2 cursor-pointer hover:bg-gray-700 transition-colors"
+        onClick={onToggle}
+      >
+        <span className="text-white text-sm mr-2">Filters</span>
+        {isExpanded ? (
+          <ChevronUp size={16} className="text-white" />
+        ) : (
+          <ChevronDown size={16} className="text-white" />
+        )}
+      </div>
+
+      {/* Filter Panel */}
+      {isExpanded && (
+        <div className="p-4 border-t border-gray-700">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Status Filters */}
+            <div>
+              <h3 className="text-white font-medium mb-3">Status</h3>
+              <label className="flex items-center text-white text-sm mb-2">
+                <input
+                  type="checkbox"
+                  checked={filters.onlineOnly}
+                  onChange={(e) => onFiltersChange({ ...filters, onlineOnly: e.target.checked })}
+                  className="mr-2"
+                />
+                <Wifi size={14} className="mr-1" />
+                Online Only
+              </label>
+            </div>
+
+            {/* Feature Filters */}
+            <div>
+              <h3 className="text-white font-medium mb-3">Features</h3>
+              <div className="space-y-2">
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="checkbox"
+                    checked={filters.features.canHeat}
+                    onChange={() => toggleFeature('canHeat')}
+                    className="mr-2"
+                  />
+                  <Thermometer size={14} className="mr-1" />
+                  Can Heat
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="checkbox"
+                    checked={filters.features.hasAMM}
+                    onChange={() => toggleFeature('hasAMM')}
+                    className="mr-2"
+                  />
+                  <Zap size={14} className="mr-1" />
+                  Has AMM
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="checkbox"
+                    checked={filters.features.hasClimateBaseline}
+                    onChange={() => toggleFeature('hasClimateBaseline')}
+                    className="mr-2"
+                  />
+                  <Activity size={14} className="mr-1" />
+                  Climate Baseline
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="checkbox"
+                    checked={filters.features.hasReadWriteDiscrepancies}
+                    onChange={() => toggleFeature('hasReadWriteDiscrepancies')}
+                    className="mr-2"
+                  />
+                  <AlertTriangle size={14} className="mr-1" />
+                  R/W Issues
+                </label>
+              </div>
+            </div>
+
+            {/* Client Filters */}
+            <div>
+              <h3 className="text-white font-medium mb-3">Clients</h3>
+              <div className="max-h-32 overflow-y-auto space-y-1">
+                {availableClients.map(client => (
+                  <label key={client} className="flex items-center text-white text-sm">
+                    <input
+                      type="checkbox"
+                      checked={filters.clients.includes(client)}
+                      onChange={() => toggleClient(client)}
+                      className="mr-2"
+                    />
+                    {client}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

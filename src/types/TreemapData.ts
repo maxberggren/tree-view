@@ -1,19 +1,27 @@
 
-export interface StockData {
-  symbol: string;
+export interface BuildingData {
+  id: string; // Building ID (current shorthand)
   name: string;
-  value: number; // Market cap or size
-  change: number; // Percentage change
-  sector: string;
+  squareMeters: number; // Size for treemap
+  temperature: number; // Current percentage as temperature
+  client: string;
+  isOnline: boolean;
+  features: {
+    canHeat: boolean;
+    canCool: boolean;
+    hasAMM: boolean;
+    hasClimateBaseline: boolean;
+    hasReadWriteDiscrepancies: boolean;
+  };
 }
 
-export interface SectorData {
+export interface ClientData {
   name: string;
-  children: StockData[];
+  children: BuildingData[];
 }
 
 export interface TreemapNode {
-  data: StockData | SectorData;
+  data: BuildingData | ClientData;
   x0: number;
   y0: number;
   x1: number;
