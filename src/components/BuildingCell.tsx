@@ -87,7 +87,7 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, onHover }) => 
               </div>
               
               {shouldShowIcons && (
-                <div className="flex flex-wrap gap-1 ml-2">
+                <div className="flex flex-wrap gap-1 ml-1">
                   {building.features.canHeat && (
                     <Thermometer size={Math.min(width / 15, 12)} color={getTextColor()} />
                   )}
