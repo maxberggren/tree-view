@@ -76,8 +76,10 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       .filter(client => client.children.length > 0);
   }, [filters]);
 
-  const filterPanelHeight = filtersExpanded ? 200 : 40;
-  const treemapHeight = height - filterPanelHeight;
+  const filterPanelHeight = filtersExpanded ? 200 : 32;
+  const clientTagsHeight = 24;
+  const totalHeaderHeight = filterPanelHeight + clientTagsHeight;
+  const treemapHeight = height - totalHeaderHeight;
 
   const treemapData = useMemo(() => {
     if (filteredData.length === 0) return null;
@@ -124,13 +126,13 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             className="absolute border-2 border-blue-400 border-opacity-30 rounded-lg"
             style={{
               left: node.x0,
-              top: node.y0 + filterPanelHeight,
+              top: node.y0 + totalHeaderHeight,
               width: clientWidth,
               height: clientHeight,
             }}
           >
             <div 
-              className="absolute -top-6 left-2 text-blue-400 text-sm font-medium bg-gray-900 px-2 rounded cursor-pointer hover:bg-blue-900 hover:text-blue-300 transition-colors"
+              className="absolute -top-6 left-2 text-blue-400 text-sm font-medium bg-gray-900 px-2 rounded cursor-pointer hover:bg-blue-900 hover:text-blue-300 transition-colors z-10"
               onClick={() => handleClientClick(node.data.name)}
               title={`Filter by ${node.data.name}`}
             >
@@ -145,11 +147,11 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         nodes.push(...renderNodes(child));
       });
     } else {
-      // Render leaf node (building) with offset for filter panel
+      // Render leaf node (building) with offset for filter panel and client tags
       const adjustedNode = {
         ...node,
-        y0: node.y0 + filterPanelHeight,
-        y1: node.y1 + filterPanelHeight,
+        y0: node.y0 + totalHeaderHeight,
+        y1: node.y1 + totalHeaderHeight,
       };
       
       nodes.push(
@@ -252,6 +254,9 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         onFiltersChange={setFilters}
         availableClients={availableClients}
       />
+
+      {/* Space for client tags */}
+      <div style={{ height: clientTagsHeight }} />
 
       {/* Main treemap */}
       <div className="relative w-full h-full">

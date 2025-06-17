@@ -62,12 +62,11 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
 
   return (
     <div className="absolute top-0 left-0 right-0 z-30 bg-gray-800 border-b border-gray-700">
-      {/* Toggle Bar */}
+      {/* Toggle Bar - made smaller */}
       <div 
-        className="flex items-center justify-center p-2 cursor-pointer hover:bg-gray-700 transition-colors"
+        className="flex items-center justify-center py-1 cursor-pointer hover:bg-gray-700 transition-colors"
         onClick={onToggle}
       >
-        <span className="text-white text-sm mr-2">Filters</span>
         {isExpanded ? (
           <ChevronUp size={16} className="text-white" />
         ) : (
@@ -114,6 +113,17 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   />
                   <Thermometer size={14} className="mr-1" />
                   Can Heat
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="radio"
+                    name="colorMode"
+                    checked={filters.colorMode === 'canCool'}
+                    onChange={() => handleColorModeChange('canCool')}
+                    className="mr-2"
+                  />
+                  <Thermometer size={14} className="mr-1" />
+                  Can Cool
                 </label>
                 <label className="flex items-center text-white text-sm">
                   <input
@@ -179,6 +189,16 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   />
                   <Thermometer size={14} className="mr-1" />
                   Can Heat
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="checkbox"
+                    checked={filters.features.canCool}
+                    onChange={() => toggleFeature('canCool')}
+                    className="mr-2"
+                  />
+                  <Thermometer size={14} className="mr-1" />
+                  Can Cool
                 </label>
                 <label className="flex items-center text-white text-sm">
                   <input
