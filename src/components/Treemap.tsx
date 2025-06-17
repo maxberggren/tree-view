@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
 import { BuildingFilters } from './BuildingFilters';
@@ -42,6 +42,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [filters, setFilters] = useState<FilterState>(initialFilters);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const availableClients = useMemo(() => {
     return mockBuildingData.map(client => client.name);
@@ -103,6 +104,24 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     return treemapLayout(root);
   }, [width, treemapHeight, filteredData]);
 
+  const handleNodeHover = (node: TreemapNode | null) => {
+    // Clear any existing timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+
+    if (node) {
+      // Immediately show the tooltip when hovering
+      setHoveredNode(node);
+    } else {
+      // Add a small delay before hiding the tooltip
+      hoverTimeoutRef.current = setTimeout(() => {
+        setHoveredNode(null);
+      }, 150); // 150ms delay
+    }
+  };
+
   const handleClientClick = (clientName: string) => {
     setFilters({
       ...filters,
@@ -158,7 +177,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           key={`${node.data.id}-${node.x0}-${node.y0}`}
           node={node}
           colorMode={filters.colorMode}
-          onHover={setHoveredNode}
+          onHover={handleNodeHover}
         />
       );
     }
@@ -266,10 +285,10 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         {renderNodes(treemapData)}
       </div>
       
-      {/* Hover tooltip - positioned above filter bar */}
+      {/* Hover tooltip - positioned above filter bar with transition */}
       {hoveredNode && 'id' in hoveredNode.data && (
         <div 
-          className="absolute bg-black bg-opacity-90 text-white p-4 rounded-lg pointer-events-none z-50 max-w-xs"
+          className="absolute bg-black bg-opacity-90 text-white p-4 rounded-lg pointer-events-none z-50 max-w-xs transition-opacity duration-150"
           style={{
             top: '40px',
             left: '16px'
