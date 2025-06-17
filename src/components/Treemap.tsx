@@ -171,16 +171,46 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           { color: '#3B82F6', label: 'Too Cold (<18°F)' },
           { color: '#A3A3A3', label: 'Mild' },
         ];
-      case 'features':
+      case 'canHeat':
         return [
-          { color: '#8B5CF6', label: '4+ Features' },
-          { color: '#06B6D4', label: '3 Features' },
-          { color: '#10B981', label: '2 Features' },
-          { color: '#F59E0B', label: '1 Feature' },
-          { color: '#6B7280', label: 'No Features' },
+          { color: '#DC2626', label: 'Can Heat' },
+          { color: '#6B7280', label: 'Cannot Heat' },
+        ];
+      case 'canCool':
+        return [
+          { color: '#2563EB', label: 'Can Cool' },
+          { color: '#6B7280', label: 'Cannot Cool' },
+        ];
+      case 'hasAMM':
+        return [
+          { color: '#FBBF24', label: 'Has AMM' },
+          { color: '#6B7280', label: 'No AMM' },
+        ];
+      case 'hasClimateBaseline':
+        return [
+          { color: '#059669', label: 'Has Climate Baseline' },
+          { color: '#6B7280', label: 'No Climate Baseline' },
+        ];
+      case 'hasReadWriteDiscrepancies':
+        return [
+          { color: '#EA580C', label: 'Has R/W Issues' },
+          { color: '#6B7280', label: 'No R/W Issues' },
         ];
       default:
         return [];
+    }
+  };
+
+  const getLegendTitle = () => {
+    switch (filters.colorMode) {
+      case 'temperature': return 'Temperature Scale';
+      case 'comfort': return 'Comfort Zones';
+      case 'canHeat': return 'Heating Capability';
+      case 'canCool': return 'Cooling Capability';
+      case 'hasAMM': return 'AMM Status';
+      case 'hasClimateBaseline': return 'Climate Baseline';
+      case 'hasReadWriteDiscrepancies': return 'Read/Write Issues';
+      default: return 'Legend';
     }
   };
 
@@ -256,9 +286,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       {/* Dynamic Legend */}
       <div className="absolute bottom-4 right-4 bg-black bg-opacity-90 text-white p-3 rounded-lg max-w-xs">
         <div className="text-xs font-bold mb-2">
-          {filters.colorMode === 'temperature' && 'Temperature Scale'}
-          {filters.colorMode === 'comfort' && 'Comfort Zones'}
-          {filters.colorMode === 'features' && 'Feature Count'}
+          {getLegendTitle()}
         </div>
         <div className="flex flex-col gap-1 text-xs mb-3">
           {getLegendItems().map((item, index) => (

@@ -31,4 +31,4 @@ export interface TreemapNode {
   value?: number;
 }
 
-export type ColorMode = 'temperature' | 'comfort' | 'features';
+export type ColorMode = 'temperature' | 'comfort' | 'canHeat' | 'canCool' | 'hasAMM' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies';

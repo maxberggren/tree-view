@@ -108,11 +108,45 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <input
                     type="radio"
                     name="colorMode"
-                    checked={filters.colorMode === 'features'}
-                    onChange={() => handleColorModeChange('features')}
+                    checked={filters.colorMode === 'canHeat'}
+                    onChange={() => handleColorModeChange('canHeat')}
                     className="mr-2"
                   />
-                  Feature Count
+                  <Thermometer size={14} className="mr-1" />
+                  Can Heat
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="radio"
+                    name="colorMode"
+                    checked={filters.colorMode === 'hasAMM'}
+                    onChange={() => handleColorModeChange('hasAMM')}
+                    className="mr-2"
+                  />
+                  <Zap size={14} className="mr-1" />
+                  Has AMM
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="radio"
+                    name="colorMode"
+                    checked={filters.colorMode === 'hasClimateBaseline'}
+                    onChange={() => handleColorModeChange('hasClimateBaseline')}
+                    className="mr-2"
+                  />
+                  <Activity size={14} className="mr-1" />
+                  Climate Baseline
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="radio"
+                    name="colorMode"
+                    checked={filters.colorMode === 'hasReadWriteDiscrepancies'}
+                    onChange={() => handleColorModeChange('hasReadWriteDiscrepancies')}
+                    className="mr-2"
+                  />
+                  <AlertTriangle size={14} className="mr-1" />
+                  R/W Issues
                 </label>
               </div>
             </div>

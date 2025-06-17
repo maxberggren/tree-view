@@ -49,13 +49,30 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
         if (isTooCold) return { bg: '#3B82F6', border: '#2563EB' }; // Blue
         return { bg: '#A3A3A3', border: '#737373' }; // Gray (mild)
 
-      case 'features':
-        const featureCount = Object.values(building.features).filter(Boolean).length;
-        if (featureCount >= 4) return { bg: '#8B5CF6', border: '#7C3AED' }; // Purple
-        if (featureCount >= 3) return { bg: '#06B6D4', border: '#0891B2' }; // Cyan
-        if (featureCount >= 2) return { bg: '#10B981', border: '#059669' }; // Green
-        if (featureCount >= 1) return { bg: '#F59E0B', border: '#D97706' }; // Yellow
-        return { bg: '#6B7280', border: '#4B5563' }; // Gray
+      case 'canHeat':
+        return building.features.canHeat 
+          ? { bg: '#DC2626', border: '#991B1B' } // Red
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'canCool':
+        return building.features.canCool 
+          ? { bg: '#2563EB', border: '#1D4ED8' } // Blue
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'hasAMM':
+        return building.features.hasAMM 
+          ? { bg: '#FBBF24', border: '#F59E0B' } // Yellow
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'hasClimateBaseline':
+        return building.features.hasClimateBaseline 
+          ? { bg: '#059669', border: '#047857' } // Green
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'hasReadWriteDiscrepancies':
+        return building.features.hasReadWriteDiscrepancies 
+          ? { bg: '#EA580C', border: '#C2410C' } // Orange
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       default:
         return { bg: '#6B7280', border: '#4B5563' };
