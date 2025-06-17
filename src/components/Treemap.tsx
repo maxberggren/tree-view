@@ -34,7 +34,7 @@ const initialFilters: FilterState = {
     hasClimateBaseline: false,
     hasReadWriteDiscrepancies: false,
   },
-  temperatureRange: [15, 75],
+  temperatureRange: [5, 35],
   colorMode: 'temperature',
 };
 
@@ -189,17 +189,17 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     switch (filters.colorMode) {
       case 'temperature':
         return [
-          { color: '#3B82F6', label: 'Cold (<20°F)' },
-          { color: '#06B6D4', label: 'Cool (20-25°F)' },
-          { color: '#10B981', label: 'Comfort (25-30°F)' },
-          { color: '#F59E0B', label: 'Warm (30-35°F)' },
-          { color: '#EF4444', label: 'Hot (>35°F)' },
+          { color: '#3B82F6', label: 'Cold (<10°C)' },
+          { color: '#06B6D4', label: 'Cool (10-18°C)' },
+          { color: '#10B981', label: 'Comfort (18-25°C)' },
+          { color: '#F59E0B', label: 'Warm (25-30°C)' },
+          { color: '#EF4444', label: 'Hot (>30°C)' },
         ];
       case 'comfort':
         return [
-          { color: '#22C55E', label: 'Comfortable (20-25°F)' },
-          { color: '#F97316', label: 'Too Hot (>30°F)' },
-          { color: '#3B82F6', label: 'Too Cold (<18°F)' },
+          { color: '#22C55E', label: 'Comfortable (20-25°C)' },
+          { color: '#F97316', label: 'Too Hot (>28°C)' },
+          { color: '#3B82F6', label: 'Too Cold (<18°C)' },
           { color: '#A3A3A3', label: 'Mild' },
         ];
       case 'canHeat':
@@ -308,7 +308,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           </div>
           <div className="text-sm mb-2">
             <span className="opacity-75">Temperature: </span>
-            <span className="text-blue-400">{(hoveredNode.data as any).temperature}°F</span>
+            <span className="text-blue-400">{(hoveredNode.data as any).temperature}°C</span>
           </div>
           <div className="text-sm mb-2">
             <span className="opacity-75">Size: </span>

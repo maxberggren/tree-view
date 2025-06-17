@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { Thermometer, Zap, Activity, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
@@ -59,15 +58,15 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
   const getBaseColors = () => {
     switch (colorMode) {
       case 'temperature':
-        if (temp < 20) return { bg: '#3B82F6', border: '#1D4ED8' }; // Blue
-        if (temp < 25) return { bg: '#06B6D4', border: '#0891B2' }; // Cyan
-        if (temp < 30) return { bg: '#10B981', border: '#059669' }; // Green
-        if (temp < 35) return { bg: '#F59E0B', border: '#D97706' }; // Yellow
+        if (temp < 10) return { bg: '#3B82F6', border: '#1D4ED8' }; // Blue
+        if (temp < 18) return { bg: '#06B6D4', border: '#0891B2' }; // Cyan
+        if (temp < 25) return { bg: '#10B981', border: '#059669' }; // Green
+        if (temp < 30) return { bg: '#F59E0B', border: '#D97706' }; // Yellow
         return { bg: '#EF4444', border: '#DC2626' }; // Red
 
       case 'comfort':
         const isComfortable = temp >= 20 && temp <= 25;
-        const isTooHot = temp > 30;
+        const isTooHot = temp > 28;
         const isTooCold = temp < 18;
         
         if (isComfortable) return { bg: '#22C55E', border: '#16A34A' }; // Bright green
@@ -163,7 +162,7 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
                 className="font-bold"
                 style={{ color: getTextColor(), fontSize: Math.min(width / 10, 11) }}
               >
-                {temp}°F
+                {temp}°C
               </div>
               
               {shouldShowIcons && (
@@ -194,4 +193,3 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
     </div>
   );
 };
-
