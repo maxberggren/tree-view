@@ -260,9 +260,15 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         {renderNodes(treemapData)}
       </div>
       
-      {/* Hover tooltip */}
+      {/* Hover tooltip - positioned above filter bar */}
       {hoveredNode && 'id' in hoveredNode.data && (
-        <div className="absolute top-0 left-0 bg-black bg-opacity-90 text-white p-4 rounded-lg pointer-events-none z-30 max-w-xs">
+        <div 
+          className="absolute bg-black bg-opacity-90 text-white p-4 rounded-lg pointer-events-none z-50 max-w-xs"
+          style={{
+            top: filtersExpanded ? '160px' : '40px',
+            left: '16px'
+          }}
+        >
           <div className="font-bold text-lg">{(hoveredNode.data as any).id}</div>
           <div className="text-sm opacity-90 mb-2">{(hoveredNode.data as any).name}</div>
           <div className="text-sm mb-2">
