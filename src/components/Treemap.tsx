@@ -77,7 +77,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   }, [filters]);
 
   const filterPanelHeight = filtersExpanded ? 200 : 32;
-  const clientTagsHeight = 24;
+  const clientTagsHeight = 16;
   const totalHeaderHeight = filterPanelHeight + clientTagsHeight;
   const treemapHeight = height - totalHeaderHeight;
 
