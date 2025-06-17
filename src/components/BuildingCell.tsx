@@ -106,14 +106,6 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, onHover }) => 
             >
               {temp}°F
             </div>
-            {shouldShowDetails && (
-              <div 
-                className="text-xs opacity-75"
-                style={{ color: getTextColor(), fontSize: Math.min(width / 14, 8) }}
-              >
-                {building.squareMeters}m²
-              </div>
-            )}
           </div>
         </div>
       )}
