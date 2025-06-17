@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ChevronUp, ChevronDown, Thermometer, Zap, Activity, AlertTriangle, Wifi } from 'lucide-react';
+import { ColorMode } from '@/types/TreemapData';
 
 interface FilterState {
   clients: string[];
@@ -13,6 +14,7 @@ interface FilterState {
     hasReadWriteDiscrepancies: boolean;
   };
   temperatureRange: [number, number];
+  colorMode: ColorMode;
 }
 
 interface BuildingFiltersProps {
@@ -51,6 +53,13 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     });
   };
 
+  const handleColorModeChange = (colorMode: ColorMode) => {
+    onFiltersChange({
+      ...filters,
+      colorMode
+    });
+  };
+
   return (
     <div className="absolute top-0 left-0 right-0 z-30 bg-gray-800 border-b border-gray-700">
       {/* Toggle Bar */}
@@ -69,8 +78,45 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
       {/* Filter Panel */}
       {isExpanded && (
         <div className="p-4 border-t border-gray-700">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             
+            {/* Color Mode */}
+            <div>
+              <h3 className="text-white font-medium mb-3">Color By</h3>
+              <div className="space-y-2">
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="radio"
+                    name="colorMode"
+                    checked={filters.colorMode === 'temperature'}
+                    onChange={() => handleColorModeChange('temperature')}
+                    className="mr-2"
+                  />
+                  Temperature
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="radio"
+                    name="colorMode"
+                    checked={filters.colorMode === 'comfort'}
+                    onChange={() => handleColorModeChange('comfort')}
+                    className="mr-2"
+                  />
+                  Comfort Zone
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="radio"
+                    name="colorMode"
+                    checked={filters.colorMode === 'features'}
+                    onChange={() => handleColorModeChange('features')}
+                    className="mr-2"
+                  />
+                  Feature Count
+                </label>
+              </div>
+            </div>
+
             {/* Status Filters */}
             <div>
               <h3 className="text-white font-medium mb-3">Status</h3>

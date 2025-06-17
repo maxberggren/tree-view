@@ -1,14 +1,15 @@
 
 import React from 'react';
-import { TreemapNode } from '@/types/TreemapData';
+import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { Thermometer, Zap, Activity, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
 
 interface BuildingCellProps {
   node: TreemapNode;
+  colorMode: ColorMode;
   onHover?: (node: TreemapNode | null) => void;
 }
 
-export const BuildingCell: React.FC<BuildingCellProps> = ({ node, onHover }) => {
+export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onHover }) => {
   const width = node.x1 - node.x0;
   const height = node.y1 - node.y0;
   
@@ -21,18 +22,49 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, onHover }) => 
   const building = node.data as any;
   const temp = building.temperature;
   
-  // Color based on temperature and online status
+  // Color based on selected mode
   const getColor = () => {
-    if (!building.isOnline) return '#374151'; // Gray for offline
-    if (temp < 20) return '#3B82F6'; // Cold - blue
-    if (temp < 25) return '#06B6D4'; // Cool - cyan
-    if (temp < 30) return '#10B981'; // Comfortable - green
-    if (temp < 35) return '#F59E0B'; // Warm - yellow
-    return '#EF4444'; // Hot - red
+    const baseColors = getBaseColors();
+    const opacity = building.isOnline ? 1 : 0.3;
+    
+    return `${baseColors.bg}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`;
+  };
+
+  const getBaseColors = () => {
+    switch (colorMode) {
+      case 'temperature':
+        if (temp < 20) return { bg: '#3B82F6', border: '#1D4ED8' }; // Blue
+        if (temp < 25) return { bg: '#06B6D4', border: '#0891B2' }; // Cyan
+        if (temp < 30) return { bg: '#10B981', border: '#059669' }; // Green
+        if (temp < 35) return { bg: '#F59E0B', border: '#D97706' }; // Yellow
+        return { bg: '#EF4444', border: '#DC2626' }; // Red
+
+      case 'comfort':
+        const isComfortable = temp >= 20 && temp <= 25;
+        const isTooHot = temp > 30;
+        const isTooCold = temp < 18;
+        
+        if (isComfortable) return { bg: '#22C55E', border: '#16A34A' }; // Bright green
+        if (isTooHot) return { bg: '#F97316', border: '#EA580C' }; // Orange
+        if (isTooCold) return { bg: '#3B82F6', border: '#2563EB' }; // Blue
+        return { bg: '#A3A3A3', border: '#737373' }; // Gray (mild)
+
+      case 'features':
+        const featureCount = Object.values(building.features).filter(Boolean).length;
+        if (featureCount >= 4) return { bg: '#8B5CF6', border: '#7C3AED' }; // Purple
+        if (featureCount >= 3) return { bg: '#06B6D4', border: '#0891B2' }; // Cyan
+        if (featureCount >= 2) return { bg: '#10B981', border: '#059669' }; // Green
+        if (featureCount >= 1) return { bg: '#F59E0B', border: '#D97706' }; // Yellow
+        return { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      default:
+        return { bg: '#6B7280', border: '#4B5563' };
+    }
   };
 
   const getBorderColor = () => {
-    return building.isOnline ? '#1F2937' : '#6B7280';
+    if (!building.isOnline) return '#6B7280';
+    return getBaseColors().border;
   };
 
   const getTextColor = () => {
@@ -53,7 +85,6 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, onHover }) => 
         height,
         backgroundColor: getColor(),
         borderColor: getBorderColor(),
-        opacity: building.isOnline ? 1 : 0.6,
       }}
       onMouseEnter={() => onHover?.(node)}
       onMouseLeave={() => onHover?.(null)}

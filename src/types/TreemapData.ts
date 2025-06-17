@@ -30,3 +30,5 @@ export interface TreemapNode {
   parent?: TreemapNode;
   value?: number;
 }
+
+export type ColorMode = 'temperature' | 'comfort' | 'features';

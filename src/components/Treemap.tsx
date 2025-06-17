@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
 import { BuildingFilters } from './BuildingFilters';
-import { TreemapNode } from '@/types/TreemapData';
+import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { mockBuildingData } from '@/data/mockBuildingData';
 
 interface TreemapProps {
@@ -22,6 +22,7 @@ interface FilterState {
     hasReadWriteDiscrepancies: boolean;
   };
   temperatureRange: [number, number];
+  colorMode: ColorMode;
 }
 
 const initialFilters: FilterState = {
@@ -35,6 +36,7 @@ const initialFilters: FilterState = {
     hasReadWriteDiscrepancies: false,
   },
   temperatureRange: [15, 75],
+  colorMode: 'temperature',
 };
 
 export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
@@ -143,12 +145,43 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         <BuildingCell
           key={`${node.data.id}-${node.x0}-${node.y0}`}
           node={adjustedNode}
+          colorMode={filters.colorMode}
           onHover={setHoveredNode}
         />
       );
     }
     
     return nodes;
+  };
+
+  const getLegendItems = () => {
+    switch (filters.colorMode) {
+      case 'temperature':
+        return [
+          { color: '#3B82F6', label: 'Cold (<20°F)' },
+          { color: '#06B6D4', label: 'Cool (20-25°F)' },
+          { color: '#10B981', label: 'Comfort (25-30°F)' },
+          { color: '#F59E0B', label: 'Warm (30-35°F)' },
+          { color: '#EF4444', label: 'Hot (>35°F)' },
+        ];
+      case 'comfort':
+        return [
+          { color: '#22C55E', label: 'Comfortable (20-25°F)' },
+          { color: '#F97316', label: 'Too Hot (>30°F)' },
+          { color: '#3B82F6', label: 'Too Cold (<18°F)' },
+          { color: '#A3A3A3', label: 'Mild' },
+        ];
+      case 'features':
+        return [
+          { color: '#8B5CF6', label: '4+ Features' },
+          { color: '#06B6D4', label: '3 Features' },
+          { color: '#10B981', label: '2 Features' },
+          { color: '#F59E0B', label: '1 Feature' },
+          { color: '#6B7280', label: 'No Features' },
+        ];
+      default:
+        return [];
+    }
   };
 
   if (!treemapData) {
@@ -220,30 +253,20 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         </div>
       )}
 
-      {/* Legend */}
+      {/* Dynamic Legend */}
       <div className="absolute bottom-4 right-4 bg-black bg-opacity-90 text-white p-3 rounded-lg max-w-xs">
-        <div className="text-xs font-bold mb-2">Temperature Scale</div>
+        <div className="text-xs font-bold mb-2">
+          {filters.colorMode === 'temperature' && 'Temperature Scale'}
+          {filters.colorMode === 'comfort' && 'Comfort Zones'}
+          {filters.colorMode === 'features' && 'Feature Count'}
+        </div>
         <div className="flex flex-col gap-1 text-xs mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-500"></div>
-            <span>Cold (&lt;20°F)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-cyan-500"></div>
-            <span>Cool (20-25°F)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500"></div>
-            <span>Comfort (25-30°F)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-yellow-500"></div>
-            <span>Warm (30-35°F)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500"></div>
-            <span>Hot (&gt;35°F)</span>
-          </div>
+          {getLegendItems().map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
+              <span>{item.label}</span>
+            </div>
+          ))}
         </div>
         <div className="text-xs opacity-75">
           Offline buildings are dimmed
