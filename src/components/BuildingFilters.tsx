@@ -61,8 +61,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   };
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-30 bg-gray-800 border-b border-gray-700">
-      {/* Toggle Bar - made smaller */}
+    <div className="absolute top-0 left-0 right-0 z-50 bg-gray-800 border-b border-gray-700 shadow-lg">
+      {/* Toggle Bar */}
       <div 
         className="flex items-center justify-center py-1 cursor-pointer hover:bg-gray-700 transition-colors"
         onClick={onToggle}

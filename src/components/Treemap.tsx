@@ -75,10 +75,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       .filter(client => client.children.length > 0);
   }, [filters]);
 
-  const filterPanelHeight = filtersExpanded ? 200 : 32;
-  const clientTagsHeight = 8;
-  const totalHeaderHeight = filterPanelHeight + clientTagsHeight;
-  const treemapHeight = height - totalHeaderHeight;
+  // Use full height for treemap, no space reserved for filters
+  const treemapHeight = height;
 
   const treemapData = useMemo(() => {
     if (filteredData.length === 0) return null;
@@ -125,7 +123,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             className="absolute border-2 border-blue-400 border-opacity-30 rounded-lg"
             style={{
               left: node.x0,
-              top: node.y0 + totalHeaderHeight,
+              top: node.y0,
               width: clientWidth,
               height: clientHeight,
             }}
@@ -142,21 +140,15 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       }
 
       // Render children recursively
-      node.children.forEach((child: any, index: number) => {
+      node.children.forEach((child: any, index: number) => {  
         nodes.push(...renderNodes(child));
       });
     } else {
-      // Render leaf node (building) with offset for filter panel and client tags
-      const adjustedNode = {
-        ...node,
-        y0: node.y0 + totalHeaderHeight,
-        y1: node.y1 + totalHeaderHeight,
-      };
-      
+      // Render leaf node (building) without any offset
       nodes.push(
         <BuildingCell
           key={`${node.data.id}-${node.x0}-${node.y0}`}
-          node={adjustedNode}
+          node={node}
           colorMode={filters.colorMode}
           onHover={setHoveredNode}
         />
@@ -245,7 +237,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
 
   return (
     <div className="relative w-full h-full bg-gray-900 overflow-hidden">
-      {/* Filter Panel */}
+      {/* Filter Panel - positioned absolutely */}
       <BuildingFilters
         isExpanded={filtersExpanded}
         onToggle={() => setFiltersExpanded(!filtersExpanded)}
@@ -254,10 +246,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         availableClients={availableClients}
       />
 
-      {/* Space for client tags */}
-      <div style={{ height: clientTagsHeight }} />
-
-      {/* Main treemap */}
+      {/* Main treemap - uses full height */}
       <div className="relative w-full h-full">
         {renderNodes(treemapData)}
       </div>
