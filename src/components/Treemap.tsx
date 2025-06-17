@@ -131,7 +131,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             }}
           >
             <div 
-              className="absolute -top-6 left-2 text-gray-400 text-sm font-medium bg-gray-900 px-2 rounded cursor-pointer hover:bg-gray-700 hover:text-gray-300 transition-colors z-10"
+              className="absolute -top-6 left-2 text-gray-300 text-sm font-medium bg-gray-900 px-2 rounded cursor-pointer hover:bg-gray-700 hover:text-gray-200 transition-colors z-10"
               onClick={() => handleClientClick(node.data.name)}
               title={`Filter by ${node.data.name}`}
             >

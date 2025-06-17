@@ -30,6 +30,32 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
     return `${baseColors.bg}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`;
   };
 
+  const getHoverColor = () => {
+    const baseColors = getBaseColors();
+    const opacity = building.isOnline ? 1 : 0.3;
+    
+    // Add white overlay for hover effect
+    const rgbColor = hexToRgb(baseColors.bg);
+    if (rgbColor) {
+      const lighterR = Math.min(255, rgbColor.r + 40);
+      const lighterG = Math.min(255, rgbColor.g + 40);
+      const lighterB = Math.min(255, rgbColor.b + 40);
+      const lighterHex = `#${lighterR.toString(16).padStart(2, '0')}${lighterG.toString(16).padStart(2, '0')}${lighterB.toString(16).padStart(2, '0')}`;
+      return `${lighterHex}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`;
+    }
+    
+    return getColor();
+  };
+
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  };
+
   const getBaseColors = () => {
     switch (colorMode) {
       case 'temperature':
@@ -103,8 +129,14 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
         backgroundColor: getColor(),
         borderColor: getBorderColor(),
       }}
-      onMouseEnter={() => onHover?.(node)}
-      onMouseLeave={() => onHover?.(null)}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = getHoverColor();
+        onHover?.(node);
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = getColor();
+        onHover?.(null);
+      }}
     >
       {shouldShowText && (
         <div className="p-2 h-full flex flex-col justify-between text-xs overflow-hidden">
@@ -162,3 +194,4 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
     </div>
   );
 };
+
