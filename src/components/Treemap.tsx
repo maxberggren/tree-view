@@ -108,6 +108,12 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     });
   };
 
+  const handleGridClick = () => {
+    if (filtersExpanded) {
+      setFiltersExpanded(false);
+    }
+  };
+
   const renderNodes = (node: any): React.ReactNode[] => {
     const nodes: React.ReactNode[] = [];
     
@@ -247,7 +253,10 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       />
 
       {/* Main treemap - uses full height */}
-      <div className="relative w-full h-full">
+      <div 
+        className="relative w-full h-full cursor-pointer"
+        onClick={handleGridClick}
+      >
         {renderNodes(treemapData)}
       </div>
       
