@@ -1,4 +1,5 @@
 
+
 import React, { useMemo, useState, useRef } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
@@ -77,10 +78,11 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       .filter(client => client.children.length > 0);
   }, [filters]);
 
-  // Use fixed height for filter bar since it expands upward
+  // Use fixed height for filter bar and add space for client tags
   const filterBarHeight = 25; // Fixed height for the toggle bar
-  const treemapHeight = height - filterBarHeight;
-  const treemapTop = filterBarHeight;
+  const clientTagSpacing = 30; // Space for client tags above the grid
+  const treemapHeight = height - filterBarHeight - clientTagSpacing;
+  const treemapTop = filterBarHeight + clientTagSpacing;
 
   const treemapData = useMemo(() => {
     if (filteredData.length === 0) return null;
@@ -277,7 +279,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         availableClients={availableClients}
       />
 
-      {/* Main treemap - positioned below filter bar */}
+      {/* Main treemap - positioned below filter bar with spacing */}
       <div 
         className="absolute w-full cursor-pointer"
         style={{
@@ -351,3 +353,4 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     </div>
   );
 };
+
