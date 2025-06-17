@@ -102,6 +102,13 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     return treemapLayout(root);
   }, [width, treemapHeight, filteredData]);
 
+  const handleClientClick = (clientName: string) => {
+    setFilters({
+      ...filters,
+      clients: [clientName]
+    });
+  };
+
   const renderNodes = (node: any): React.ReactNode[] => {
     const nodes: React.ReactNode[] = [];
     
@@ -114,7 +121,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         nodes.push(
           <div
             key={`client-${node.data.name}`}
-            className="absolute border-2 border-blue-400 border-opacity-30 rounded-lg pointer-events-none"
+            className="absolute border-2 border-blue-400 border-opacity-30 rounded-lg"
             style={{
               left: node.x0,
               top: node.y0 + filterPanelHeight,
@@ -122,7 +129,11 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
               height: clientHeight,
             }}
           >
-            <div className="absolute -top-6 left-2 text-blue-400 text-sm font-medium bg-gray-900 px-2 rounded">
+            <div 
+              className="absolute -top-6 left-2 text-blue-400 text-sm font-medium bg-gray-900 px-2 rounded cursor-pointer hover:bg-blue-900 hover:text-blue-300 transition-colors"
+              onClick={() => handleClientClick(node.data.name)}
+              title={`Filter by ${node.data.name}`}
+            >
               {node.data.name}
             </div>
           </div>
