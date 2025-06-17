@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
@@ -77,7 +76,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   }, [filters]);
 
   const filterPanelHeight = filtersExpanded ? 200 : 32;
-  const clientTagsHeight = 16;
+  const clientTagsHeight = 8;
   const totalHeaderHeight = filterPanelHeight + clientTagsHeight;
   const treemapHeight = height - totalHeaderHeight;
 
