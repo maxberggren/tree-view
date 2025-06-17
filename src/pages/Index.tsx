@@ -1,12 +1,14 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React from 'react';
+import { Treemap } from '@/components/Treemap';
+import { useWindowSize } from '@/hooks/useWindowSize';
 
 const Index = () => {
+  const { width, height } = useWindowSize();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="w-screen h-screen overflow-hidden bg-gray-900">
+      <Treemap width={width} height={height} />
     </div>
   );
 };
