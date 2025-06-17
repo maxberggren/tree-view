@@ -80,7 +80,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
 
   // Use fixed height for filter bar and add space for client tags
   const filterBarHeight = 25; // Fixed height for the toggle bar
-  const clientTagSpacing = 30; // Space for client tags above the grid
+  const clientTagSpacing = 20; // Space for client tags above the grid
   const treemapHeight = height - filterBarHeight - clientTagSpacing;
   const treemapTop = filterBarHeight + clientTagSpacing;
 
