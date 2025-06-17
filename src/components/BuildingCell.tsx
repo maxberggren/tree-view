@@ -77,34 +77,36 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, onHover }) => 
             )}
           </div>
 
-          {shouldShowIcons && (
-            <div className="flex flex-wrap gap-1 my-1">
-              {building.features.canHeat && (
-                <Thermometer size={Math.min(width / 15, 12)} color={getTextColor()} />
+          <div className="flex items-end justify-between">
+            <div className="flex items-center gap-1">
+              <div 
+                className="font-bold"
+                style={{ color: getTextColor(), fontSize: Math.min(width / 10, 11) }}
+              >
+                {temp}°F
+              </div>
+              
+              {shouldShowIcons && (
+                <div className="flex flex-wrap gap-1 ml-2">
+                  {building.features.canHeat && (
+                    <Thermometer size={Math.min(width / 15, 12)} color={getTextColor()} />
+                  )}
+                  {building.features.hasAMM && (
+                    <Zap size={Math.min(width / 15, 12)} color={getTextColor()} />
+                  )}
+                  {building.features.hasClimateBaseline && (
+                    <Activity size={Math.min(width / 15, 12)} color={getTextColor()} />
+                  )}
+                  {building.features.hasReadWriteDiscrepancies && (
+                    <AlertTriangle size={Math.min(width / 15, 12)} color="#FCD34D" />
+                  )}
+                  {building.isOnline ? (
+                    <Wifi size={Math.min(width / 15, 12)} color={getTextColor()} />
+                  ) : (
+                    <WifiOff size={Math.min(width / 15, 12)} color="#9CA3AF" />
+                  )}
+                </div>
               )}
-              {building.features.hasAMM && (
-                <Zap size={Math.min(width / 15, 12)} color={getTextColor()} />
-              )}
-              {building.features.hasClimateBaseline && (
-                <Activity size={Math.min(width / 15, 12)} color={getTextColor()} />
-              )}
-              {building.features.hasReadWriteDiscrepancies && (
-                <AlertTriangle size={Math.min(width / 15, 12)} color="#FCD34D" />
-              )}
-              {building.isOnline ? (
-                <Wifi size={Math.min(width / 15, 12)} color={getTextColor()} />
-              ) : (
-                <WifiOff size={Math.min(width / 15, 12)} color="#9CA3AF" />
-              )}
-            </div>
-          )}
-
-          <div className="flex justify-between items-end">
-            <div 
-              className="font-bold"
-              style={{ color: getTextColor(), fontSize: Math.min(width / 10, 11) }}
-            >
-              {temp}°F
             </div>
           </div>
         </div>

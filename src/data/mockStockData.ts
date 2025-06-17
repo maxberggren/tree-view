@@ -1,6 +1,4 @@
 
-import { StockData } from "@/types/TreemapData";
-
 const stockNames = [
   "Apple Inc.", "Microsoft Corp.", "Amazon.com Inc.", "Alphabet Inc.", "Tesla Inc.",
   "Meta Platforms Inc.", "NVIDIA Corp.", "Berkshire Hathaway", "Johnson & Johnson", "JPMorgan Chase",
@@ -41,7 +39,7 @@ allStocks.forEach(stock => {
   sectorGroups[stock.sector].push(stock);
 });
 
-export const mockStockData: SectorData[] = Object.entries(sectorGroups).map(([sectorName, stocks]) => ({
+export const mockStockData = Object.entries(sectorGroups).map(([sectorName, stocks]) => ({
   name: sectorName,
   children: stocks
 }));
