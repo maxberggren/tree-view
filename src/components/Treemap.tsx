@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
@@ -304,7 +305,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         nodes.push(
           <div
             key={`client-${node.data.name}`}
-            className="absolute border-2 border-blue-400 border-opacity-30"
+            className="absolute border-2 border-blue-600 border-opacity-50"
             style={{
               left: node.x0,
               top: node.y0,
@@ -313,9 +314,11 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             }}
           >
             <div 
-              className="absolute left-2 text-gray-300 text-sm font-medium bg-gray-900 px-2 rounded cursor-pointer hover:bg-gray-700 hover:text-gray-200 transition-colors z-10"
+              className="absolute text-white text-sm font-medium px-2 rounded cursor-pointer hover:text-gray-200 transition-colors z-10"
               style={{
-                top: '-20px'
+                left: '6px',
+                top: '-20px',
+                backgroundColor: '#2563EB', // Blue-600 to match the darker border
               }}
               onClick={() => handleClientClick(node.data.name)}
               title={`Filter by ${node.data.name}`}
@@ -556,8 +559,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             left: '16px'
           }}
         >
-          <div className="font-bold text-lg">{(hoveredNode.data as any).id}</div>
-          <div className="text-sm opacity-90 mb-2">{(hoveredNode.data as any).name}</div>
+          <div className="font-bold text-lg">{(hoveredNode.data as any).name}</div>
+          <div className="text-sm opacity-90 mb-2">Building id: {(hoveredNode.data as any).id.replace(/^BLD-/, '')}</div>
           
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mb-3">
             <div>
