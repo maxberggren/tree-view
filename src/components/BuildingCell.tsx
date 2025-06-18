@@ -231,7 +231,6 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
   };
 
   const shouldShowText = width > 60 && height > 40;
-  const shouldShowIcons = width > 80 && height > 60;
   const shouldShowDetails = width > 120 && height > 80;
 
   return (
@@ -255,50 +254,21 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
       }}
     >
       {shouldShowText && (
-        <div className="p-2 h-full flex flex-col justify-between text-xs overflow-hidden">
-          <div>
+        <div className="p-2 h-full flex flex-col justify-center text-center overflow-hidden">
+          <div 
+            className="font-bold leading-tight"
+            style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
+          >
+            {building.id}
+          </div>
+          {shouldShowDetails && (
             <div 
-              className="font-bold leading-tight mb-1"
-              style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
+              className="opacity-90 leading-tight mt-1"
+              style={{ color: getTextColor(), fontSize: Math.min(width / 12, 9) }}
             >
-              {building.id}
+              {building.name}
             </div>
-            {shouldShowDetails && (
-              <div 
-                className="opacity-90 leading-tight"
-                style={{ color: getTextColor(), fontSize: Math.min(width / 12, 9) }}
-              >
-                {building.name}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-end justify-between">
-            <div className="flex items-center gap-1">
-              <div 
-                className="font-bold"
-                style={{ color: getTextColor(), fontSize: Math.min(width / 10, 11) }}
-              >
-                {temp}°C
-              </div>
-              
-              {shouldShowIcons && (
-                <div className="flex flex-wrap gap-1 ml-1">
-                  {building.features.hasClimateBaseline && (
-                    <Activity size={Math.min(width / 15, 12)} color={getTextColor()} />
-                  )}
-                  {building.features.hasReadWriteDiscrepancies && (
-                    <AlertTriangle size={Math.min(width / 15, 12)} color="#FCD34D" />
-                  )}
-                  {building.isOnline ? (
-                    <Wifi size={Math.min(width / 15, 12)} color={getTextColor()} />
-                  ) : (
-                    <WifiOff size={Math.min(width / 15, 12)} color="#9CA3AF" />
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>
