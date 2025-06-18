@@ -56,11 +56,43 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
     return labelMap[key] || key;
   };
 
+  const calculatePosition = (mouseX: number, mouseY: number) => {
+    const tooltipWidth = 400; // Approximate tooltip width
+    const tooltipHeight = 300; // Approximate tooltip height
+    const padding = 20;
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    let x = mouseX + 10;
+    let y = mouseY - 10;
+    
+    // Adjust horizontal position if tooltip would go off right edge
+    if (x + tooltipWidth > viewportWidth - padding) {
+      x = mouseX - tooltipWidth - 10;
+    }
+    
+    // Adjust vertical position if tooltip would go off bottom edge
+    if (y + tooltipHeight > viewportHeight - padding) {
+      y = mouseY - tooltipHeight - 10;
+    }
+    
+    // Ensure tooltip doesn't go off top edge
+    if (y < padding) {
+      y = padding;
+    }
+    
+    // Ensure tooltip doesn't go off left edge
+    if (x < padding) {
+      x = padding;
+    }
+    
+    return { x, y };
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
-    setPosition({
-      x: e.clientX + 10,
-      y: e.clientY - 10
-    });
+    const newPosition = calculatePosition(e.clientX, e.clientY);
+    setPosition(newPosition);
   };
 
   const handleMouseEnter = (e: React.MouseEvent) => {
@@ -74,10 +106,8 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
       hideTimeoutRef.current = null;
     }
     
-    setPosition({
-      x: e.clientX + 10,
-      y: e.clientY - 10
-    });
+    const newPosition = calculatePosition(e.clientX, e.clientY);
+    setPosition(newPosition);
     setIsVisible(true);
     
     // Register this tooltip as the current one
