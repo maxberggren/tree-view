@@ -51,7 +51,7 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
       <HoverCardTrigger asChild>
         {children}
       </HoverCardTrigger>
-      <HoverCardContent className="w-80 p-4">
+      <HoverCardContent className="w-96 p-4">
         <div className="space-y-2">
           <div className="flex justify-between items-center border-b pb-2">
             <h3 className="font-semibold text-sm">{building.name}</h3>
@@ -61,25 +61,25 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
           </div>
           
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-            <div className="flex justify-between">
-              <span className="text-gray-600 w-16 truncate">ID:</span>
-              <span className="font-mono w-20 text-right">{building.id}</span>
+            <div className="flex">
+              <span className="text-gray-600 w-12 flex-shrink-0">ID:</span>
+              <span className="font-mono flex-1">{building.id}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 w-16 truncate">Client:</span>
-              <span className="w-20 text-right truncate" title={building.client}>{building.client}</span>
+            <div className="flex">
+              <span className="text-gray-600 w-12 flex-shrink-0">Client:</span>
+              <span className="flex-1 truncate" title={building.client}>{building.client}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 w-16 truncate">Area:</span>
-              <span className="w-20 text-right">{building.squareMeters.toLocaleString()} m²</span>
+            <div className="flex">
+              <span className="text-gray-600 w-12 flex-shrink-0">Area:</span>
+              <span className="flex-1">{building.squareMeters.toLocaleString()} m²</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 w-16 truncate">Temp:</span>
-              <span className="w-20 text-right">{building.temperature}°C</span>
+            <div className="flex">
+              <span className="text-gray-600 w-12 flex-shrink-0">Temp:</span>
+              <span className="flex-1">{building.temperature}°C</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 w-16 truncate">Country:</span>
-              <span className="w-20 text-right truncate" title={building.country}>{building.country}</span>
+            <div className="flex">
+              <span className="text-gray-600 w-12 flex-shrink-0">Country:</span>
+              <span className="flex-1 truncate" title={building.country}>{building.country}</span>
             </div>
           </div>
 
@@ -87,11 +87,11 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
             <h4 className="font-medium text-xs mb-2 text-gray-700">Features</h4>
             <div className="space-y-1 max-h-32 overflow-y-auto">
               {Object.entries(building.features).map(([key, value]) => (
-                <div key={key} className="flex justify-between text-xs">
-                  <span className="text-gray-600 w-32 truncate" title={formatLabel(key)}>
+                <div key={key} className="flex text-xs">
+                  <span className="text-gray-600 w-40 flex-shrink-0 truncate" title={formatLabel(key)}>
                     {formatLabel(key)}:
                   </span>
-                  <span className="w-16 text-right font-mono" title={formatValue(key, value)}>
+                  <span className="w-20 flex-shrink-0 text-right font-mono" title={formatValue(key, value)}>
                     {formatValue(key, value)}
                   </span>
                 </div>
