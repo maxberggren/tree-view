@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { Thermometer, Activity, AlertTriangle, Wifi, WifiOff, Building, Settings, Wind, Plug, Battery, BarChart, Gauge } from 'lucide-react';
@@ -233,6 +234,9 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
   const shouldShowText = width > 60 && height > 40;
   const shouldShowDetails = width > 120 && height > 80;
 
+  // Remove "BLD-" prefix from building ID
+  const displayId = building.id.replace(/^BLD-/, '');
+
   return (
     <div
       className="absolute border border-opacity-40 cursor-pointer transition-all duration-200 hover:border-opacity-80 hover:z-10 hover:shadow-lg"
@@ -254,21 +258,23 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
       }}
     >
       {shouldShowText && (
-        <div className="p-2 h-full flex flex-col justify-center text-center overflow-hidden">
-          <div 
-            className="font-bold leading-tight"
-            style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
-          >
-            {building.id}
-          </div>
-          {shouldShowDetails && (
+        <div className="p-2 h-full flex flex-col justify-start text-left overflow-hidden">
+          <div>
             <div 
-              className="opacity-90 leading-tight mt-1"
-              style={{ color: getTextColor(), fontSize: Math.min(width / 12, 9) }}
+              className="font-bold leading-tight mb-1"
+              style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
             >
-              {building.name}
+              {displayId}
             </div>
-          )}
+            {shouldShowDetails && (
+              <div 
+                className="opacity-90 leading-tight"
+                style={{ color: getTextColor(), fontSize: Math.min(width / 12, 9) }}
+              >
+                {building.name}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
