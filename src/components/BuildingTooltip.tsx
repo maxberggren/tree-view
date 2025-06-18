@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { TreemapNode } from '@/types/TreemapData';
 
@@ -153,7 +154,7 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
       
       {isVisible && (
         <div
-          className="fixed bg-black bg-opacity-80 text-white p-4 rounded-lg shadow-xl max-w-lg z-50 pointer-events-none transition-all duration-100 ease-out border border-gray-700"
+          className="fixed bg-black bg-opacity-90 text-white p-4 rounded-lg shadow-xl max-w-lg z-50 pointer-events-none transition-all duration-100 ease-out border border-gray-700"
           style={{
             left: `${position.x}px`,
             top: `${position.y}px`,
