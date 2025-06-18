@@ -317,7 +317,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
               style={{
                 left: '6px',
                 top: '-20px',
-                backgroundColor: '#1D4ED8', // Darker blue (blue-700)
+                backgroundColor: '#06112d',
               }}
               onClick={() => handleClientClick(node.data.name)}
               title={`Filter by ${node.data.name}`}
