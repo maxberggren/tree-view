@@ -166,7 +166,7 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
       case 'savingEnergy':
         const savingValue = building.features.savingEnergy;
         if (savingValue <= -0.1) return { bg: '#DC2626', border: '#991B1B' }; // Red for -10% or more
-        if (savingValue <= -0.05) return { bg: '#F59E0B', border: '#D97706' }; // Amber for -5% to -10%
+        if (savingValue <= -0.05) return { bg: '#EF4444', border: '#DC2626' }; // Light red for -5% to -10%
         if (savingValue <= 0.05) return { bg: '#6B7280', border: '#4B5563' }; // Gray for neutral
         if (savingValue <= 0.1) return { bg: '#FBBF24', border: '#F59E0B' }; // Yellow for 5% to 10%
         if (savingValue <= 0.2) return { bg: '#10B981', border: '#059669' }; // Green for 10% to 20%

@@ -1,9 +1,10 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
 import { BuildingFilters } from './BuildingFilters';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { mockBuildingData } from '@/data/mockBuildingData';
+import { useSearchParams } from 'react-router-dom';
 
 interface TreemapProps {
   width: number;
@@ -59,8 +60,61 @@ const initialFilters: FilterState = {
 export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
-  const [filters, setFilters] = useState<FilterState>(initialFilters);
+  const [searchParams, setSearchParams] = useSearchParams();
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Initialize filters from URL params
+  const [filters, setFilters] = useState<FilterState>(() => {
+    const urlColorMode = searchParams.get('colorMode') as ColorMode;
+    const urlClients = searchParams.get('clients')?.split(',').filter(Boolean) || [];
+    const urlOnlineOnly = searchParams.get('onlineOnly') === 'true';
+    
+    // Parse feature filters from URL
+    const urlFeatures = { ...initialFilters.features };
+    Object.keys(initialFilters.features).forEach(key => {
+      const urlValue = searchParams.get(key);
+      if (urlValue === 'true') {
+        urlFeatures[key as keyof FilterState['features']] = true;
+      }
+    });
+
+    return {
+      ...initialFilters,
+      colorMode: urlColorMode && Object.keys(initialFilters).includes('colorMode') ? urlColorMode : initialFilters.colorMode,
+      clients: urlClients,
+      onlineOnly: urlOnlineOnly,
+      features: urlFeatures,
+    };
+  });
+
+  // Update URL when filters change
+  useEffect(() => {
+    const newParams = new URLSearchParams();
+    
+    // Add color mode
+    if (filters.colorMode !== initialFilters.colorMode) {
+      newParams.set('colorMode', filters.colorMode);
+    }
+    
+    // Add clients
+    if (filters.clients.length > 0) {
+      newParams.set('clients', filters.clients.join(','));
+    }
+    
+    // Add online only
+    if (filters.onlineOnly !== initialFilters.onlineOnly) {
+      newParams.set('onlineOnly', filters.onlineOnly.toString());
+    }
+    
+    // Add feature filters
+    Object.entries(filters.features).forEach(([key, value]) => {
+      if (value !== initialFilters.features[key as keyof FilterState['features']]) {
+        newParams.set(key, value.toString());
+      }
+    });
+
+    setSearchParams(newParams, { replace: true });
+  }, [filters, setSearchParams]);
 
   const availableClients = useMemo(() => {
     return mockBuildingData.map(client => client.name);
@@ -288,7 +342,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       case 'savingEnergy':
         return [
           { color: '#DC2626', label: 'Wasting (-10% or more)' },
-          { color: '#F59E0B', label: 'Slight waste (-5% to -10%)' },
+          { color: '#EF4444', label: 'Slight waste (-5% to -10%)' },
           { color: '#6B7280', label: 'Neutral (-5% to +5%)' },
           { color: '#FBBF24', label: 'Saving (5% to 10%)' },
           { color: '#10B981', label: 'Good saving (10% to 20%)' },
