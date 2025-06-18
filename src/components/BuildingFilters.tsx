@@ -91,8 +91,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: 'missingLBGPOVConnections', label: 'Missing LBGP OV', icon: Plug },
     { value: 'missingLBGTOVConnections', label: 'Missing LBGT OV', icon: Plug },
     { value: 'savingEnergy', label: 'Energy Saving', icon: Battery },
-    { value: 'automaticComfortScheduleActive', label: 'Auto Comfort Schedule', icon: Calendar },
-    { value: 'manualComfortScheduleActive', label: 'Manual Comfort Schedule', icon: Settings },
+    { value: 'automaticComfortScheduleActive', label: 'Automatic CS', icon: Calendar },
+    { value: 'manualComfortScheduleActive', label: 'Manual CS', icon: Settings },
     { value: 'componentsErrors', label: 'Component Errors', icon: Wrench },
     { value: 'modelTrainingTestR2Score', label: 'Model R2 Score', icon: BarChart },
     { value: 'hasDistrictHeatingMeter', label: 'District Heating Meter', icon: Gauge },
@@ -109,8 +109,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { key: 'missingVSGTOVConnections', label: 'Missing VSGT OV', icon: Plug },
     { key: 'missingLBGPOVConnections', label: 'Missing LBGP OV', icon: Plug },
     { key: 'missingLBGTOVConnections', label: 'Missing LBGT OV', icon: Plug },
-    { key: 'automaticComfortScheduleActive', label: 'Auto Comfort Schedule', icon: Calendar },
-    { key: 'manualComfortScheduleActive', label: 'Manual Comfort Schedule', icon: Settings },
+    { key: 'automaticComfortScheduleActive', label: 'Automatic CS', icon: Calendar },
+    { key: 'manualComfortScheduleActive', label: 'Manual CS', icon: Settings },
     { key: 'componentsErrors', label: 'Component Errors', icon: Wrench },
     { key: 'hasDistrictHeatingMeter', label: 'District Heating Meter', icon: Gauge },
     { key: 'hasDistrictCoolingMeter', label: 'District Cooling Meter', icon: Gauge },
@@ -218,7 +218,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                       </Badge>
                     )}
                   </div>
-                  <div className="max-h-32 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <div className="max-h-64 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     {availableClients.map(client => (
                       <div key={client} className="flex items-center space-x-3">
                         <Checkbox
