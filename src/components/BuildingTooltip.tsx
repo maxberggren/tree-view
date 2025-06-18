@@ -10,6 +10,7 @@ interface BuildingTooltipProps {
 export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children }) => {
   const [isVisible, setIsVisible] = React.useState(false);
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
+  const hideTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   
   const building = node.data as any;
   
@@ -56,6 +57,11 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
   };
 
   const handleMouseEnter = (e: React.MouseEvent) => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    
     setPosition({
       x: e.clientX + 10,
       y: e.clientY - 10
@@ -64,8 +70,18 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
   };
 
   const handleMouseLeave = () => {
-    setIsVisible(false);
+    hideTimeoutRef.current = setTimeout(() => {
+      setIsVisible(false);
+    }, 150);
   };
+
+  React.useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const features = Object.entries(building.features);
   const halfLength = Math.ceil(features.length / 2);
