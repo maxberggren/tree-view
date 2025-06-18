@@ -1,4 +1,3 @@
-
 import { ClientData } from "@/types/TreemapData";
 
 const buildingNames = [
@@ -12,7 +11,7 @@ const buildingNames = [
 const clients = [
   "SISAB", "Scheider", "Framfab", "Akademiska Hus", "Robertos Harem",
   "Healthcare Partners", "Retail Solutions", "Manufacturing Co", 
-  "Energy Systems", "Government Facilities"
+  "Energy Systems", "Stef's castles"
 ];
 
 const countries = ["Sweden", "Denmark", "Finland", "USA", "Argentina"];

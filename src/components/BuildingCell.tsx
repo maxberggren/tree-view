@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
-import { Thermometer, Activity, AlertTriangle, Wifi, WifiOff, Building, Settings, Wind, Plug, Battery, BarChart, Gauge } from 'lucide-react';
+import { BuildingTooltip } from './BuildingTooltip';
 
 interface BuildingCellProps {
   node: TreemapNode;
@@ -238,41 +238,43 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
   const displayId = building.id.replace(/^BLD-/, '');
 
   return (
-    <div
-      className="absolute border border-opacity-40 cursor-pointer transition-all duration-200 hover:border-opacity-80 hover:z-10 hover:shadow-lg"
-      style={{
-        left: node.x0,
-        top: node.y0,
-        width,
-        height,
-        backgroundColor: getColor(),
-        borderColor: getBorderColor(),
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = getHoverColor();
-        onHover?.(node);
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = getColor();
-        onHover?.(null);
-      }}
-    >
-      <div className="p-1 h-full flex flex-col justify-start text-left overflow-hidden">
-        <div 
-          className="font-bold leading-tight mb-1 truncate"
-          style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
-          title={`Building id: ${displayId}`}
-        >
-          {displayId}
-        </div>
-        <div 
-          className="opacity-90 leading-tight truncate"
-          style={{ color: getTextColor(), fontSize: Math.min(width / 12, 9) }}
-          title={building.name}
-        >
-          {building.name}
+    <BuildingTooltip node={node}>
+      <div
+        className="absolute border border-opacity-40 cursor-pointer transition-all duration-200 hover:border-opacity-80 hover:z-10 hover:shadow-lg"
+        style={{
+          left: node.x0,
+          top: node.y0,
+          width,
+          height,
+          backgroundColor: getColor(),
+          borderColor: getBorderColor(),
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = getHoverColor();
+          onHover?.(node);
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = getColor();
+          onHover?.(null);
+        }}
+      >
+        <div className="p-1 h-full flex flex-col justify-start text-left overflow-hidden">
+          <div 
+            className="font-bold leading-tight mb-1 truncate"
+            style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
+            title={`Building id: ${displayId}`}
+          >
+            {displayId}
+          </div>
+          <div 
+            className="opacity-90 leading-tight truncate"
+            style={{ color: getTextColor(), fontSize: Math.min(width / 12, 9) }}
+            title={building.name}
+          >
+            {building.name}
+          </div>
         </div>
       </div>
-    </div>
+    </BuildingTooltip>
   );
 };
