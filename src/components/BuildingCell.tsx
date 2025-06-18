@@ -1,6 +1,6 @@
 import React from 'react';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
-import { Thermometer, Zap, Activity, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { Thermometer, Activity, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
 
 interface BuildingCellProps {
   node: TreemapNode;
@@ -99,11 +99,6 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
       case 'canCool':
         return building.features.canCool 
           ? { bg: '#2563EB', border: '#1D4ED8' } // Blue
-          : { bg: '#6B7280', border: '#4B5563' }; // Gray
-
-      case 'hasAMM':
-        return building.features.hasAMM 
-          ? { bg: '#FBBF24', border: '#F59E0B' } // Yellow
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'adaptiveMin':
@@ -225,9 +220,6 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
                 <div className="flex flex-wrap gap-1 ml-1">
                   {building.features.canHeat && (
                     <Thermometer size={Math.min(width / 15, 12)} color={getTextColor()} />
-                  )}
-                  {building.features.hasAMM && (
-                    <Zap size={Math.min(width / 15, 12)} color={getTextColor()} />
                   )}
                   {building.features.hasClimateBaseline && (
                     <Activity size={Math.min(width / 15, 12)} color={getTextColor()} />

@@ -1,5 +1,3 @@
-
-
 import React, { useMemo, useState, useRef } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
@@ -18,7 +16,6 @@ interface FilterState {
   features: {
     canHeat: boolean;
     canCool: boolean;
-    hasAMM: boolean;
     hasClimateBaseline: boolean;
     hasReadWriteDiscrepancies: boolean;
   };
@@ -32,7 +29,6 @@ const initialFilters: FilterState = {
   features: {
     canHeat: false,
     canCool: false,
-    hasAMM: false,
     hasClimateBaseline: false,
     hasReadWriteDiscrepancies: false,
   },
@@ -68,7 +64,6 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           // Feature filters
           if (filters.features.canHeat && !building.features.canHeat) return false;
           if (filters.features.canCool && !building.features.canCool) return false;
-          if (filters.features.hasAMM && !building.features.hasAMM) return false;
           if (filters.features.hasClimateBaseline && !building.features.hasClimateBaseline) return false;
           if (filters.features.hasReadWriteDiscrepancies && !building.features.hasReadWriteDiscrepancies) return false;
 
@@ -218,11 +213,6 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           { color: '#2563EB', label: 'Can Cool' },
           { color: '#6B7280', label: 'Cannot Cool' },
         ];
-      case 'hasAMM':
-        return [
-          { color: '#FBBF24', label: 'Has AMM' },
-          { color: '#6B7280', label: 'No AMM' },
-        ];
       case 'adaptiveMin':
         return [
           { color: '#FBBF24', label: 'Low (0.0)' },
@@ -256,7 +246,6 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       case 'comfort': return 'Comfort Zones';
       case 'canHeat': return 'Heating Capability';
       case 'canCool': return 'Cooling Capability';
-      case 'hasAMM': return 'AMM Status';
       case 'adaptiveMin': return 'Adaptive Min (0-1)';
       case 'adaptiveMax': return 'Adaptive Max (0-1)';
       case 'hasClimateBaseline': return 'Climate Baseline';
@@ -339,7 +328,6 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             <div className="flex flex-wrap gap-1">
               {(hoveredNode.data as any).features.canHeat && <span className="bg-blue-600 px-1 rounded">Heat</span>}
               {(hoveredNode.data as any).features.canCool && <span className="bg-cyan-600 px-1 rounded">Cool</span>}
-              {(hoveredNode.data as any).features.hasAMM && <span className="bg-yellow-600 px-1 rounded">AMM</span>}
               {(hoveredNode.data as any).features.hasClimateBaseline && <span className="bg-green-600 px-1 rounded">Baseline</span>}
               {(hoveredNode.data as any).features.hasReadWriteDiscrepancies && <span className="bg-red-600 px-1 rounded">R/W Issues</span>}
             </div>
@@ -367,4 +355,3 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     </div>
   );
 };
-

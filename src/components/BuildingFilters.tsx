@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ChevronUp, ChevronDown, Thermometer, Zap, Activity, AlertTriangle, Wifi } from 'lucide-react';
 import { ColorMode } from '@/types/TreemapData';
@@ -9,7 +8,6 @@ interface FilterState {
   features: {
     canHeat: boolean;
     canCool: boolean;
-    hasAMM: boolean;
     hasClimateBaseline: boolean;
     hasReadWriteDiscrepancies: boolean;
   };
@@ -117,17 +115,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <input
                     type="radio"
                     name="colorMode"
-                    checked={filters.colorMode === 'hasAMM'}
-                    onChange={() => handleColorModeChange('hasAMM')}
-                    className="mr-2"
-                  />
-                  <Zap size={14} className="mr-1" />
-                  Has AMM
-                </label>
-                <label className="flex items-center text-white text-sm">
-                  <input
-                    type="radio"
-                    name="colorMode"
                     checked={filters.colorMode === 'adaptiveMin'}
                     onChange={() => handleColorModeChange('adaptiveMin')}
                     className="mr-2"
@@ -209,16 +196,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   />
                   <Thermometer size={14} className="mr-1" />
                   Can Cool
-                </label>
-                <label className="flex items-center text-white text-sm">
-                  <input
-                    type="checkbox"
-                    checked={filters.features.hasAMM}
-                    onChange={() => toggleFeature('hasAMM')}
-                    className="mr-2"
-                  />
-                  <Zap size={14} className="mr-1" />
-                  Has AMM
                 </label>
                 <label className="flex items-center text-white text-sm">
                   <input
