@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { Thermometer, Activity, AlertTriangle, Wifi, WifiOff, Building, Settings, Wind, Plug, Battery, BarChart, Gauge } from 'lucide-react';
@@ -260,7 +261,7 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
         <div 
           className="font-bold leading-tight mb-1 truncate"
           style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
-          title={displayId}
+          title={`Building id: ${displayId}`}
         >
           {displayId}
         </div>
