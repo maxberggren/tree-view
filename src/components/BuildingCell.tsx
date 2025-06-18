@@ -89,6 +89,24 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
           ? { bg: '#FBBF24', border: '#F59E0B' } // Yellow
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
+      case 'adaptiveMin':
+        // Yellow (0) to Grey (1) gradient
+        const minValue = building.features.adaptiveMin;
+        const yellowComponent = Math.round(255 * (1 - minValue));
+        const greyLevel = Math.round(107 + (148 * minValue)); // 107 is base grey, 148 is range to lighter grey
+        const bgColor = `rgb(${greyLevel}, ${greyLevel}, ${yellowComponent})`;
+        const borderColor = `rgb(${Math.max(0, greyLevel - 20)}, ${Math.max(0, greyLevel - 20)}, ${Math.max(0, yellowComponent - 20)})`;
+        return { bg: bgColor, border: borderColor };
+
+      case 'adaptiveMax':
+        // Purple (0) to Grey (1) gradient
+        const maxValue = building.features.adaptiveMax;
+        const greyLevelMax = Math.round(107 + (148 * maxValue));
+        const purpleComponent = Math.round(255 * (1 - maxValue));
+        const bgColorMax = `rgb(${greyLevelMax}, ${Math.round(greyLevelMax * 0.6)}, ${purpleComponent})`;
+        const borderColorMax = `rgb(${Math.max(0, greyLevelMax - 20)}, ${Math.max(0, Math.round(greyLevelMax * 0.6) - 20)}, ${Math.max(0, purpleComponent - 20)})`;
+        return { bg: bgColorMax, border: borderColorMax };
+
       case 'hasClimateBaseline':
         return building.features.hasClimateBaseline 
           ? { bg: '#059669', border: '#047857' } // Green

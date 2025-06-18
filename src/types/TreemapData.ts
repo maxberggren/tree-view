@@ -10,6 +10,8 @@ export interface BuildingData {
     canHeat: boolean;
     canCool: boolean;
     hasAMM: boolean;
+    adaptiveMin: number; // 0-1 value for Adaptive Min
+    adaptiveMax: number; // 0-1 value for Adaptive Max
     hasClimateBaseline: boolean;
     hasReadWriteDiscrepancies: boolean;
   };
@@ -31,4 +33,4 @@ export interface TreemapNode {
   value?: number;
 }
 
-export type ColorMode = 'temperature' | 'comfort' | 'canHeat' | 'canCool' | 'hasAMM' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies';
+export type ColorMode = 'temperature' | 'comfort' | 'canHeat' | 'canCool' | 'hasAMM' | 'adaptiveMin' | 'adaptiveMax' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies';

@@ -30,6 +30,8 @@ const generateRandomBuilding = (index: number) => {
       canHeat: Math.random() > 0.2, // 80% can heat
       canCool: Math.random() > 0.15, // 85% can cool
       hasAMM: Math.random() > 0.4, // 60% have AMM
+      adaptiveMin: Math.random(), // 0-1 random value
+      adaptiveMax: Math.random(), // 0-1 random value
       hasClimateBaseline: Math.random() > 0.3, // 70% have baseline
       hasReadWriteDiscrepancies: Math.random() > 0.8, // 20% have discrepancies
     },

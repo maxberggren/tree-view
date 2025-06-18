@@ -223,6 +223,18 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           { color: '#FBBF24', label: 'Has AMM' },
           { color: '#6B7280', label: 'No AMM' },
         ];
+      case 'adaptiveMin':
+        return [
+          { color: '#FBBF24', label: 'Low (0.0)' },
+          { color: '#D4D4AA', label: 'Medium (0.5)' },
+          { color: '#A3A3A3', label: 'High (1.0)' },
+        ];
+      case 'adaptiveMax':
+        return [
+          { color: '#8B5CF6', label: 'Low (0.0)' },
+          { color: '#A78BFA', label: 'Medium (0.5)' },
+          { color: '#A3A3A3', label: 'High (1.0)' },
+        ];
       case 'hasClimateBaseline':
         return [
           { color: '#059669', label: 'Has Climate Baseline' },
@@ -245,6 +257,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       case 'canHeat': return 'Heating Capability';
       case 'canCool': return 'Cooling Capability';
       case 'hasAMM': return 'AMM Status';
+      case 'adaptiveMin': return 'Adaptive Min (0-1)';
+      case 'adaptiveMax': return 'Adaptive Max (0-1)';
       case 'hasClimateBaseline': return 'Climate Baseline';
       case 'hasReadWriteDiscrepancies': return 'Read/Write Issues';
       default: return 'Legend';

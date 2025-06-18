@@ -128,6 +128,28 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <input
                     type="radio"
                     name="colorMode"
+                    checked={filters.colorMode === 'adaptiveMin'}
+                    onChange={() => handleColorModeChange('adaptiveMin')}
+                    className="mr-2"
+                  />
+                  <Zap size={14} className="mr-1" />
+                  Adaptive Min
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="radio"
+                    name="colorMode"
+                    checked={filters.colorMode === 'adaptiveMax'}
+                    onChange={() => handleColorModeChange('adaptiveMax')}
+                    className="mr-2"
+                  />
+                  <Zap size={14} className="mr-1" />
+                  Adaptive Max
+                </label>
+                <label className="flex items-center text-white text-sm">
+                  <input
+                    type="radio"
+                    name="colorMode"
                     checked={filters.colorMode === 'hasClimateBaseline'}
                     onChange={() => handleColorModeChange('hasClimateBaseline')}
                     className="mr-2"
