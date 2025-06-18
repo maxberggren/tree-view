@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { BuildingTooltip } from './BuildingTooltip';
@@ -257,13 +256,8 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode }) =
       >
         <div className="p-1 h-full flex flex-col justify-start text-left overflow-hidden">
           <div 
-            className="font-mono font-bold leading-tight mb-1 truncate tracking-wider"
-            style={{ 
-              color: getTextColor(), 
-              fontSize: Math.min(width / 8, 12),
-              textShadow: building.isOnline ? '0 0 2px rgba(0,0,0,0.5)' : 'none',
-              letterSpacing: '0.1em'
-            }}
+            className="font-bold leading-tight mb-1 truncate"
+            style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
           >
             {displayId}
           </div>
