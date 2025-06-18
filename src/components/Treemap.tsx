@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
@@ -317,7 +318,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
               style={{
                 left: '6px',
                 top: '-20px',
-                backgroundColor: '#3B82F6', // Blue-400 to match the border
+                backgroundColor: '#60A5FA', // Blue-400 to match the border
               }}
               onClick={() => handleClientClick(node.data.name)}
               title={`Filter by ${node.data.name}`}
