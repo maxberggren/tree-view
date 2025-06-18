@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -100,6 +101,11 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: '30', label: '30 seconds' },
   ];
 
+  const getCurrentGroupModeLabel = () => {
+    const option = groupModeOptions.find(opt => opt.value === filters.groupMode);
+    return option ? option.label : filters.groupMode;
+  };
+
   const handleClientToggle = (clientName: string) => {
     const newClients = filters.clients.includes(clientName)
       ? filters.clients.filter(c => c !== clientName)
@@ -125,6 +131,9 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
         <div className="flex items-center gap-2">
           <Settings className="w-3 h-3 text-gray-300" />
           <span className="text-xs text-gray-300">Filters & Settings</span>
+          <span className="text-xs text-blue-400 font-medium">
+            Label: {getCurrentGroupModeLabel()}
+          </span>
         </div>
         {isExpanded ? (
           <ChevronUp className="w-3 h-3 text-gray-300" />
