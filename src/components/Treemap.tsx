@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
@@ -32,6 +33,8 @@ interface FilterState {
   };
   temperatureRange: [number, number];
   colorMode: ColorMode;
+  cycleEnabled: boolean;
+  cycleInterval: number;
 }
 
 const initialFilters: FilterState = {
@@ -55,19 +58,48 @@ const initialFilters: FilterState = {
   },
   temperatureRange: [5, 35],
   colorMode: 'temperature',
+  cycleEnabled: false,
+  cycleInterval: 5,
 };
+
+// All available color modes for cycling
+const colorModes: ColorMode[] = [
+  'temperature',
+  'comfort',
+  'adaptiveMin',
+  'adaptiveMax',
+  'hasClimateBaseline',
+  'hasReadWriteDiscrepancies',
+  'hasZoneAssets',
+  'hasHeatingCircuit',
+  'hasVentilation',
+  'missingVSGTOVConnections',
+  'missingLBGPOVConnections',
+  'missingLBGTOVConnections',
+  'savingEnergy',
+  'automaticComfortScheduleActive',
+  'manualComfortScheduleActive',
+  'componentsErrors',
+  'modelTrainingTestR2Score',
+  'hasDistrictHeatingMeter',
+  'hasDistrictCoolingMeter',
+  'hasElectricityMeter',
+];
 
 export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const cycleIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize filters from URL params
   const [filters, setFilters] = useState<FilterState>(() => {
     const urlColorMode = searchParams.get('colorMode') as ColorMode;
     const urlClients = searchParams.get('clients')?.split(',').filter(Boolean) || [];
     const urlOnlineOnly = searchParams.get('onlineOnly') === 'true';
+    const urlCycleEnabled = searchParams.get('cycleEnabled') === 'true';
+    const urlCycleInterval = parseInt(searchParams.get('cycleInterval') || '5');
     
     // Parse feature filters from URL
     const urlFeatures = { ...initialFilters.features };
@@ -84,8 +116,37 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       clients: urlClients,
       onlineOnly: urlOnlineOnly,
       features: urlFeatures,
+      cycleEnabled: urlCycleEnabled,
+      cycleInterval: isNaN(urlCycleInterval) ? 5 : urlCycleInterval,
     };
   });
+
+  // Cycle through color modes
+  useEffect(() => {
+    if (filters.cycleEnabled) {
+      cycleIntervalRef.current = setInterval(() => {
+        setFilters(prevFilters => {
+          const currentIndex = colorModes.indexOf(prevFilters.colorMode);
+          const nextIndex = (currentIndex + 1) % colorModes.length;
+          return {
+            ...prevFilters,
+            colorMode: colorModes[nextIndex]
+          };
+        });
+      }, filters.cycleInterval * 1000);
+
+      return () => {
+        if (cycleIntervalRef.current) {
+          clearInterval(cycleIntervalRef.current);
+        }
+      };
+    } else {
+      if (cycleIntervalRef.current) {
+        clearInterval(cycleIntervalRef.current);
+        cycleIntervalRef.current = null;
+      }
+    }
+  }, [filters.cycleEnabled, filters.cycleInterval]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -104,6 +165,15 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     // Add online only
     if (filters.onlineOnly !== initialFilters.onlineOnly) {
       newParams.set('onlineOnly', filters.onlineOnly.toString());
+    }
+
+    // Add cycle settings
+    if (filters.cycleEnabled !== initialFilters.cycleEnabled) {
+      newParams.set('cycleEnabled', filters.cycleEnabled.toString());
+    }
+
+    if (filters.cycleInterval !== initialFilters.cycleInterval) {
+      newParams.set('cycleInterval', filters.cycleInterval.toString());
     }
     
     // Add feature filters
@@ -631,6 +701,9 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       <div className="absolute bottom-4 right-4 bg-black bg-opacity-90 text-white p-3 rounded-lg max-w-xs z-20">
         <div className="text-xs font-bold mb-2">
           {getLegendTitle()}
+          {filters.cycleEnabled && (
+            <span className="text-blue-400 ml-2">(Auto-cycling)</span>
+          )}
         </div>
         <div className="flex flex-col gap-1 text-xs mb-3">
           {getLegendItems().map((item, index) => (

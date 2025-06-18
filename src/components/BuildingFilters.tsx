@@ -1,15 +1,12 @@
 
 import React from 'react';
-import { ChevronUp, ChevronDown, Thermometer, Zap, Activity, AlertTriangle, Wifi, Building, Settings, Wind, Plug, Battery, Calendar, Wrench, BarChart, Gauge } from 'lucide-react';
-import { ColorMode } from '@/types/TreemapData';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { ChevronDown, ChevronUp, Settings, Play, Pause } from 'lucide-react';
+import { ColorMode } from '@/types/TreemapData';
 
 interface FilterState {
   clients: string[];
@@ -32,6 +29,8 @@ interface FilterState {
   };
   temperatureRange: [number, number];
   colorMode: ColorMode;
+  cycleEnabled: boolean;
+  cycleInterval: number;
 }
 
 interface BuildingFiltersProps {
@@ -49,7 +48,47 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   onFiltersChange,
   availableClients
 }) => {
-  const toggleFeature = (feature: keyof FilterState['features']) => {
+  const colorModeOptions = [
+    { value: 'temperature', label: 'Temperature' },
+    { value: 'comfort', label: 'Comfort' },
+    { value: 'adaptiveMin', label: 'Adaptive Min' },
+    { value: 'adaptiveMax', label: 'Adaptive Max' },
+    { value: 'hasClimateBaseline', label: 'Climate Baseline' },
+    { value: 'hasReadWriteDiscrepancies', label: 'Read/Write Issues' },
+    { value: 'hasZoneAssets', label: 'Zone Assets' },
+    { value: 'hasHeatingCircuit', label: 'Heating Circuit' },
+    { value: 'hasVentilation', label: 'Ventilation' },
+    { value: 'missingVSGTOVConnections', label: 'Missing VSGT OV' },
+    { value: 'missingLBGPOVConnections', label: 'Missing LBGP OV' },
+    { value: 'missingLBGTOVConnections', label: 'Missing LBGT OV' },
+    { value: 'savingEnergy', label: 'Energy Saving' },
+    { value: 'automaticComfortScheduleActive', label: 'Auto Comfort Schedule' },
+    { value: 'manualComfortScheduleActive', label: 'Manual Comfort Schedule' },
+    { value: 'componentsErrors', label: 'Component Errors' },
+    { value: 'modelTrainingTestR2Score', label: 'Model R2 Score' },
+    { value: 'hasDistrictHeatingMeter', label: 'Heating Meter' },
+    { value: 'hasDistrictCoolingMeter', label: 'Cooling Meter' },
+    { value: 'hasElectricityMeter', label: 'Electricity Meter' },
+  ];
+
+  const cycleIntervalOptions = [
+    { value: '2', label: '2 seconds' },
+    { value: '3', label: '3 seconds' },
+    { value: '5', label: '5 seconds' },
+    { value: '10', label: '10 seconds' },
+    { value: '15', label: '15 seconds' },
+    { value: '30', label: '30 seconds' },
+  ];
+
+  const handleClientToggle = (clientName: string) => {
+    const newClients = filters.clients.includes(clientName)
+      ? filters.clients.filter(c => c !== clientName)
+      : [...filters.clients, clientName];
+    
+    onFiltersChange({ ...filters, clients: newClients });
+  };
+
+  const handleFeatureToggle = (feature: keyof FilterState['features']) => {
     onFiltersChange({
       ...filters,
       features: {
@@ -59,220 +98,227 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     });
   };
 
-  const toggleClient = (client: string) => {
-    const newClients = filters.clients.includes(client)
-      ? filters.clients.filter(c => c !== client)
-      : [...filters.clients, client];
-    
-    onFiltersChange({
-      ...filters,
-      clients: newClients
-    });
-  };
-
-  const handleColorModeChange = (colorMode: ColorMode) => {
-    onFiltersChange({
-      ...filters,
-      colorMode
-    });
-  };
-
-  const colorModeOptions = [
-    { value: 'temperature', label: 'Temperature', icon: Thermometer },
-    { value: 'comfort', label: 'Comfort Zone', icon: Activity },
-    { value: 'adaptiveMin', label: 'Adaptive Min', icon: Zap },
-    { value: 'adaptiveMax', label: 'Adaptive Max', icon: Zap },
-    { value: 'hasClimateBaseline', label: 'Climate Baseline Active', icon: Activity },
-    { value: 'hasReadWriteDiscrepancies', label: 'R/W Issues', icon: AlertTriangle },
-    { value: 'hasZoneAssets', label: 'Zone Assets', icon: Building },
-    { value: 'hasHeatingCircuit', label: 'Heating Circuit', icon: Thermometer },
-    { value: 'hasVentilation', label: 'Ventilation', icon: Wind },
-    { value: 'missingVSGTOVConnections', label: 'Missing VSGT OV', icon: Plug },
-    { value: 'missingLBGPOVConnections', label: 'Missing LBGP OV', icon: Plug },
-    { value: 'missingLBGTOVConnections', label: 'Missing LBGT OV', icon: Plug },
-    { value: 'savingEnergy', label: 'Energy Saving', icon: Battery },
-    { value: 'automaticComfortScheduleActive', label: 'Automatic CS', icon: Calendar },
-    { value: 'manualComfortScheduleActive', label: 'Manual CS', icon: Settings },
-    { value: 'componentsErrors', label: 'Component Errors', icon: Wrench },
-    { value: 'modelTrainingTestR2Score', label: 'Model R2 Score', icon: BarChart },
-    { value: 'hasDistrictHeatingMeter', label: 'Heating Meter', icon: Gauge },
-    { value: 'hasDistrictCoolingMeter', label: 'Cooling Meter', icon: Gauge },
-    { value: 'hasElectricityMeter', label: 'Electricity Meter', icon: Gauge },
-  ];
-
-  const featureOptions = [
-    { key: 'hasClimateBaseline', label: 'Climate Baseline Active', icon: Activity },
-    { key: 'hasReadWriteDiscrepancies', label: 'R/W Issues', icon: AlertTriangle },
-    { key: 'hasZoneAssets', label: 'Zone Assets', icon: Building },
-    { key: 'hasHeatingCircuit', label: 'Heating Circuit', icon: Thermometer },
-    { key: 'hasVentilation', label: 'Ventilation', icon: Wind },
-    { key: 'missingVSGTOVConnections', label: 'Missing VSGT OV', icon: Plug },
-    { key: 'missingLBGPOVConnections', label: 'Missing LBGP OV', icon: Plug },
-    { key: 'missingLBGTOVConnections', label: 'Missing LBGT OV', icon: Plug },
-    { key: 'automaticComfortScheduleActive', label: 'Automatic CS', icon: Calendar },
-    { key: 'manualComfortScheduleActive', label: 'Manual CS', icon: Settings },
-    { key: 'componentsErrors', label: 'Component Errors', icon: Wrench },
-    { key: 'hasDistrictHeatingMeter', label: 'Heating Meter', icon: Gauge },
-    { key: 'hasDistrictCoolingMeter', label: 'Cooling Meter', icon: Gauge },
-    { key: 'hasElectricityMeter', label: 'Electricity Meter', icon: Gauge },
-  ];
-
   return (
-    <div className="absolute top-0 left-0 right-0 z-50">
+    <div className="absolute top-0 left-0 w-full z-30 bg-gray-800 border-b border-gray-700">
+      {/* Toggle Bar */}
+      <div className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-700" onClick={onToggle}>
+        <div className="flex items-center gap-2">
+          <Settings className="w-4 h-4 text-gray-300" />
+          <span className="text-sm text-gray-300">Filters & Settings</span>
+        </div>
+        {isExpanded ? (
+          <ChevronUp className="w-4 h-4 text-gray-300" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-gray-300" />
+        )}
+      </div>
+
       {/* Expanded Filter Panel */}
       {isExpanded && (
-        <div className="bg-background/95 backdrop-blur-md border-b border-border shadow-lg">
-          <div className="max-w-7xl mx-auto p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              
-              {/* Color Mode */}
-              <Card className="border-0 shadow-sm bg-card/80">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <Label className="text-sm font-semibold text-foreground">Color Mode</Label>
-                  </div>
-                  <RadioGroup value={filters.colorMode} onValueChange={handleColorModeChange}>
-                    <div className="space-y-3 max-h-64 overflow-y-auto">
-                      {colorModeOptions.map((option) => {
-                        const IconComponent = option.icon;
-                        return (
-                          <div key={option.value} className="flex items-center space-x-3">
-                            <RadioGroupItem value={option.value} id={option.value} className="border-border" />
-                            <Label htmlFor={option.value} className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer">
-                              <IconComponent size={14} className="text-muted-foreground" />
-                              {option.label}
-                            </Label>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </RadioGroup>
-                </CardContent>
-              </Card>
+        <div className="p-4 bg-gray-800 border-t border-gray-700 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Color Mode Section */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-200">Color Mode</Label>
+              <Select 
+                value={filters.colorMode} 
+                onValueChange={(value) => onFiltersChange({ ...filters, colorMode: value as ColorMode })}
+              >
+                <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {colorModeOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              {/* Status Filters */}
-              <Card className="border-0 shadow-sm bg-card/80">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <Label className="text-sm font-semibold text-foreground">Status</Label>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Wifi size={16} className="text-muted-foreground" />
-                      <Label htmlFor="online-only" className="text-sm font-medium text-foreground">
-                        Online Only
-                      </Label>
-                    </div>
-                    <Switch
-                      id="online-only"
-                      checked={filters.onlineOnly}
-                      onCheckedChange={(checked) => onFiltersChange({ ...filters, onlineOnly: checked })}
+              {/* Cycle Controls */}
+              <div className="space-y-2 pt-2 border-t border-gray-600">
+                <div className="flex items-center gap-2">
+                  {filters.cycleEnabled ? (
+                    <Play className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <Pause className="w-4 h-4 text-gray-400" />
+                  )}
+                  <Label className="text-sm text-gray-200">Cycle every X</Label>
+                  <Switch
+                    checked={filters.cycleEnabled}
+                    onCheckedChange={(checked) => onFiltersChange({ ...filters, cycleEnabled: checked })}
+                  />
+                </div>
+                
+                {filters.cycleEnabled && (
+                  <Select 
+                    value={filters.cycleInterval.toString()} 
+                    onValueChange={(value) => onFiltersChange({ ...filters, cycleInterval: parseInt(value) })}
+                  >
+                    <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-700 border-gray-600">
+                      {cycleIntervalOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
+
+            {/* Client Filters */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-200">Clients</Label>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {availableClients.map(client => (
+                  <div key={client} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`client-${client}`}
+                      checked={filters.clients.includes(client)}
+                      onCheckedChange={() => handleClientToggle(client)}
+                      className="border-gray-500"
                     />
+                    <Label htmlFor={`client-${client}`} className="text-sm text-gray-300 cursor-pointer">
+                      {client}
+                    </Label>
                   </div>
-                </CardContent>
-              </Card>
+                ))}
+              </div>
+              
+              <div className="flex items-center space-x-2 pt-2 border-t border-gray-600">
+                <Checkbox
+                  id="online-only"
+                  checked={filters.onlineOnly}
+                  onCheckedChange={(checked) => onFiltersChange({ ...filters, onlineOnly: !!checked })}
+                  className="border-gray-500"
+                />
+                <Label htmlFor="online-only" className="text-sm text-gray-300 cursor-pointer">
+                  Online only
+                </Label>
+              </div>
+            </div>
 
-              {/* Feature Filters */}
-              <Card className="border-0 shadow-sm bg-card/80">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                    <Label className="text-sm font-semibold text-foreground">Features</Label>
-                  </div>
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {featureOptions.map((option) => {
-                      const IconComponent = option.icon;
-                      return (
-                        <div key={option.key} className="flex items-center space-x-3">
-                          <Checkbox
-                            id={option.key}
-                            checked={filters.features[option.key as keyof FilterState['features']]}
-                            onCheckedChange={() => toggleFeature(option.key as keyof FilterState['features'])}
-                          />
-                          <Label 
-                            htmlFor={option.key} 
-                            className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer"
-                            onClick={() => toggleFeature(option.key as keyof FilterState['features'])}
-                          >
-                            <IconComponent size={14} className="text-muted-foreground" />
-                            {option.label}
-                          </Label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Feature Filters */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-200">Features</Label>
+              <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasClimateBaseline"
+                    checked={filters.features.hasClimateBaseline}
+                    onCheckedChange={() => handleFeatureToggle('hasClimateBaseline')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasClimateBaseline" className="text-xs text-gray-300 cursor-pointer">
+                    Climate Baseline
+                  </Label>
+                </div>
 
-              {/* Client Filters */}
-              <Card className="border-0 shadow-sm bg-card/80">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                    <Label className="text-sm font-semibold text-foreground">Clients</Label>
-                    {filters.clients.length > 0 && (
-                      <Badge variant="secondary" className="ml-auto text-xs">
-                        {filters.clients.length}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="max-h-64 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                    {availableClients.map(client => (
-                      <div key={client} className="flex items-center space-x-3">
-                        <Checkbox
-                          id={`client-${client}`}
-                          checked={filters.clients.includes(client)}
-                          onCheckedChange={() => toggleClient(client)}
-                        />
-                        <Label 
-                          htmlFor={`client-${client}`} 
-                          className="text-sm font-medium text-foreground cursor-pointer truncate flex-1"
-                          title={client}
-                        >
-                          {client}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasReadWriteDiscrepancies"
+                    checked={filters.features.hasReadWriteDiscrepancies}
+                    onCheckedChange={() => handleFeatureToggle('hasReadWriteDiscrepancies')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasReadWriteDiscrepancies" className="text-xs text-gray-300 cursor-pointer">
+                    R/W Issues
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasZoneAssets"
+                    checked={filters.features.hasZoneAssets}
+                    onCheckedChange={() => handleFeatureToggle('hasZoneAssets')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasZoneAssets" className="text-xs text-gray-300 cursor-pointer">
+                    Zone Assets
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasHeatingCircuit"
+                    checked={filters.features.hasHeatingCircuit}
+                    onCheckedChange={() => handleFeatureToggle('hasHeatingCircuit')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasHeatingCircuit" className="text-xs text-gray-300 cursor-pointer">
+                    Heating Circuit
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasVentilation"
+                    checked={filters.features.hasVentilation}
+                    onCheckedChange={() => handleFeatureToggle('hasVentilation')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasVentilation" className="text-xs text-gray-300 cursor-pointer">
+                    Ventilation
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="componentsErrors"
+                    checked={filters.features.componentsErrors}
+                    onCheckedChange={() => handleFeatureToggle('componentsErrors')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="componentsErrors" className="text-xs text-gray-300 cursor-pointer">
+                    Component Errors
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasDistrictHeatingMeter"
+                    checked={filters.features.hasDistrictHeatingMeter}
+                    onCheckedChange={() => handleFeatureToggle('hasDistrictHeatingMeter')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasDistrictHeatingMeter" className="text-xs text-gray-300 cursor-pointer">
+                    Heating Meter
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasDistrictCoolingMeter"
+                    checked={filters.features.hasDistrictCoolingMeter}
+                    onCheckedChange={() => handleFeatureToggle('hasDistrictCoolingMeter')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasDistrictCoolingMeter" className="text-xs text-gray-300 cursor-pointer">
+                    Cooling Meter
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasElectricityMeter"
+                    checked={filters.features.hasElectricityMeter}
+                    onCheckedChange={() => handleFeatureToggle('hasElectricityMeter')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasElectricityMeter" className="text-xs text-gray-300 cursor-pointer">
+                    Electricity Meter
+                  </Label>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Modern Toggle Bar */}
-      <div className="bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
-        <div className="max-w-7xl mx-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full h-8 rounded-none hover:bg-accent/50 transition-all duration-200"
-            onClick={onToggle}
-          >
-            <div className="flex items-center gap-2 text-muted-foreground">
-              {isExpanded ? (
-                <>
-                  <ChevronUp size={16} />
-                  <span className="text-xs font-medium">Hide Filters</span>
-                </>
-              ) : (
-                <>
-                  <ChevronDown size={16} />
-                  <span className="text-xs font-medium">Show Filters</span>
-                  {(filters.clients.length > 0 || filters.onlineOnly || Object.values(filters.features).some(Boolean)) && (
-                    <Badge variant="secondary" className="ml-2 text-xs h-5">
-                      Active
-                    </Badge>
-                  )}
-                </>
-              )}
-            </div>
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };
