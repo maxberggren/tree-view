@@ -7,10 +7,15 @@ interface BuildingTooltipProps {
   children: React.ReactNode;
 }
 
+// Global state to track the currently visible tooltip
+let currentTooltipId: string | null = null;
+let hideAllTooltips: (() => void) | null = null;
+
 export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children }) => {
   const [isVisible, setIsVisible] = React.useState(false);
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
   const hideTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const tooltipId = React.useRef(`tooltip-${Math.random().toString(36).substr(2, 9)}`);
   
   const building = node.data as any;
   
@@ -57,6 +62,11 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
   };
 
   const handleMouseEnter = (e: React.MouseEvent) => {
+    // Hide any other visible tooltip
+    if (hideAllTooltips && currentTooltipId !== tooltipId.current) {
+      hideAllTooltips();
+    }
+    
     if (hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
       hideTimeoutRef.current = null;
@@ -67,18 +77,39 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
       y: e.clientY - 10
     });
     setIsVisible(true);
+    currentTooltipId = tooltipId.current;
   };
 
   const handleMouseLeave = () => {
     hideTimeoutRef.current = setTimeout(() => {
       setIsVisible(false);
+      if (currentTooltipId === tooltipId.current) {
+        currentTooltipId = null;
+      }
     }, 150);
   };
 
+  const hideTooltip = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setIsVisible(false);
+    if (currentTooltipId === tooltipId.current) {
+      currentTooltipId = null;
+    }
+  };
+
   React.useEffect(() => {
+    hideAllTooltips = hideTooltip;
+    
     return () => {
       if (hideTimeoutRef.current) {
         clearTimeout(hideTimeoutRef.current);
+      }
+      if (currentTooltipId === tooltipId.current) {
+        currentTooltipId = null;
+        hideAllTooltips = null;
       }
     };
   }, []);
