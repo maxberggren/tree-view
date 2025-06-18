@@ -19,6 +19,18 @@ const generateRandomBuilding = (index: number) => {
   const clientIndex = Math.floor(Math.random() * clients.length);
   const nameIndex = Math.floor(Math.random() * buildingNames.length);
   
+  // Generate energy saving values biased towards positive (energy saving)
+  const generateEnergySaving = () => {
+    const rand = Math.random();
+    if (rand < 0.15) {
+      // 15% chance of energy wasting (-30% to 0%)
+      return (Math.random() - 1) * 0.3;
+    } else {
+      // 85% chance of energy saving (0% to +30%)
+      return Math.random() * 0.3;
+    }
+  };
+  
   return {
     id: `BLD-${String(index + 1).padStart(3, '0')}`,
     name: `${buildingNames[nameIndex]} ${Math.floor(Math.random() * 99) + 1}`,
@@ -37,7 +49,7 @@ const generateRandomBuilding = (index: number) => {
       missingVSGTOVConnections: Math.random() > 0.85, // 15% missing VSGT OV
       missingLBGPOVConnections: Math.random() > 0.82, // 18% missing LBGP OV
       missingLBGTOVConnections: Math.random() > 0.88, // 12% missing LBGT OV
-      savingEnergy: (Math.random() - 0.5) * 0.6, // -0.3 to 0.3 (-30% to +30%)
+      savingEnergy: generateEnergySaving(), // Biased towards positive energy saving
       automaticComfortScheduleActive: Math.random() > 0.6, // 40% have automatic schedule
       manualComfortScheduleActive: Math.random() > 0.7, // 30% have manual schedule
       componentsErrors: Math.random() > 0.9, // 10% have component errors
