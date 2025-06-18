@@ -339,7 +339,6 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           key={`${node.data.id}-${node.x0}-${node.y0}`}
           node={node}
           colorMode={filters.colorMode}
-          onHover={handleNodeHover}
         />
       );
     }

@@ -7,9 +7,11 @@ interface BuildingTooltipProps {
   children: React.ReactNode;
 }
 
-// Global state to track the currently visible tooltip
-let currentTooltipId: string | null = null;
-let hideAllTooltips: (() => void) | null = null;
+// Global state to track tooltips
+let currentTooltip: {
+  setVisible: (visible: boolean) => void;
+  id: string;
+} | null = null;
 
 export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children }) => {
   const [isVisible, setIsVisible] = React.useState(false);
@@ -62,9 +64,9 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
   };
 
   const handleMouseEnter = (e: React.MouseEvent) => {
-    // Hide any other visible tooltip
-    if (hideAllTooltips && currentTooltipId !== tooltipId.current) {
-      hideAllTooltips();
+    // Hide any existing tooltip immediately
+    if (currentTooltip && currentTooltip.id !== tooltipId.current) {
+      currentTooltip.setVisible(false);
     }
     
     if (hideTimeoutRef.current) {
@@ -77,39 +79,30 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
       y: e.clientY - 10
     });
     setIsVisible(true);
-    currentTooltipId = tooltipId.current;
+    
+    // Register this tooltip as the current one
+    currentTooltip = {
+      setVisible: setIsVisible,
+      id: tooltipId.current
+    };
   };
 
   const handleMouseLeave = () => {
     hideTimeoutRef.current = setTimeout(() => {
       setIsVisible(false);
-      if (currentTooltipId === tooltipId.current) {
-        currentTooltipId = null;
+      if (currentTooltip?.id === tooltipId.current) {
+        currentTooltip = null;
       }
     }, 150);
   };
 
-  const hideTooltip = () => {
-    if (hideTimeoutRef.current) {
-      clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = null;
-    }
-    setIsVisible(false);
-    if (currentTooltipId === tooltipId.current) {
-      currentTooltipId = null;
-    }
-  };
-
   React.useEffect(() => {
-    hideAllTooltips = hideTooltip;
-    
     return () => {
       if (hideTimeoutRef.current) {
         clearTimeout(hideTimeoutRef.current);
       }
-      if (currentTooltipId === tooltipId.current) {
-        currentTooltipId = null;
-        hideAllTooltips = null;
+      if (currentTooltip?.id === tooltipId.current) {
+        currentTooltip = null;
       }
     };
   }, []);

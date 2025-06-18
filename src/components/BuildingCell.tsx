@@ -5,10 +5,9 @@ import { BuildingTooltip } from './BuildingTooltip';
 interface BuildingCellProps {
   node: TreemapNode;
   colorMode: ColorMode;
-  onHover?: (node: TreemapNode | null) => void;
 }
 
-export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onHover }) => {
+export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode }) => {
   const width = node.x1 - node.x0;
   const height = node.y1 - node.y0;
   
@@ -170,7 +169,7 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
         if (savingValue <= 0.05) return { bg: '#6B7280', border: '#4B5563' }; // Gray for neutral
         if (savingValue <= 0.1) return { bg: '#FBBF24', border: '#F59E0B' }; // Yellow for 5% to 10%
         if (savingValue <= 0.2) return { bg: '#10B981', border: '#059669' }; // Green for 10% to 20%
-        return { bg: '#059669', border: '#047857' }; // Dark green for 20%+
+        return { bg: '#059669', border: '#047857' }; // Dark green for 20+
 
       case 'automaticComfortScheduleActive':
         return building.features.automaticComfortScheduleActive 
@@ -250,11 +249,9 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = getHoverColor();
-          onHover?.(node);
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = getColor();
-          onHover?.(null);
         }}
       >
         <div className="p-1 h-full flex flex-col justify-start text-left overflow-hidden">
