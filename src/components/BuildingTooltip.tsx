@@ -142,23 +142,23 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
               <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">ID:</span>
-                <span className="font-mono flex-1 text-white">{building.id}</span>
+                <span className="font-mono flex-1 text-white pr-2">{building.id}</span>
               </div>
               <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">Client:</span>
-                <span className="flex-1 truncate text-white" title={building.client}>{building.client}</span>
+                <span className="flex-1 truncate text-white pr-2" title={building.client}>{building.client}</span>
               </div>
               <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">Area:</span>
-                <span className="flex-1 text-white">{building.squareMeters.toLocaleString()} m²</span>
+                <span className="flex-1 text-white pr-2">{building.squareMeters.toLocaleString()} m²</span>
               </div>
               <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">Temp:</span>
-                <span className="flex-1 text-white">{building.temperature}°C</span>
+                <span className="flex-1 text-white pr-2">{building.temperature}°C</span>
               </div>
               <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">Country:</span>
-                <span className="flex-1 truncate text-white" title={building.country}>{building.country}</span>
+                <span className="flex-1 truncate text-white pr-2" title={building.country}>{building.country}</span>
               </div>
             </div>
 
@@ -171,7 +171,7 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
                       <span className="text-gray-400 w-32 flex-shrink-0 truncate" title={formatLabel(key)}>
                         {formatLabel(key)}:
                       </span>
-                      <span className="w-16 flex-shrink-0 text-right font-mono text-white" title={formatValue(key, value)}>
+                      <span className="w-16 flex-shrink-0 text-right font-mono text-white pr-2" title={formatValue(key, value)}>
                         {formatValue(key, value)}
                       </span>
                     </div>
@@ -183,7 +183,7 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
                       <span className="text-gray-400 w-32 flex-shrink-0 truncate" title={formatLabel(key)}>
                         {formatLabel(key)}:
                       </span>
-                      <span className="w-16 flex-shrink-0 text-right font-mono text-white" title={formatValue(key, value)}>
+                      <span className="w-16 flex-shrink-0 text-right font-mono text-white pr-2" title={formatValue(key, value)}>
                         {formatValue(key, value)}
                       </span>
                     </div>
