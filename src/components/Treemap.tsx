@@ -387,13 +387,13 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         ];
       case 'hasDistrictHeatingMeter':
         return [
-          { color: '#BE123C', label: 'Has District Heating Meter' },
-          { color: '#6B7280', label: 'No District Heating Meter' },
+          { color: '#BE123C', label: 'Has Heating Meter' },
+          { color: '#6B7280', label: 'No Heating Meter' },
         ];
       case 'hasDistrictCoolingMeter':
         return [
-          { color: '#0891B2', label: 'Has District Cooling Meter' },
-          { color: '#6B7280', label: 'No District Cooling Meter' },
+          { color: '#0891B2', label: 'Has Cooling Meter' },
+          { color: '#6B7280', label: 'No Cooling Meter' },
         ];
       case 'hasElectricityMeter':
         return [
@@ -424,8 +424,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       case 'manualComfortScheduleActive': return 'Manual Comfort Schedule';
       case 'componentsErrors': return 'Component Errors';
       case 'modelTrainingTestR2Score': return 'Model R2 Score';
-      case 'hasDistrictHeatingMeter': return 'District Heating Meter';
-      case 'hasDistrictCoolingMeter': return 'District Cooling Meter';
+      case 'hasDistrictHeatingMeter': return 'Heating Meter';
+      case 'hasDistrictCoolingMeter': return 'Cooling Meter';
       case 'hasElectricityMeter': return 'Electricity Meter';
       default: return 'Legend';
     }
@@ -605,13 +605,13 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
                 </span>
               </div>
               <div>
-                <span className="opacity-75">District Heating: </span>
+                <span className="opacity-75">Heating Meter: </span>
                 <span className={(hoveredNode.data as any).features.hasDistrictHeatingMeter ? 'text-rose-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasDistrictHeatingMeter')}
                 </span>
               </div>
               <div>
-                <span className="opacity-75">District Cooling: </span>
+                <span className="opacity-75">Cooling Meter: </span>
                 <span className={(hoveredNode.data as any).features.hasDistrictCoolingMeter ? 'text-cyan-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasDistrictCoolingMeter')}
                 </span>
