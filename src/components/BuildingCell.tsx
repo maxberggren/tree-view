@@ -26,14 +26,31 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
     const baseColors = getBaseColors();
     const opacity = building.isOnline ? 1 : 0.3;
     
-    return `${baseColors.bg}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`;
+    // Handle RGB colors differently from hex colors
+    if (baseColors.bg.startsWith('rgb')) {
+      return baseColors.bg.replace('rgb(', `rgba(`).replace(')', `, ${opacity})`);
+    } else {
+      return `${baseColors.bg}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`;
+    }
   };
 
   const getHoverColor = () => {
     const baseColors = getBaseColors();
     const opacity = building.isOnline ? 1 : 0.3;
     
-    // Add white overlay for hover effect
+    // Handle RGB colors for hover effect
+    if (baseColors.bg.startsWith('rgb')) {
+      const rgbMatch = baseColors.bg.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (rgbMatch) {
+        const r = Math.min(255, parseInt(rgbMatch[1]) + 40);
+        const g = Math.min(255, parseInt(rgbMatch[2]) + 40);
+        const b = Math.min(255, parseInt(rgbMatch[3]) + 40);
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+      }
+      return getColor();
+    }
+    
+    // Add white overlay for hover effect on hex colors
     const rgbColor = hexToRgb(baseColors.bg);
     if (rgbColor) {
       const lighterR = Math.min(255, rgbColor.r + 40);
@@ -92,20 +109,34 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
       case 'adaptiveMin':
         // Yellow (0) to Grey (1) gradient
         const minValue = building.features.adaptiveMin;
-        const yellowComponent = Math.round(255 * (1 - minValue));
-        const greyLevel = Math.round(107 + (148 * minValue)); // 107 is base grey, 148 is range to lighter grey
-        const bgColor = `rgb(${greyLevel}, ${greyLevel}, ${yellowComponent})`;
-        const borderColor = `rgb(${Math.max(0, greyLevel - 20)}, ${Math.max(0, greyLevel - 20)}, ${Math.max(0, yellowComponent - 20)})`;
-        return { bg: bgColor, border: borderColor };
+        const yellowR = Math.round(251 + (107 - 251) * minValue); // 251 (yellow) to 107 (grey)
+        const yellowG = Math.round(191 + (116 - 191) * minValue); // 191 (yellow) to 116 (grey)
+        const yellowB = Math.round(36 + (128 - 36) * minValue);   // 36 (yellow) to 128 (grey)
+        
+        const borderR = Math.max(0, yellowR - 20);
+        const borderG = Math.max(0, yellowG - 20);
+        const borderB = Math.max(0, yellowB - 20);
+        
+        return { 
+          bg: `rgb(${yellowR}, ${yellowG}, ${yellowB})`,
+          border: `rgb(${borderR}, ${borderG}, ${borderB})`
+        };
 
       case 'adaptiveMax':
         // Purple (0) to Grey (1) gradient
         const maxValue = building.features.adaptiveMax;
-        const greyLevelMax = Math.round(107 + (148 * maxValue));
-        const purpleComponent = Math.round(255 * (1 - maxValue));
-        const bgColorMax = `rgb(${greyLevelMax}, ${Math.round(greyLevelMax * 0.6)}, ${purpleComponent})`;
-        const borderColorMax = `rgb(${Math.max(0, greyLevelMax - 20)}, ${Math.max(0, Math.round(greyLevelMax * 0.6) - 20)}, ${Math.max(0, purpleComponent - 20)})`;
-        return { bg: bgColorMax, border: borderColorMax };
+        const purpleR = Math.round(139 + (107 - 139) * maxValue); // 139 (purple) to 107 (grey)
+        const purpleG = Math.round(92 + (116 - 92) * maxValue);   // 92 (purple) to 116 (grey)
+        const purpleB = Math.round(246 + (128 - 246) * maxValue); // 246 (purple) to 128 (grey)
+        
+        const borderRMax = Math.max(0, purpleR - 20);
+        const borderGMax = Math.max(0, purpleG - 20);
+        const borderBMax = Math.max(0, purpleB - 20);
+        
+        return { 
+          bg: `rgb(${purpleR}, ${purpleG}, ${purpleB})`,
+          border: `rgb(${borderRMax}, ${borderGMax}, ${borderBMax})`
+        };
 
       case 'hasClimateBaseline':
         return building.features.hasClimateBaseline 
@@ -124,7 +155,14 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
 
   const getBorderColor = () => {
     if (!building.isOnline) return '#6B7280';
-    return getBaseColors().border;
+    const baseColors = getBaseColors();
+    
+    // Handle RGB border colors
+    if (baseColors.border.startsWith('rgb')) {
+      return baseColors.border;
+    }
+    
+    return baseColors.border;
   };
 
   const getTextColor = () => {
