@@ -304,7 +304,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         nodes.push(
           <div
             key={`client-${node.data.name}`}
-            className="absolute border-2 border-blue-400 border-opacity-30 rounded-lg"
+            className="absolute border-2 border-blue-400 border-opacity-30"
             style={{
               left: node.x0,
               top: node.y0,
