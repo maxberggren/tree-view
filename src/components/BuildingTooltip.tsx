@@ -139,26 +139,26 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
               </span>
             </div>
             
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
               <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">ID:</span>
-                <span className="font-mono flex-1 text-white pr-2">{building.id}</span>
+                <span className="font-mono flex-1 text-white pr-3">{building.id}</span>
               </div>
               <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">Client:</span>
-                <span className="flex-1 truncate text-white pr-2" title={building.client}>{building.client}</span>
+                <span className="flex-1 truncate text-white pr-3" title={building.client}>{building.client}</span>
               </div>
               <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">Area:</span>
-                <span className="flex-1 text-white pr-2">{building.squareMeters.toLocaleString()} m²</span>
+                <span className="flex-1 text-white pr-3">{building.squareMeters.toLocaleString()} m²</span>
               </div>
               <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">Temp:</span>
-                <span className="flex-1 text-white pr-2">{building.temperature}°C</span>
+                <span className="flex-1 text-white pr-3">{building.temperature}°C</span>
               </div>
-              <div className="flex">
+              <div className="flex col-span-2">
                 <span className="text-gray-400 w-12 flex-shrink-0">Country:</span>
-                <span className="flex-1 truncate text-white pr-2" title={building.country}>{building.country}</span>
+                <span className="flex-1 text-white pr-3" title={building.country}>{building.country}</span>
               </div>
             </div>
 
