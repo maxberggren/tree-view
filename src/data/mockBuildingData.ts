@@ -1,4 +1,3 @@
-
 import { ClientData } from "@/types/TreemapData";
 
 const buildingNames = [
@@ -10,9 +9,9 @@ const buildingNames = [
 ];
 
 const clients = [
-  "TechCorp Industries", "Healthcare Partners", "Retail Solutions", "Education Group",
-  "Manufacturing Co", "Real Estate Holdings", "Energy Systems", "Financial Services",
-  "Government Facilities", "Entertainment Group"
+  "SISAB", "Scheider", "Framfab", "Akademiska Hus", "Robertos Harem",
+  "Healthcare Partners", "Retail Solutions", "Manufacturing Co", 
+  "Energy Systems", "Government Facilities"
 ];
 
 const generateRandomBuilding = (index: number) => {
