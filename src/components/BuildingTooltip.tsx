@@ -48,11 +48,17 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
     return labelMap[key] || key;
   };
 
-  const handleMouseEnter = (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+  const handleMouseMove = (e: React.MouseEvent) => {
     setPosition({
-      x: rect.right + 10,
-      y: rect.top
+      x: e.clientX + 10,
+      y: e.clientY - 10
+    });
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    setPosition({
+      x: e.clientX + 10,
+      y: e.clientY - 10
     });
     setIsVisible(true);
   };
@@ -71,20 +77,21 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
       <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onMouseMove={handleMouseMove}
       >
         {children}
       </div>
       
       {isVisible && (
         <div
-          className="fixed bg-black bg-opacity-90 text-white p-3 rounded-lg max-w-md z-50 pointer-events-none transition-all duration-150 ease-out"
+          className="fixed bg-black text-white p-4 rounded-lg shadow-xl max-w-lg z-50 pointer-events-none transition-all duration-100 ease-out border border-gray-700"
           style={{
             left: `${position.x}px`,
             top: `${position.y}px`,
             transform: 'translateY(-10px)'
           }}
         >
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex justify-between items-center border-b border-gray-600 pb-2">
               <h3 className="font-semibold text-sm text-white">{building.name}</h3>
               <span className={`px-2 py-1 rounded text-xs ${building.isOnline ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
@@ -117,7 +124,7 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
 
             <div className="border-t border-gray-600 pt-2 mt-2">
               <h4 className="font-medium text-xs mb-2 text-gray-300">Features</h4>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs max-h-32 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                 <div className="space-y-1">
                   {leftColumn.map(([key, value]) => (
                     <div key={key} className="flex">
