@@ -188,7 +188,7 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
               </div>
               <div className="flex col-span-2">
                 <span className="text-gray-400 w-12 flex-shrink-0">Country:</span>
-                <span className="flex-1 text-white pr-3" title={building.country}>{building.country}</span>
+                <span className="flex-1 text-white pr-6" title={building.country}>{building.country}</span>
               </div>
             </div>
 
