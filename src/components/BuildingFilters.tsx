@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -162,19 +163,21 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
         <div className="flex items-center gap-2">
           <Settings className="w-3 h-3 text-gray-300" />
           <span className="text-xs text-gray-300">Filters & Settings</span>
-          <span className="text-xs text-blue-400 font-medium">
-            ({getActiveFiltersCount()} filters)
-          </span>
           {getActiveFiltersCount() > 0 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                clearAllFilters();
-              }}
-              className="text-xs text-red-400 hover:text-red-300 underline"
-            >
-              clear
-            </button>
+            <>
+              <span className="text-xs text-blue-400 font-medium">
+                ({getActiveFiltersCount()} filters)
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearAllFilters();
+                }}
+                className="text-xs text-red-400 hover:text-red-300 underline"
+              >
+                clear
+              </button>
+            </>
           )}
         </div>
         {isExpanded ? (

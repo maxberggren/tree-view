@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
@@ -341,6 +342,41 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     });
   };
 
+  const handleGroupClick = (groupName: string) => {
+    switch (filters.groupMode) {
+      case 'client':
+        setFilters({
+          ...filters,
+          clients: [groupName]
+        });
+        break;
+      case 'country':
+        // For country grouping, we could filter by country if we had that filter
+        // For now, just do nothing or add console.log
+        console.log(`Clicked on country group: ${groupName}`);
+        break;
+      case 'isOnline':
+        setFilters({
+          ...filters,
+          onlineOnly: groupName === 'Online'
+        });
+        break;
+      default:
+        // For feature-based grouping, toggle the corresponding feature filter
+        if (filters.groupMode in filters.features) {
+          const featureKey = filters.groupMode as keyof typeof filters.features;
+          setFilters({
+            ...filters,
+            features: {
+              ...filters.features,
+              [featureKey]: groupName === 'Yes'
+            }
+          });
+        }
+        break;
+    }
+  };
+
   const handleGridClick = () => {
     if (filtersExpanded) {
       setFiltersExpanded(false);
@@ -399,7 +435,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
                 top: '-22px',
                 backgroundColor: '#06112d',
               }}
-              onClick={() => handleClientClick(node.data.name)}
+              onClick={() => handleGroupClick(node.data.name)}
               title={`Filter by ${node.data.name}`}
             >
               {getGroupLabel(node.data.name)}
