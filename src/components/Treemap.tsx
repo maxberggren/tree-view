@@ -305,7 +305,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         nodes.push(
           <div
             key={`client-${node.data.name}`}
-            className="absolute border-2 border-blue-400 border-opacity-30"
+            className="absolute border-2 border-blue-600 border-opacity-50"
             style={{
               left: node.x0,
               top: node.y0,
@@ -314,11 +314,11 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             }}
           >
             <div 
-              className="absolute text-gray-300 text-sm font-medium px-2 rounded cursor-pointer hover:text-gray-200 transition-colors z-10"
+              className="absolute text-white text-sm font-medium px-2 rounded cursor-pointer hover:text-gray-200 transition-colors z-10"
               style={{
                 left: '6px',
                 top: '-20px',
-                backgroundColor: '#60A5FA', // Blue-400 to match the border
+                backgroundColor: '#2563EB', // Blue-600 to match the darker border
               }}
               onClick={() => handleClientClick(node.data.name)}
               title={`Filter by ${node.data.name}`}
