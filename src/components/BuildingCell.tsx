@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { Thermometer, Activity, AlertTriangle, Wifi, WifiOff, Building, Settings, Wind, Plug, Battery, BarChart, Gauge } from 'lucide-react';
@@ -257,26 +256,22 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
         onHover?.(null);
       }}
     >
-      {shouldShowText && (
-        <div className="p-2 h-full flex flex-col justify-start text-left overflow-hidden">
-          <div>
-            <div 
-              className="font-bold leading-tight mb-1"
-              style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
-            >
-              {displayId}
-            </div>
-            {shouldShowDetails && (
-              <div 
-                className="opacity-90 leading-tight"
-                style={{ color: getTextColor(), fontSize: Math.min(width / 12, 9) }}
-              >
-                {building.name}
-              </div>
-            )}
-          </div>
+      <div className="p-1 h-full flex flex-col justify-start text-left overflow-hidden">
+        <div 
+          className="font-bold leading-tight mb-1 truncate"
+          style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
+          title={displayId}
+        >
+          {displayId}
         </div>
-      )}
+        <div 
+          className="opacity-90 leading-tight truncate"
+          style={{ color: getTextColor(), fontSize: Math.min(width / 12, 9) }}
+          title={building.name}
+        >
+          {building.name}
+        </div>
+      </div>
     </div>
   );
 };
