@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -106,6 +105,38 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     return option ? option.label : filters.groupMode;
   };
 
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (filters.clients.length > 0) count++;
+    if (filters.onlineOnly) count++;
+    if (Object.values(filters.features).some(feature => feature)) count++;
+    return count;
+  };
+
+  const clearAllFilters = () => {
+    onFiltersChange({
+      ...filters,
+      clients: [],
+      onlineOnly: false,
+      features: {
+        hasClimateBaseline: false,
+        hasReadWriteDiscrepancies: false,
+        hasZoneAssets: false,
+        hasHeatingCircuit: false,
+        hasVentilation: false,
+        missingVSGTOVConnections: false,
+        missingLBGPOVConnections: false,
+        missingLBGTOVConnections: false,
+        automaticComfortScheduleActive: false,
+        manualComfortScheduleActive: false,
+        componentsErrors: false,
+        hasDistrictHeatingMeter: false,
+        hasDistrictCoolingMeter: false,
+        hasElectricityMeter: false,
+      }
+    });
+  };
+
   const handleClientToggle = (clientName: string) => {
     const newClients = filters.clients.includes(clientName)
       ? filters.clients.filter(c => c !== clientName)
@@ -132,8 +163,19 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
           <Settings className="w-3 h-3 text-gray-300" />
           <span className="text-xs text-gray-300">Filters & Settings</span>
           <span className="text-xs text-blue-400 font-medium">
-            Label: {getCurrentGroupModeLabel()}
+            ({getActiveFiltersCount()} filters)
           </span>
+          {getActiveFiltersCount() > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                clearAllFilters();
+              }}
+              className="text-xs text-red-400 hover:text-red-300 underline"
+            >
+              clear
+            </button>
+          )}
         </div>
         {isExpanded ? (
           <ChevronUp className="w-3 h-3 text-gray-300" />

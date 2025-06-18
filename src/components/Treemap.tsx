@@ -347,6 +347,31 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     }
   };
 
+  const getGroupLabel = (groupName: string) => {
+    const groupModeLabels: Record<GroupMode, string> = {
+      'client': 'Client',
+      'country': 'Country',
+      'isOnline': 'Status',
+      'hasClimateBaseline': 'Climate Baseline',
+      'hasReadWriteDiscrepancies': 'R/W Issues',
+      'hasZoneAssets': 'Zone Assets',
+      'hasHeatingCircuit': 'Heating Circuit',
+      'hasVentilation': 'Ventilation',
+      'missingVSGTOVConnections': 'Missing VSGT OV',
+      'missingLBGPOVConnections': 'Missing LBGP OV',
+      'missingLBGTOVConnections': 'Missing LBGT OV',
+      'automaticComfortScheduleActive': 'Auto Schedule',
+      'manualComfortScheduleActive': 'Manual Schedule',
+      'componentsErrors': 'Component Errors',
+      'hasDistrictHeatingMeter': 'Heating Meter',
+      'hasDistrictCoolingMeter': 'Cooling Meter',
+      'hasElectricityMeter': 'Electricity Meter',
+    };
+
+    const prefix = groupModeLabels[filters.groupMode] || filters.groupMode;
+    return `${prefix}: ${groupName}`;
+  };
+
   const renderNodes = (node: any): React.ReactNode[] => {
     const nodes: React.ReactNode[] = [];
     
@@ -377,7 +402,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
               onClick={() => handleClientClick(node.data.name)}
               title={`Filter by ${node.data.name}`}
             >
-              {node.data.name}
+              {getGroupLabel(node.data.name)}
             </div>
           </div>
         );
