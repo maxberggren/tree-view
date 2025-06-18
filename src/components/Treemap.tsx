@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
@@ -313,7 +314,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             }}
           >
             <div 
-              className="absolute text-white text-sm font-medium px-2 rounded cursor-pointer hover:text-gray-200 transition-colors z-10 bg-blue-600"
+              className="absolute text-white text-sm font-medium px-2 rounded cursor-pointer hover:text-gray-200 transition-colors z-10 bg-blue-600 bg-opacity-50"
               style={{
                 left: '6px',
                 top: '-20px',
