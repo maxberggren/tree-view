@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChevronUp, ChevronDown, Thermometer, Zap, Activity, AlertTriangle, Wifi } from 'lucide-react';
+import { ChevronUp, ChevronDown, Thermometer, Zap, Activity, AlertTriangle, Wifi, Building, Settings, Wind, Plug, Battery, Calendar, Wrench, BarChart, Gauge } from 'lucide-react';
 import { ColorMode } from '@/types/TreemapData';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -15,10 +15,20 @@ interface FilterState {
   clients: string[];
   onlineOnly: boolean;
   features: {
-    canHeat: boolean;
-    canCool: boolean;
     hasClimateBaseline: boolean;
     hasReadWriteDiscrepancies: boolean;
+    hasZoneAssets: boolean;
+    hasHeatingCircuit: boolean;
+    hasVentilation: boolean;
+    missingVSGTOVConnections: boolean;
+    missingLBGPOVConnections: boolean;
+    missingLBGTOVConnections: boolean;
+    automaticComfortScheduleActive: boolean;
+    manualComfortScheduleActive: boolean;
+    componentsErrors: boolean;
+    hasDistrictHeatingMeter: boolean;
+    hasDistrictCoolingMeter: boolean;
+    hasElectricityMeter: boolean;
   };
   temperatureRange: [number, number];
   colorMode: ColorMode;
@@ -70,19 +80,41 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   const colorModeOptions = [
     { value: 'temperature', label: 'Temperature', icon: Thermometer },
     { value: 'comfort', label: 'Comfort Zone', icon: Activity },
-    { value: 'canHeat', label: 'Can Heat', icon: Thermometer },
-    { value: 'canCool', label: 'Can Cool', icon: Thermometer },
     { value: 'adaptiveMin', label: 'Adaptive Min', icon: Zap },
     { value: 'adaptiveMax', label: 'Adaptive Max', icon: Zap },
-    { value: 'hasClimateBaseline', label: 'Climate Baseline', icon: Activity },
+    { value: 'hasClimateBaseline', label: 'Climate Baseline Active', icon: Activity },
     { value: 'hasReadWriteDiscrepancies', label: 'R/W Issues', icon: AlertTriangle },
+    { value: 'hasZoneAssets', label: 'Zone Assets', icon: Building },
+    { value: 'hasHeatingCircuit', label: 'Heating Circuit', icon: Thermometer },
+    { value: 'hasVentilation', label: 'Ventilation', icon: Wind },
+    { value: 'missingVSGTOVConnections', label: 'Missing VSGT OV', icon: Plug },
+    { value: 'missingLBGPOVConnections', label: 'Missing LBGP OV', icon: Plug },
+    { value: 'missingLBGTOVConnections', label: 'Missing LBGT OV', icon: Plug },
+    { value: 'savingEnergy', label: 'Energy Saving', icon: Battery },
+    { value: 'automaticComfortScheduleActive', label: 'Auto Comfort Schedule', icon: Calendar },
+    { value: 'manualComfortScheduleActive', label: 'Manual Comfort Schedule', icon: Settings },
+    { value: 'componentsErrors', label: 'Component Errors', icon: Wrench },
+    { value: 'modelTrainingTestR2Score', label: 'Model R2 Score', icon: BarChart },
+    { value: 'hasDistrictHeatingMeter', label: 'District Heating Meter', icon: Gauge },
+    { value: 'hasDistrictCoolingMeter', label: 'District Cooling Meter', icon: Gauge },
+    { value: 'hasElectricityMeter', label: 'Electricity Meter', icon: Gauge },
   ];
 
   const featureOptions = [
-    { key: 'canHeat', label: 'Can Heat', icon: Thermometer },
-    { key: 'canCool', label: 'Can Cool', icon: Thermometer },
-    { key: 'hasClimateBaseline', label: 'Climate Baseline', icon: Activity },
+    { key: 'hasClimateBaseline', label: 'Climate Baseline Active', icon: Activity },
     { key: 'hasReadWriteDiscrepancies', label: 'R/W Issues', icon: AlertTriangle },
+    { key: 'hasZoneAssets', label: 'Zone Assets', icon: Building },
+    { key: 'hasHeatingCircuit', label: 'Heating Circuit', icon: Thermometer },
+    { key: 'hasVentilation', label: 'Ventilation', icon: Wind },
+    { key: 'missingVSGTOVConnections', label: 'Missing VSGT OV', icon: Plug },
+    { key: 'missingLBGPOVConnections', label: 'Missing LBGP OV', icon: Plug },
+    { key: 'missingLBGTOVConnections', label: 'Missing LBGT OV', icon: Plug },
+    { key: 'automaticComfortScheduleActive', label: 'Auto Comfort Schedule', icon: Calendar },
+    { key: 'manualComfortScheduleActive', label: 'Manual Comfort Schedule', icon: Settings },
+    { key: 'componentsErrors', label: 'Component Errors', icon: Wrench },
+    { key: 'hasDistrictHeatingMeter', label: 'District Heating Meter', icon: Gauge },
+    { key: 'hasDistrictCoolingMeter', label: 'District Cooling Meter', icon: Gauge },
+    { key: 'hasElectricityMeter', label: 'Electricity Meter', icon: Gauge },
   ];
 
   return (
@@ -101,7 +133,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                     <Label className="text-sm font-semibold text-foreground">Color Mode</Label>
                   </div>
                   <RadioGroup value={filters.colorMode} onValueChange={handleColorModeChange}>
-                    <div className="space-y-3">
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
                       {colorModeOptions.map((option) => {
                         const IconComponent = option.icon;
                         return (
@@ -149,7 +181,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                     <div className="w-2 h-2 rounded-full bg-purple-500"></div>
                     <Label className="text-sm font-semibold text-foreground">Features</Label>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
                     {featureOptions.map((option) => {
                       const IconComponent = option.icon;
                       return (

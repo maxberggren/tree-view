@@ -1,6 +1,6 @@
 import React from 'react';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
-import { Thermometer, Activity, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { Thermometer, Activity, AlertTriangle, Wifi, WifiOff, Building, Settings, Wind, Plug, Battery, BarChart, Gauge } from 'lucide-react';
 
 interface BuildingCellProps {
   node: TreemapNode;
@@ -91,22 +91,12 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
         if (isTooCold) return { bg: '#3B82F6', border: '#2563EB' }; // Blue
         return { bg: '#A3A3A3', border: '#737373' }; // Gray (mild)
 
-      case 'canHeat':
-        return building.features.canHeat 
-          ? { bg: '#DC2626', border: '#991B1B' } // Red
-          : { bg: '#6B7280', border: '#4B5563' }; // Gray
-
-      case 'canCool':
-        return building.features.canCool 
-          ? { bg: '#2563EB', border: '#1D4ED8' } // Blue
-          : { bg: '#6B7280', border: '#4B5563' }; // Gray
-
       case 'adaptiveMin':
         // Yellow (0) to Grey (1) gradient
         const minValue = building.features.adaptiveMin;
-        const yellowR = Math.round(251 + (107 - 251) * minValue); // 251 (yellow) to 107 (grey)
-        const yellowG = Math.round(191 + (116 - 191) * minValue); // 191 (yellow) to 116 (grey)
-        const yellowB = Math.round(36 + (128 - 36) * minValue);   // 36 (yellow) to 128 (grey)
+        const yellowR = Math.round(251 + (107 - 251) * minValue);
+        const yellowG = Math.round(191 + (116 - 191) * minValue);
+        const yellowB = Math.round(36 + (128 - 36) * minValue);
         
         const borderR = Math.max(0, yellowR - 20);
         const borderG = Math.max(0, yellowG - 20);
@@ -120,9 +110,9 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
       case 'adaptiveMax':
         // Purple (0) to Grey (1) gradient
         const maxValue = building.features.adaptiveMax;
-        const purpleR = Math.round(139 + (107 - 139) * maxValue); // 139 (purple) to 107 (grey)
-        const purpleG = Math.round(92 + (116 - 92) * maxValue);   // 92 (purple) to 116 (grey)
-        const purpleB = Math.round(246 + (128 - 246) * maxValue); // 246 (purple) to 128 (grey)
+        const purpleR = Math.round(139 + (107 - 139) * maxValue);
+        const purpleG = Math.round(92 + (116 - 92) * maxValue);
+        const purpleB = Math.round(246 + (128 - 246) * maxValue);
         
         const borderRMax = Math.max(0, purpleR - 20);
         const borderGMax = Math.max(0, purpleG - 20);
@@ -141,6 +131,82 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
       case 'hasReadWriteDiscrepancies':
         return building.features.hasReadWriteDiscrepancies 
           ? { bg: '#EA580C', border: '#C2410C' } // Orange
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'hasZoneAssets':
+        return building.features.hasZoneAssets 
+          ? { bg: '#7C3AED', border: '#6D28D9' } // Purple
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'hasHeatingCircuit':
+        return building.features.hasHeatingCircuit 
+          ? { bg: '#DC2626', border: '#991B1B' } // Red
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'hasVentilation':
+        return building.features.hasVentilation 
+          ? { bg: '#0EA5E9', border: '#0284C7' } // Sky blue
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'missingVSGTOVConnections':
+        return building.features.missingVSGTOVConnections 
+          ? { bg: '#F59E0B', border: '#D97706' } // Amber
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'missingLBGPOVConnections':
+        return building.features.missingLBGPOVConnections 
+          ? { bg: '#EF4444', border: '#DC2626' } // Red
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'missingLBGTOVConnections':
+        return building.features.missingLBGTOVConnections 
+          ? { bg: '#F97316', border: '#EA580C' } // Orange
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'savingEnergy':
+        const savingValue = building.features.savingEnergy;
+        if (savingValue <= -0.1) return { bg: '#DC2626', border: '#991B1B' }; // Red for -10% or more
+        if (savingValue <= -0.05) return { bg: '#F59E0B', border: '#D97706' }; // Amber for -5% to -10%
+        if (savingValue <= 0.05) return { bg: '#6B7280', border: '#4B5563' }; // Gray for neutral
+        if (savingValue <= 0.1) return { bg: '#FBBF24', border: '#F59E0B' }; // Yellow for 5% to 10%
+        if (savingValue <= 0.2) return { bg: '#10B981', border: '#059669' }; // Green for 10% to 20%
+        return { bg: '#059669', border: '#047857' }; // Dark green for 20%+
+
+      case 'automaticComfortScheduleActive':
+        return building.features.automaticComfortScheduleActive 
+          ? { bg: '#16A34A', border: '#15803D' } // Green
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'manualComfortScheduleActive':
+        return building.features.manualComfortScheduleActive 
+          ? { bg: '#CA8A04', border: '#A16207' } // Yellow
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'componentsErrors':
+        return building.features.componentsErrors 
+          ? { bg: '#DC2626', border: '#991B1B' } // Red
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'modelTrainingTestR2Score':
+        const r2Score = building.features.modelTrainingTestR2Score;
+        if (r2Score < 0.3) return { bg: '#DC2626', border: '#991B1B' }; // Red for poor
+        if (r2Score < 0.6) return { bg: '#F59E0B', border: '#D97706' }; // Amber for fair
+        if (r2Score < 0.8) return { bg: '#FBBF24', border: '#F59E0B' }; // Yellow for good
+        return { bg: '#10B981', border: '#059669' }; // Green for excellent
+
+      case 'hasDistrictHeatingMeter':
+        return building.features.hasDistrictHeatingMeter 
+          ? { bg: '#BE123C', border: '#9F1239' } // Rose
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'hasDistrictCoolingMeter':
+        return building.features.hasDistrictCoolingMeter 
+          ? { bg: '#0891B2', border: '#0E7490' } // Cyan
+          : { bg: '#6B7280', border: '#4B5563' }; // Gray
+
+      case 'hasElectricityMeter':
+        return building.features.hasElectricityMeter 
+          ? { bg: '#7C2D12', border: '#92400E' } // Brown
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       default:
@@ -218,9 +284,6 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
               
               {shouldShowIcons && (
                 <div className="flex flex-wrap gap-1 ml-1">
-                  {building.features.canHeat && (
-                    <Thermometer size={Math.min(width / 15, 12)} color={getTextColor()} />
-                  )}
                   {building.features.hasClimateBaseline && (
                     <Activity size={Math.min(width / 15, 12)} color={getTextColor()} />
                   )}

@@ -14,10 +14,20 @@ interface FilterState {
   clients: string[];
   onlineOnly: boolean;
   features: {
-    canHeat: boolean;
-    canCool: boolean;
     hasClimateBaseline: boolean;
     hasReadWriteDiscrepancies: boolean;
+    hasZoneAssets: boolean;
+    hasHeatingCircuit: boolean;
+    hasVentilation: boolean;
+    missingVSGTOVConnections: boolean;
+    missingLBGPOVConnections: boolean;
+    missingLBGTOVConnections: boolean;
+    automaticComfortScheduleActive: boolean;
+    manualComfortScheduleActive: boolean;
+    componentsErrors: boolean;
+    hasDistrictHeatingMeter: boolean;
+    hasDistrictCoolingMeter: boolean;
+    hasElectricityMeter: boolean;
   };
   temperatureRange: [number, number];
   colorMode: ColorMode;
@@ -27,10 +37,20 @@ const initialFilters: FilterState = {
   clients: [],
   onlineOnly: false,
   features: {
-    canHeat: false,
-    canCool: false,
     hasClimateBaseline: false,
     hasReadWriteDiscrepancies: false,
+    hasZoneAssets: false,
+    hasHeatingCircuit: false,
+    hasVentilation: false,
+    missingVSGTOVConnections: false,
+    missingLBGPOVConnections: false,
+    missingLBGTOVConnections: false,
+    automaticComfortScheduleActive: false,
+    manualComfortScheduleActive: false,
+    componentsErrors: false,
+    hasDistrictHeatingMeter: false,
+    hasDistrictCoolingMeter: false,
+    hasElectricityMeter: false,
   },
   temperatureRange: [5, 35],
   colorMode: 'temperature',
@@ -62,10 +82,20 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           }
 
           // Feature filters
-          if (filters.features.canHeat && !building.features.canHeat) return false;
-          if (filters.features.canCool && !building.features.canCool) return false;
           if (filters.features.hasClimateBaseline && !building.features.hasClimateBaseline) return false;
           if (filters.features.hasReadWriteDiscrepancies && !building.features.hasReadWriteDiscrepancies) return false;
+          if (filters.features.hasZoneAssets && !building.features.hasZoneAssets) return false;
+          if (filters.features.hasHeatingCircuit && !building.features.hasHeatingCircuit) return false;
+          if (filters.features.hasVentilation && !building.features.hasVentilation) return false;
+          if (filters.features.missingVSGTOVConnections && !building.features.missingVSGTOVConnections) return false;
+          if (filters.features.missingLBGPOVConnections && !building.features.missingLBGPOVConnections) return false;
+          if (filters.features.missingLBGTOVConnections && !building.features.missingLBGTOVConnections) return false;
+          if (filters.features.automaticComfortScheduleActive && !building.features.automaticComfortScheduleActive) return false;
+          if (filters.features.manualComfortScheduleActive && !building.features.manualComfortScheduleActive) return false;
+          if (filters.features.componentsErrors && !building.features.componentsErrors) return false;
+          if (filters.features.hasDistrictHeatingMeter && !building.features.hasDistrictHeatingMeter) return false;
+          if (filters.features.hasDistrictCoolingMeter && !building.features.hasDistrictCoolingMeter) return false;
+          if (filters.features.hasElectricityMeter && !building.features.hasElectricityMeter) return false;
 
           return true;
         })
@@ -203,16 +233,6 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           { color: '#3B82F6', label: 'Too Cold (<18°C)' },
           { color: '#A3A3A3', label: 'Mild' },
         ];
-      case 'canHeat':
-        return [
-          { color: '#DC2626', label: 'Can Heat' },
-          { color: '#6B7280', label: 'Cannot Heat' },
-        ];
-      case 'canCool':
-        return [
-          { color: '#2563EB', label: 'Can Cool' },
-          { color: '#6B7280', label: 'Cannot Cool' },
-        ];
       case 'adaptiveMin':
         return [
           { color: '#FBBF24', label: 'Low (0.0)' },
@@ -227,13 +247,89 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         ];
       case 'hasClimateBaseline':
         return [
-          { color: '#059669', label: 'Has Climate Baseline' },
+          { color: '#059669', label: 'Climate Baseline Active' },
           { color: '#6B7280', label: 'No Climate Baseline' },
         ];
       case 'hasReadWriteDiscrepancies':
         return [
           { color: '#EA580C', label: 'Has R/W Issues' },
           { color: '#6B7280', label: 'No R/W Issues' },
+        ];
+      case 'hasZoneAssets':
+        return [
+          { color: '#7C3AED', label: 'Has Zone Assets' },
+          { color: '#6B7280', label: 'No Zone Assets' },
+        ];
+      case 'hasHeatingCircuit':
+        return [
+          { color: '#DC2626', label: 'Has Heating Circuit' },
+          { color: '#6B7280', label: 'No Heating Circuit' },
+        ];
+      case 'hasVentilation':
+        return [
+          { color: '#0EA5E9', label: 'Has Ventilation' },
+          { color: '#6B7280', label: 'No Ventilation' },
+        ];
+      case 'missingVSGTOVConnections':
+        return [
+          { color: '#F59E0B', label: 'Missing VSGT OV' },
+          { color: '#6B7280', label: 'VSGT OV Connected' },
+        ];
+      case 'missingLBGPOVConnections':
+        return [
+          { color: '#EF4444', label: 'Missing LBGP OV' },
+          { color: '#6B7280', label: 'LBGP OV Connected' },
+        ];
+      case 'missingLBGTOVConnections':
+        return [
+          { color: '#F97316', label: 'Missing LBGT OV' },
+          { color: '#6B7280', label: 'LBGT OV Connected' },
+        ];
+      case 'savingEnergy':
+        return [
+          { color: '#DC2626', label: 'Wasting (-10% or more)' },
+          { color: '#F59E0B', label: 'Slight waste (-5% to -10%)' },
+          { color: '#6B7280', label: 'Neutral (-5% to +5%)' },
+          { color: '#FBBF24', label: 'Saving (5% to 10%)' },
+          { color: '#10B981', label: 'Good saving (10% to 20%)' },
+          { color: '#059669', label: 'Excellent saving (20%+)' },
+        ];
+      case 'automaticComfortScheduleActive':
+        return [
+          { color: '#16A34A', label: 'Auto Schedule Active' },
+          { color: '#6B7280', label: 'Auto Schedule Inactive' },
+        ];
+      case 'manualComfortScheduleActive':
+        return [
+          { color: '#CA8A04', label: 'Manual Schedule Active' },
+          { color: '#6B7280', label: 'Manual Schedule Inactive' },
+        ];
+      case 'componentsErrors':
+        return [
+          { color: '#DC2626', label: 'Component Errors' },
+          { color: '#6B7280', label: 'No Component Errors' },
+        ];
+      case 'modelTrainingTestR2Score':
+        return [
+          { color: '#DC2626', label: 'Poor (0.0-0.3)' },
+          { color: '#F59E0B', label: 'Fair (0.3-0.6)' },
+          { color: '#FBBF24', label: 'Good (0.6-0.8)' },
+          { color: '#10B981', label: 'Excellent (0.8-1.0)' },
+        ];
+      case 'hasDistrictHeatingMeter':
+        return [
+          { color: '#BE123C', label: 'Has District Heating Meter' },
+          { color: '#6B7280', label: 'No District Heating Meter' },
+        ];
+      case 'hasDistrictCoolingMeter':
+        return [
+          { color: '#0891B2', label: 'Has District Cooling Meter' },
+          { color: '#6B7280', label: 'No District Cooling Meter' },
+        ];
+      case 'hasElectricityMeter':
+        return [
+          { color: '#7C2D12', label: 'Has Electricity Meter' },
+          { color: '#6B7280', label: 'No Electricity Meter' },
         ];
       default:
         return [];
@@ -244,12 +340,24 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     switch (filters.colorMode) {
       case 'temperature': return 'Temperature Scale';
       case 'comfort': return 'Comfort Zones';
-      case 'canHeat': return 'Heating Capability';
-      case 'canCool': return 'Cooling Capability';
       case 'adaptiveMin': return 'Adaptive Min (0-1)';
       case 'adaptiveMax': return 'Adaptive Max (0-1)';
-      case 'hasClimateBaseline': return 'Climate Baseline';
+      case 'hasClimateBaseline': return 'Climate Baseline Active';
       case 'hasReadWriteDiscrepancies': return 'Read/Write Issues';
+      case 'hasZoneAssets': return 'Zone Assets';
+      case 'hasHeatingCircuit': return 'Heating Circuit';
+      case 'hasVentilation': return 'Ventilation';
+      case 'missingVSGTOVConnections': return 'VSGT OV Connections';
+      case 'missingLBGPOVConnections': return 'LBGP OV Connections';
+      case 'missingLBGTOVConnections': return 'LBGT OV Connections';
+      case 'savingEnergy': return 'Energy Saving';
+      case 'automaticComfortScheduleActive': return 'Automatic Comfort Schedule';
+      case 'manualComfortScheduleActive': return 'Manual Comfort Schedule';
+      case 'componentsErrors': return 'Component Errors';
+      case 'modelTrainingTestR2Score': return 'Model R2 Score';
+      case 'hasDistrictHeatingMeter': return 'District Heating Meter';
+      case 'hasDistrictCoolingMeter': return 'District Cooling Meter';
+      case 'hasElectricityMeter': return 'Electricity Meter';
       default: return 'Legend';
     }
   };

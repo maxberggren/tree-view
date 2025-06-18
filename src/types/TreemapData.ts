@@ -7,12 +7,24 @@ export interface BuildingData {
   client: string;
   isOnline: boolean;
   features: {
-    canHeat: boolean;
-    canCool: boolean;
     adaptiveMin: number; // 0-1 value for Adaptive Min
     adaptiveMax: number; // 0-1 value for Adaptive Max
     hasClimateBaseline: boolean;
     hasReadWriteDiscrepancies: boolean;
+    hasZoneAssets: boolean;
+    hasHeatingCircuit: boolean;
+    hasVentilation: boolean;
+    missingVSGTOVConnections: boolean;
+    missingLBGPOVConnections: boolean;
+    missingLBGTOVConnections: boolean;
+    savingEnergy: number; // -1 to 1 value representing energy saving percentage
+    automaticComfortScheduleActive: boolean;
+    manualComfortScheduleActive: boolean;
+    componentsErrors: boolean;
+    modelTrainingTestR2Score: number; // 0-1 value
+    hasDistrictHeatingMeter: boolean;
+    hasDistrictCoolingMeter: boolean;
+    hasElectricityMeter: boolean;
   };
 }
 
@@ -32,4 +44,4 @@ export interface TreemapNode {
   value?: number;
 }
 
-export type ColorMode = 'temperature' | 'comfort' | 'canHeat' | 'canCool' | 'adaptiveMin' | 'adaptiveMax' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies';
+export type ColorMode = 'temperature' | 'comfort' | 'adaptiveMin' | 'adaptiveMax' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies' | 'hasZoneAssets' | 'hasHeatingCircuit' | 'hasVentilation' | 'missingVSGTOVConnections' | 'missingLBGPOVConnections' | 'missingLBGTOVConnections' | 'savingEnergy' | 'automaticComfortScheduleActive' | 'manualComfortScheduleActive' | 'componentsErrors' | 'modelTrainingTestR2Score' | 'hasDistrictHeatingMeter' | 'hasDistrictCoolingMeter' | 'hasElectricityMeter';
