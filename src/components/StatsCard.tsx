@@ -41,28 +41,28 @@ export const StatsCard: React.FC<StatsCardProps> = ({ filteredBuildings }) => {
       
       <div className="flex flex-col gap-1 text-xs">
         <div className="flex justify-between">
-          <span className="opacity-75">Buildings:</span>
+          <span className="opacity-75 pr-2">Buildings:</span>
           <span className="text-blue-400">{stats.totalBuildings}</span>
         </div>
         
         <div className="flex justify-between">
-          <span className="opacity-75">Clients:</span>
+          <span className="opacity-75 pr-2">Clients:</span>
           <span className="text-purple-400">{stats.uniqueClients}</span>
         </div>
         
         <div className="flex justify-between">
-          <span className="opacity-75">Countries:</span>
+          <span className="opacity-75 pr-2">Countries:</span>
           <span className="text-yellow-400">{stats.uniqueCountries}</span>
         </div>
         
         <div className="border-t border-gray-600 mt-1 pt-1">
           <div className="flex justify-between">
-            <span className="opacity-75">Online m²:</span>
+            <span className="opacity-75 pr-2">Online m²:</span>
             <span className="text-green-400">{formatSquareMeters(stats.totalSquareMetersOnline)}</span>
           </div>
           
           <div className="flex justify-between">
-            <span className="opacity-75">Offline m²:</span>
+            <span className="opacity-75 pr-2">Offline m²:</span>
             <span className="text-red-400">{formatSquareMeters(stats.totalSquareMetersOffline)}</span>
           </div>
         </div>
