@@ -35,7 +35,7 @@ const generateRandomBuilding = (index: number, forcedClient?: string) => {
   };
   
   return {
-    id: `BLD-${String(index + 1).padStart(3, '0')}`,
+    id: `BLD-${String(index + 1).padStart(4, '0')}`,
     name: `${buildingNames[nameIndex]} ${Math.floor(Math.random() * 99) + 1}`,
     squareMeters: Math.floor(Math.random() * 10000) + 500, // 500-10500 sq meters
     temperature: Math.floor(Math.random() * 30) + 5, // 5-35°C
