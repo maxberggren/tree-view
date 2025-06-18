@@ -1,3 +1,4 @@
+
 import { ClientData } from "@/types/TreemapData";
 
 const buildingNames = [
@@ -14,8 +15,8 @@ const clients = [
   "Energy Systems", "Government Facilities"
 ];
 
-const generateRandomBuilding = (index: number) => {
-  const clientIndex = Math.floor(Math.random() * clients.length);
+const generateRandomBuilding = (index: number, forcedClient?: string) => {
+  const clientIndex = forcedClient ? clients.indexOf(forcedClient) : Math.floor(Math.random() * clients.length);
   const nameIndex = Math.floor(Math.random() * buildingNames.length);
   
   // Generate energy saving values biased towards positive (energy saving)
@@ -35,7 +36,7 @@ const generateRandomBuilding = (index: number) => {
     name: `${buildingNames[nameIndex]} ${Math.floor(Math.random() * 99) + 1}`,
     squareMeters: Math.floor(Math.random() * 10000) + 500, // 500-10500 sq meters
     temperature: Math.floor(Math.random() * 30) + 5, // 5-35°C
-    client: clients[clientIndex],
+    client: forcedClient || clients[clientIndex],
     isOnline: Math.random() > 0.1, // 90% online
     features: {
       adaptiveMin: Math.random(), // 0-1 random value
@@ -60,8 +61,30 @@ const generateRandomBuilding = (index: number) => {
   };
 };
 
-// Generate 250 buildings
-const allBuildings = Array.from({ length: 250 }, (_, index) => generateRandomBuilding(index));
+// Generate buildings with SISAB getting 3x more
+const allBuildings = [];
+let buildingIndex = 0;
+
+// First, generate normal distribution for non-SISAB clients
+const otherClients = clients.filter(client => client !== "SISAB");
+const buildingsPerOtherClient = Math.floor(200 / otherClients.length); // Reserve 50 extra for SISAB
+
+otherClients.forEach(client => {
+  for (let i = 0; i < buildingsPerOtherClient; i++) {
+    allBuildings.push(generateRandomBuilding(buildingIndex++, client));
+  }
+});
+
+// Generate 3x more buildings for SISAB
+const sisabBuildingCount = buildingsPerOtherClient * 3;
+for (let i = 0; i < sisabBuildingCount; i++) {
+  allBuildings.push(generateRandomBuilding(buildingIndex++, "SISAB"));
+}
+
+// Fill remaining slots with random assignments to reach 250 total
+while (allBuildings.length < 250) {
+  allBuildings.push(generateRandomBuilding(buildingIndex++));
+}
 
 // Group by client
 const clientGroups: { [key: string]: typeof allBuildings } = {};
