@@ -316,7 +316,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
               className="absolute text-white text-sm font-medium px-2 rounded cursor-pointer hover:text-gray-200 transition-colors z-10"
               style={{
                 left: '6px',
-                top: '-20px',
+                top: '-22px',
                 backgroundColor: '#06112d',
               }}
               onClick={() => handleClientClick(node.data.name)}
