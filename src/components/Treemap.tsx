@@ -270,6 +270,21 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     return nodes;
   };
 
+  const getFeatureValue = (building: any, feature: string) => {
+    switch (feature) {
+      case 'adaptiveMin':
+        return `${(building.features.adaptiveMin * 100).toFixed(1)}%`;
+      case 'adaptiveMax':
+        return `${(building.features.adaptiveMax * 100).toFixed(1)}%`;
+      case 'savingEnergy':
+        return `${(building.features.savingEnergy * 100).toFixed(1)}%`;
+      case 'modelTrainingTestR2Score':
+        return `${(building.features.modelTrainingTestR2Score * 100).toFixed(1)}%`;
+      default:
+        return building.features[feature] ? 'Yes' : 'No';
+    }
+  };
+
   const getLegendItems = () => {
     switch (filters.colorMode) {
       case 'temperature':
@@ -459,7 +474,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       {/* Hover tooltip - positioned above filter bar with transition */}
       {hoveredNode && 'id' in hoveredNode.data && (
         <div 
-          className="absolute bg-black bg-opacity-90 text-white p-4 rounded-lg pointer-events-none z-50 max-w-xs transition-opacity duration-150"
+          className="absolute bg-black bg-opacity-95 text-white p-4 rounded-lg pointer-events-none z-50 max-w-md transition-opacity duration-150"
           style={{
             top: '40px',
             left: '16px'
@@ -467,31 +482,146 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         >
           <div className="font-bold text-lg">{(hoveredNode.data as any).id}</div>
           <div className="text-sm opacity-90 mb-2">{(hoveredNode.data as any).name}</div>
-          <div className="text-sm mb-2">
-            <span className="opacity-75">Client: </span>
-            {(hoveredNode.data as any).client}
+          
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mb-3">
+            <div>
+              <span className="opacity-75">Client: </span>
+              <span className="text-blue-400">{(hoveredNode.data as any).client}</span>
+            </div>
+            <div>
+              <span className="opacity-75">Status: </span>
+              <span className={(hoveredNode.data as any).isOnline ? 'text-green-400' : 'text-red-400'}>
+                {(hoveredNode.data as any).isOnline ? 'Online' : 'Offline'}
+              </span>
+            </div>
+            <div>
+              <span className="opacity-75">Temperature: </span>
+              <span className="text-blue-400">{(hoveredNode.data as any).temperature}°C</span>
+            </div>
+            <div>
+              <span className="opacity-75">Size: </span>
+              <span>{(hoveredNode.data as any).squareMeters.toLocaleString()} m²</span>
+            </div>
           </div>
-          <div className="text-sm mb-2">
-            <span className="opacity-75">Status: </span>
-            <span className={(hoveredNode.data as any).isOnline ? 'text-green-400' : 'text-red-400'}>
-              {(hoveredNode.data as any).isOnline ? 'Online' : 'Offline'}
-            </span>
-          </div>
-          <div className="text-sm mb-2">
-            <span className="opacity-75">Temperature: </span>
-            <span className="text-blue-400">{(hoveredNode.data as any).temperature}°C</span>
-          </div>
-          <div className="text-sm mb-2">
-            <span className="opacity-75">Size: </span>
-            {(hoveredNode.data as any).squareMeters.toLocaleString()} m²
-          </div>
-          <div className="text-xs mt-3">
-            <div className="opacity-75 mb-1">Features:</div>
-            <div className="flex flex-wrap gap-1">
-              {(hoveredNode.data as any).features.canHeat && <span className="bg-blue-600 px-1 rounded">Heat</span>}
-              {(hoveredNode.data as any).features.canCool && <span className="bg-cyan-600 px-1 rounded">Cool</span>}
-              {(hoveredNode.data as any).features.hasClimateBaseline && <span className="bg-green-600 px-1 rounded">Baseline</span>}
-              {(hoveredNode.data as any).features.hasReadWriteDiscrepancies && <span className="bg-red-600 px-1 rounded">R/W Issues</span>}
+
+          {/* All Features */}
+          <div className="text-xs">
+            <div className="opacity-75 mb-2 font-semibold">All Features:</div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+              <div>
+                <span className="opacity-75">Adaptive Min: </span>
+                <span className="text-yellow-400">{getFeatureValue(hoveredNode.data, 'adaptiveMin')}</span>
+              </div>
+              <div>
+                <span className="opacity-75">Adaptive Max: </span>
+                <span className="text-purple-400">{getFeatureValue(hoveredNode.data, 'adaptiveMax')}</span>
+              </div>
+              <div>
+                <span className="opacity-75">Climate Baseline: </span>
+                <span className={(hoveredNode.data as any).features.hasClimateBaseline ? 'text-green-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'hasClimateBaseline')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">R/W Issues: </span>
+                <span className={(hoveredNode.data as any).features.hasReadWriteDiscrepancies ? 'text-red-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'hasReadWriteDiscrepancies')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Zone Assets: </span>
+                <span className={(hoveredNode.data as any).features.hasZoneAssets ? 'text-purple-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'hasZoneAssets')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Heating Circuit: </span>
+                <span className={(hoveredNode.data as any).features.hasHeatingCircuit ? 'text-red-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'hasHeatingCircuit')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Ventilation: </span>
+                <span className={(hoveredNode.data as any).features.hasVentilation ? 'text-cyan-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'hasVentilation')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Missing VSGT OV: </span>
+                <span className={(hoveredNode.data as any).features.missingVSGTOVConnections ? 'text-amber-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'missingVSGTOVConnections')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Missing LBGP OV: </span>
+                <span className={(hoveredNode.data as any).features.missingLBGPOVConnections ? 'text-red-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'missingLBGPOVConnections')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Missing LBGT OV: </span>
+                <span className={(hoveredNode.data as any).features.missingLBGTOVConnections ? 'text-orange-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'missingLBGTOVConnections')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Energy Saving: </span>
+                <span className={
+                  (hoveredNode.data as any).features.savingEnergy <= -0.1 ? 'text-red-400' :
+                  (hoveredNode.data as any).features.savingEnergy <= -0.05 ? 'text-red-300' :
+                  (hoveredNode.data as any).features.savingEnergy <= 0.05 ? 'text-gray-400' :
+                  (hoveredNode.data as any).features.savingEnergy <= 0.1 ? 'text-yellow-400' :
+                  (hoveredNode.data as any).features.savingEnergy <= 0.2 ? 'text-green-400' : 'text-green-500'
+                }>
+                  {getFeatureValue(hoveredNode.data, 'savingEnergy')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Auto Schedule: </span>
+                <span className={(hoveredNode.data as any).features.automaticComfortScheduleActive ? 'text-green-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'automaticComfortScheduleActive')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Manual Schedule: </span>
+                <span className={(hoveredNode.data as any).features.manualComfortScheduleActive ? 'text-yellow-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'manualComfortScheduleActive')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Component Errors: </span>
+                <span className={(hoveredNode.data as any).features.componentsErrors ? 'text-red-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'componentsErrors')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Model R2 Score: </span>
+                <span className={
+                  (hoveredNode.data as any).features.modelTrainingTestR2Score < 0.3 ? 'text-red-400' :
+                  (hoveredNode.data as any).features.modelTrainingTestR2Score < 0.6 ? 'text-amber-400' :
+                  (hoveredNode.data as any).features.modelTrainingTestR2Score < 0.8 ? 'text-yellow-400' : 'text-green-400'
+                }>
+                  {getFeatureValue(hoveredNode.data, 'modelTrainingTestR2Score')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">District Heating: </span>
+                <span className={(hoveredNode.data as any).features.hasDistrictHeatingMeter ? 'text-rose-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'hasDistrictHeatingMeter')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">District Cooling: </span>
+                <span className={(hoveredNode.data as any).features.hasDistrictCoolingMeter ? 'text-cyan-400' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'hasDistrictCoolingMeter')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Electricity Meter: </span>
+                <span className={(hoveredNode.data as any).features.hasElectricityMeter ? 'text-amber-600' : 'text-gray-400'}>
+                  {getFeatureValue(hoveredNode.data, 'hasElectricityMeter')}
+                </span>
+              </div>
             </div>
           </div>
         </div>

@@ -191,7 +191,11 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                             checked={filters.features[option.key as keyof FilterState['features']]}
                             onCheckedChange={() => toggleFeature(option.key as keyof FilterState['features'])}
                           />
-                          <Label htmlFor={option.key} className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer">
+                          <Label 
+                            htmlFor={option.key} 
+                            className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer"
+                            onClick={() => toggleFeature(option.key as keyof FilterState['features'])}
+                          >
                             <IconComponent size={14} className="text-muted-foreground" />
                             {option.label}
                           </Label>
