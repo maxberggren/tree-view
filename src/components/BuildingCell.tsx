@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { Thermometer, Activity, AlertTriangle, Wifi, WifiOff, Building, Settings, Wind, Plug, Battery, BarChart, Gauge } from 'lucide-react';
+import { BuildingHoverCard } from './BuildingHoverCard';
 
 interface BuildingCellProps {
   node: TreemapNode;
@@ -236,7 +238,7 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
   // Remove "BLD-" prefix from building ID
   const displayId = building.id.replace(/^BLD-/, '');
 
-  return (
+  const cellContent = (
     <div
       className="absolute border border-opacity-40 cursor-pointer transition-all duration-200 hover:border-opacity-80 hover:z-10 hover:shadow-lg"
       style={{
@@ -260,18 +262,22 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode, onH
         <div 
           className="font-bold leading-tight mb-1 truncate"
           style={{ color: getTextColor(), fontSize: Math.min(width / 8, 12) }}
-          title={building.name}
         >
           {building.name}
         </div>
         <div 
           className="opacity-90 leading-tight truncate"
           style={{ color: getTextColor(), fontSize: Math.min(width / 12, 9) }}
-          title={`Building id: ${displayId}`}
         >
           {displayId}
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <BuildingHoverCard node={node}>
+      {cellContent}
+    </BuildingHoverCard>
   );
 };
