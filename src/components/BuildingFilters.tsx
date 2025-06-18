@@ -89,16 +89,16 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     <div className="absolute top-0 left-0 right-0 z-50">
       {/* Expanded Filter Panel */}
       {isExpanded && (
-        <div className="bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg">
+        <div className="bg-background/95 backdrop-blur-md border-b border-border shadow-lg">
           <div className="max-w-7xl mx-auto p-6">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               
               {/* Color Mode */}
-              <Card className="border-0 shadow-sm bg-white/80">
+              <Card className="border-0 shadow-sm bg-card/80">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <Label className="text-sm font-semibold text-gray-900">Color Mode</Label>
+                    <Label className="text-sm font-semibold text-foreground">Color Mode</Label>
                   </div>
                   <RadioGroup value={filters.colorMode} onValueChange={handleColorModeChange}>
                     <div className="space-y-3">
@@ -106,9 +106,9 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                         const IconComponent = option.icon;
                         return (
                           <div key={option.value} className="flex items-center space-x-3">
-                            <RadioGroupItem value={option.value} id={option.value} className="border-gray-300" />
-                            <Label htmlFor={option.value} className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
-                              <IconComponent size={14} className="text-gray-500" />
+                            <RadioGroupItem value={option.value} id={option.value} className="border-border" />
+                            <Label htmlFor={option.value} className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer">
+                              <IconComponent size={14} className="text-muted-foreground" />
                               {option.label}
                             </Label>
                           </div>
@@ -120,16 +120,16 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               </Card>
 
               {/* Status Filters */}
-              <Card className="border-0 shadow-sm bg-white/80">
+              <Card className="border-0 shadow-sm bg-card/80">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <Label className="text-sm font-semibold text-gray-900">Status</Label>
+                    <Label className="text-sm font-semibold text-foreground">Status</Label>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Wifi size={16} className="text-gray-500" />
-                      <Label htmlFor="online-only" className="text-sm font-medium text-gray-700">
+                      <Wifi size={16} className="text-muted-foreground" />
+                      <Label htmlFor="online-only" className="text-sm font-medium text-foreground">
                         Online Only
                       </Label>
                     </div>
@@ -143,11 +143,11 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               </Card>
 
               {/* Feature Filters */}
-              <Card className="border-0 shadow-sm bg-white/80">
+              <Card className="border-0 shadow-sm bg-card/80">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                    <Label className="text-sm font-semibold text-gray-900">Features</Label>
+                    <Label className="text-sm font-semibold text-foreground">Features</Label>
                   </div>
                   <div className="space-y-3">
                     {featureOptions.map((option) => {
@@ -159,8 +159,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                             checked={filters.features[option.key as keyof FilterState['features']]}
                             onCheckedChange={() => toggleFeature(option.key as keyof FilterState['features'])}
                           />
-                          <Label htmlFor={option.key} className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
-                            <IconComponent size={14} className="text-gray-500" />
+                          <Label htmlFor={option.key} className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer">
+                            <IconComponent size={14} className="text-muted-foreground" />
                             {option.label}
                           </Label>
                         </div>
@@ -171,11 +171,11 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               </Card>
 
               {/* Client Filters */}
-              <Card className="border-0 shadow-sm bg-white/80">
+              <Card className="border-0 shadow-sm bg-card/80">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                    <Label className="text-sm font-semibold text-gray-900">Clients</Label>
+                    <Label className="text-sm font-semibold text-foreground">Clients</Label>
                     {filters.clients.length > 0 && (
                       <Badge variant="secondary" className="ml-auto text-xs">
                         {filters.clients.length}
@@ -192,7 +192,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                         />
                         <Label 
                           htmlFor={`client-${client}`} 
-                          className="text-sm font-medium text-gray-700 cursor-pointer truncate flex-1"
+                          className="text-sm font-medium text-foreground cursor-pointer truncate flex-1"
                           title={client}
                         >
                           {client}
@@ -208,15 +208,15 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
       )}
 
       {/* Modern Toggle Bar */}
-      <div className="bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+      <div className="bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto">
           <Button
             variant="ghost"
             size="sm"
-            className="w-full h-8 rounded-none hover:bg-gray-100/50 transition-all duration-200"
+            className="w-full h-8 rounded-none hover:bg-accent/50 transition-all duration-200"
             onClick={onToggle}
           >
-            <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex items-center gap-2 text-muted-foreground">
               {isExpanded ? (
                 <>
                   <ChevronUp size={16} />
