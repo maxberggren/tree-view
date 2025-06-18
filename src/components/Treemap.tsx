@@ -351,9 +351,18 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         });
         break;
       case 'country':
-        // For country grouping, we could filter by country if we had that filter
-        // For now, just do nothing or add console.log
-        console.log(`Clicked on country group: ${groupName}`);
+        // Filter by the clicked country - we need to filter buildings by country
+        // Since we don't have a country filter in the filters state, we can use the client filter
+        // to show only buildings from that country
+        const buildingsFromCountry = mockBuildingData
+          .flatMap(client => client.children)
+          .filter(building => building.country === groupName)
+          .map(building => building.client);
+        const uniqueClients = [...new Set(buildingsFromCountry)];
+        setFilters({
+          ...filters,
+          clients: uniqueClients
+        });
         break;
       case 'isOnline':
         setFilters({
