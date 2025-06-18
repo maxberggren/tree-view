@@ -1,8 +1,8 @@
-
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
 import { BuildingFilters } from './BuildingFilters';
+import { StatsCard } from './StatsCard';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { mockBuildingData } from '@/data/mockBuildingData';
 import { useSearchParams } from 'react-router-dom';
@@ -226,6 +226,11 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       }))
       .filter(client => client.children.length > 0);
   }, [filters]);
+
+  // Get all filtered buildings for stats calculation
+  const allFilteredBuildings = useMemo(() => {
+    return filteredData.flatMap(client => client.children);
+  }, [filteredData]);
 
   // Use fixed height for filter bar and add space for client tags
   const filterBarHeight = 25; // Fixed height for the toggle bar
@@ -511,6 +516,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           onFiltersChange={setFilters}
           availableClients={availableClients}
         />
+        <StatsCard filteredBuildings={allFilteredBuildings} />
         <div className="flex items-center justify-center h-full text-white">
           <p>No buildings match the current filters</p>
         </div>
@@ -557,6 +563,10 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             <div>
               <span className="opacity-75">Client: </span>
               <span className="text-blue-400">{(hoveredNode.data as any).client}</span>
+            </div>
+            <div>
+              <span className="opacity-75">Country: </span>
+              <span className="text-yellow-400">{(hoveredNode.data as any).country}</span>
             </div>
             <div>
               <span className="opacity-75">Status: </span>
@@ -696,6 +706,9 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           </div>
         </div>
       )}
+
+      {/* Stats Card - positioned at bottom left */}
+      <StatsCard filteredBuildings={allFilteredBuildings} />
 
       {/* Dynamic Legend */}
       <div className="absolute bottom-4 right-4 bg-black bg-opacity-90 text-white p-3 rounded-lg max-w-xs z-20">

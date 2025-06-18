@@ -15,9 +15,12 @@ const clients = [
   "Energy Systems", "Government Facilities"
 ];
 
+const countries = ["Sweden", "Denmark", "Finland", "USA", "Argentina"];
+
 const generateRandomBuilding = (index: number, forcedClient?: string) => {
   const clientIndex = forcedClient ? clients.indexOf(forcedClient) : Math.floor(Math.random() * clients.length);
   const nameIndex = Math.floor(Math.random() * buildingNames.length);
+  const countryIndex = Math.floor(Math.random() * countries.length);
   
   // Generate energy saving values biased towards positive (energy saving)
   const generateEnergySaving = () => {
@@ -37,6 +40,7 @@ const generateRandomBuilding = (index: number, forcedClient?: string) => {
     squareMeters: Math.floor(Math.random() * 10000) + 500, // 500-10500 sq meters
     temperature: Math.floor(Math.random() * 30) + 5, // 5-35°C
     client: forcedClient || clients[clientIndex],
+    country: countries[countryIndex],
     isOnline: Math.random() > 0.1, // 90% online
     features: {
       adaptiveMin: Math.random(), // 0-1 random value

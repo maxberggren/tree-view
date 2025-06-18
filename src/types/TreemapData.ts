@@ -5,6 +5,7 @@ export interface BuildingData {
   squareMeters: number; // Size for treemap
   temperature: number; // Current percentage as temperature
   client: string;
+  country: string; // Added country field
   isOnline: boolean;
   features: {
     adaptiveMin: number; // 0-1 value for Adaptive Min
