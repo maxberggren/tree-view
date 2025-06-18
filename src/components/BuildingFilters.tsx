@@ -95,8 +95,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: 'manualComfortScheduleActive', label: 'Manual CS', icon: Settings },
     { value: 'componentsErrors', label: 'Component Errors', icon: Wrench },
     { value: 'modelTrainingTestR2Score', label: 'Model R2 Score', icon: BarChart },
-    { value: 'hasDistrictHeatingMeter', label: 'District Heating Meter', icon: Gauge },
-    { value: 'hasDistrictCoolingMeter', label: 'District Cooling Meter', icon: Gauge },
+    { value: 'hasDistrictHeatingMeter', label: 'Heating Meter', icon: Gauge },
+    { value: 'hasDistrictCoolingMeter', label: 'Cooling Meter', icon: Gauge },
     { value: 'hasElectricityMeter', label: 'Electricity Meter', icon: Gauge },
   ];
 
@@ -112,8 +112,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { key: 'automaticComfortScheduleActive', label: 'Automatic CS', icon: Calendar },
     { key: 'manualComfortScheduleActive', label: 'Manual CS', icon: Settings },
     { key: 'componentsErrors', label: 'Component Errors', icon: Wrench },
-    { key: 'hasDistrictHeatingMeter', label: 'District Heating Meter', icon: Gauge },
-    { key: 'hasDistrictCoolingMeter', label: 'District Cooling Meter', icon: Gauge },
+    { key: 'hasDistrictHeatingMeter', label: 'Heating Meter', icon: Gauge },
+    { key: 'hasDistrictCoolingMeter', label: 'Cooling Meter', icon: Gauge },
     { key: 'hasElectricityMeter', label: 'Electricity Meter', icon: Gauge },
   ];
 
