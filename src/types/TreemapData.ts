@@ -46,3 +46,5 @@ export interface TreemapNode {
 }
 
 export type ColorMode = 'temperature' | 'comfort' | 'adaptiveMin' | 'adaptiveMax' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies' | 'hasZoneAssets' | 'hasHeatingCircuit' | 'hasVentilation' | 'missingVSGTOVConnections' | 'missingLBGPOVConnections' | 'missingLBGTOVConnections' | 'savingEnergy' | 'automaticComfortScheduleActive' | 'manualComfortScheduleActive' | 'componentsErrors' | 'modelTrainingTestR2Score' | 'hasDistrictHeatingMeter' | 'hasDistrictCoolingMeter' | 'hasElectricityMeter';
+
+export type GroupMode = 'client' | 'country' | 'isOnline' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies' | 'hasZoneAssets' | 'hasHeatingCircuit' | 'hasVentilation' | 'missingVSGTOVConnections' | 'missingLBGPOVConnections' | 'missingLBGTOVConnections' | 'automaticComfortScheduleActive' | 'manualComfortScheduleActive' | 'componentsErrors' | 'hasDistrictHeatingMeter' | 'hasDistrictCoolingMeter' | 'hasElectricityMeter';

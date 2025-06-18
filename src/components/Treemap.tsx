@@ -3,7 +3,7 @@ import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
 import { BuildingFilters } from './BuildingFilters';
 import { StatsCard } from './StatsCard';
-import { TreemapNode, ColorMode } from '@/types/TreemapData';
+import { TreemapNode, ColorMode, GroupMode } from '@/types/TreemapData';
 import { mockBuildingData } from '@/data/mockBuildingData';
 import { useSearchParams } from 'react-router-dom';
 
@@ -33,6 +33,7 @@ interface FilterState {
   };
   temperatureRange: [number, number];
   colorMode: ColorMode;
+  groupMode: GroupMode;
   cycleEnabled: boolean;
   cycleInterval: number;
 }
@@ -58,6 +59,7 @@ const initialFilters: FilterState = {
   },
   temperatureRange: [5, 35],
   colorMode: 'temperature',
+  groupMode: 'client',
   cycleEnabled: false,
   cycleInterval: 5,
 };
@@ -96,6 +98,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   // Initialize filters from URL params
   const [filters, setFilters] = useState<FilterState>(() => {
     const urlColorMode = searchParams.get('colorMode') as ColorMode;
+    const urlGroupMode = searchParams.get('groupMode') as GroupMode;
     const urlClients = searchParams.get('clients')?.split(',').filter(Boolean) || [];
     const urlOnlineOnly = searchParams.get('onlineOnly') === 'true';
     const urlCycleEnabled = searchParams.get('cycleEnabled') === 'true';
@@ -113,6 +116,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     return {
       ...initialFilters,
       colorMode: urlColorMode && Object.keys(initialFilters).includes('colorMode') ? urlColorMode : initialFilters.colorMode,
+      groupMode: urlGroupMode || initialFilters.groupMode,
       clients: urlClients,
       onlineOnly: urlOnlineOnly,
       features: urlFeatures,
@@ -155,6 +159,11 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     // Add color mode
     if (filters.colorMode !== initialFilters.colorMode) {
       newParams.set('colorMode', filters.colorMode);
+    }
+
+    // Add group mode
+    if (filters.groupMode !== initialFilters.groupMode) {
+      newParams.set('groupMode', filters.groupMode);
     }
     
     // Add clients
@@ -232,6 +241,52 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     return filteredData.flatMap(client => client.children);
   }, [filteredData]);
 
+  // Group buildings based on the selected group mode
+  const groupedData = useMemo(() => {
+    const buildings = allFilteredBuildings;
+    
+    if (filters.groupMode === 'client') {
+      return filteredData;
+    }
+
+    // Group by other attributes
+    const groups = new Map<string, any[]>();
+    
+    buildings.forEach(building => {
+      let groupKey: string;
+      
+      switch (filters.groupMode) {
+        case 'country':
+          groupKey = building.country;
+          break;
+        case 'isOnline':
+          groupKey = building.isOnline ? 'Online' : 'Offline';
+          break;
+        default:
+          // For feature-based grouping
+          if (filters.groupMode in building.features) {
+            const featureValue = building.features[filters.groupMode as keyof typeof building.features];
+            groupKey = typeof featureValue === 'boolean' 
+              ? (featureValue ? 'Yes' : 'No')
+              : featureValue.toString();
+          } else {
+            groupKey = 'Unknown';
+          }
+          break;
+      }
+      
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, []);
+      }
+      groups.get(groupKey)!.push(building);
+    });
+
+    return Array.from(groups.entries()).map(([groupName, children]) => ({
+      name: groupName,
+      children
+    }));
+  }, [allFilteredBuildings, filters.groupMode, filteredData]);
+
   // Use fixed height for filter bar and add space for client tags
   const filterBarHeight = 25; // Fixed height for the toggle bar
   const clientTagSpacing = 20; // Space for client tags above the grid
@@ -239,13 +294,13 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   const treemapTop = filterBarHeight + clientTagSpacing;
 
   const treemapData = useMemo(() => {
-    if (filteredData.length === 0) return null;
+    if (groupedData.length === 0) return null;
 
     const rootData = {
       name: 'Buildings',
-      children: filteredData.map(client => ({
-        name: client.name,
-        children: client.children
+      children: groupedData.map(group => ({
+        name: group.name,
+        children: group.children
       }))
     };
 
@@ -259,7 +314,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       .round(true);
 
     return treemapLayout(root);
-  }, [width, treemapHeight, filteredData]);
+  }, [width, treemapHeight, groupedData]);
 
   const handleNodeHover = (node: TreemapNode | null) => {
     // Clear any existing timeout
@@ -296,20 +351,20 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     const nodes: React.ReactNode[] = [];
     
     if (node.children) {
-      // Render client border for grouping
+      // Render group border for grouping
       if (node.depth === 1) {
-        const clientWidth = node.x1 - node.x0;
-        const clientHeight = node.y1 - node.y0;
+        const groupWidth = node.x1 - node.x0;
+        const groupHeight = node.y1 - node.y0;
         
         nodes.push(
           <div
-            key={`client-${node.data.name}`}
+            key={`group-${node.data.name}`}
             className="absolute border-2 border-blue-600 border-opacity-50"
             style={{
               left: node.x0,
               top: node.y0,
-              width: clientWidth,
-              height: clientHeight,
+              width: groupWidth,
+              height: groupHeight,
             }}
           >
             <div 

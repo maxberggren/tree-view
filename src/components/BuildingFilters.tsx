@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -6,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { ChevronDown, ChevronUp, Settings, Play, Pause } from 'lucide-react';
-import { ColorMode } from '@/types/TreemapData';
+import { ColorMode, GroupMode } from '@/types/TreemapData';
 
 interface FilterState {
   clients: string[];
@@ -29,6 +28,7 @@ interface FilterState {
   };
   temperatureRange: [number, number];
   colorMode: ColorMode;
+  groupMode: GroupMode;
   cycleEnabled: boolean;
   cycleInterval: number;
 }
@@ -48,6 +48,26 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   onFiltersChange,
   availableClients
 }) => {
+  const groupModeOptions = [
+    { value: 'client', label: 'Client' },
+    { value: 'country', label: 'Country' },
+    { value: 'isOnline', label: 'Online Status' },
+    { value: 'hasClimateBaseline', label: 'Climate Baseline' },
+    { value: 'hasReadWriteDiscrepancies', label: 'Read/Write Issues' },
+    { value: 'hasZoneAssets', label: 'Zone Assets' },
+    { value: 'hasHeatingCircuit', label: 'Heating Circuit' },
+    { value: 'hasVentilation', label: 'Ventilation' },
+    { value: 'missingVSGTOVConnections', label: 'Missing VSGT OV' },
+    { value: 'missingLBGPOVConnections', label: 'Missing LBGP OV' },
+    { value: 'missingLBGTOVConnections', label: 'Missing LBGT OV' },
+    { value: 'automaticComfortScheduleActive', label: 'Auto Comfort Schedule' },
+    { value: 'manualComfortScheduleActive', label: 'Manual Comfort Schedule' },
+    { value: 'componentsErrors', label: 'Component Errors' },
+    { value: 'hasDistrictHeatingMeter', label: 'Heating Meter' },
+    { value: 'hasDistrictCoolingMeter', label: 'Cooling Meter' },
+    { value: 'hasElectricityMeter', label: 'Electricity Meter' },
+  ];
+
   const colorModeOptions = [
     { value: 'temperature', label: 'Temperature' },
     { value: 'comfort', label: 'Comfort' },
@@ -117,8 +137,25 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
       {isExpanded && (
         <div className="p-4 bg-gray-800 border-t border-gray-700 max-h-96 overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Color Mode Section */}
+            {/* Group Mode & Color Mode Section */}
             <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-200">Group Mode</Label>
+              <Select 
+                value={filters.groupMode} 
+                onValueChange={(value) => onFiltersChange({ ...filters, groupMode: value as GroupMode })}
+              >
+                <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {groupModeOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Label className="text-sm font-medium text-gray-200">Color Mode</Label>
               <Select 
                 value={filters.colorMode} 
