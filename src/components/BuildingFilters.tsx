@@ -105,85 +105,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: '30', label: '30 seconds' },
   ];
 
-  // Get all available values for any group mode from the original data, not filtered data
-  const getAllAvailableValues = (groupMode: GroupMode, data: any[]) => {
-    const uniqueValues = new Set<string>();
-    
-    data.forEach(building => {
-      switch (groupMode) {
-        case 'client':
-          uniqueValues.add(building.client);
-          break;
-        case 'country':
-          uniqueValues.add(building.country);
-          break;
-        case 'isOnline':
-          uniqueValues.add(building.isOnline ? 'Online' : 'Offline');
-          break;
-        case 'lastWeekUptime':
-          const uptime = building.features.lastWeekUptime;
-          if (uptime >= 0.95) uniqueValues.add('Excellent (95%+)');
-          else if (uptime >= 0.90) uniqueValues.add('Good (90-95%)');
-          else if (uptime >= 0.80) uniqueValues.add('Fair (80-90%)');
-          else uniqueValues.add('Poor (<80%)');
-          break;
-        default:
-          // For feature-based grouping
-          if (groupMode in building.features) {
-            const featureValue = building.features[groupMode as keyof typeof building.features];
-            uniqueValues.add(typeof featureValue === 'boolean' ? (featureValue ? 'Yes' : 'No') : featureValue.toString());
-          }
-          break;
-      }
-    });
-    
-    return Array.from(uniqueValues).sort();
-  };
-
-  // Get currently selected values for the active group mode
-  const getSelectedValues = () => {
-    switch (filters.groupMode) {
-      case 'client':
-        return filters.clients;
-      case 'isOnline':
-        return filters.onlineOnly ? ['Online'] : [];
-      default:
-        // For feature-based filters
-        if (filters.groupMode in filters.features) {
-          const featureEnabled = filters.features[filters.groupMode as keyof typeof filters.features];
-          return featureEnabled ? ['Yes'] : [];
-        }
-        return [];
-    }
-  };
-
-  const handleFilterChange = (value: string, checked: boolean) => {
-    console.log('Filter change:', { value, checked, groupMode: filters.groupMode });
-    
-    switch (filters.groupMode) {
-      case 'client':
-        const newClients = checked 
-          ? [...filters.clients, value]
-          : filters.clients.filter(c => c !== value);
-        onFiltersChange({ ...filters, clients: newClients });
-        break;
-      case 'isOnline':
-        onFiltersChange({ ...filters, onlineOnly: value === 'Online' && checked });
-        break;
-      default:
-        // For feature-based filters
-        if (filters.groupMode in filters.features) {
-          const featureKey = filters.groupMode as keyof typeof filters.features;
-          const newFeatures = {
-            ...filters.features,
-            [featureKey]: value === 'Yes' && checked
-          };
-          onFiltersChange({ ...filters, features: newFeatures });
-        }
-        break;
-    }
-  };
-
   const getActiveFiltersCount = () => {
     let count = 0;
     if (filters.clients.length > 0) count++;
@@ -215,15 +136,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
         lastWeekUptime: false,
       }
     });
-  };
-
-  // Use the original data from props, not filtered data, to get all available options
-  const allAvailableOptions = getAllAvailableValues(filters.groupMode, filteredData);
-  const selectedValues = getSelectedValues();
-
-  const getFilterLabel = () => {
-    const groupModeLabel = groupModeOptions.find(option => option.value === filters.groupMode)?.label || filters.groupMode;
-    return `Filter by ${groupModeLabel}`;
   };
 
   return (
@@ -339,35 +251,9 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
             </div>
           </div>
 
-          {/* Dynamic Filters based on Group Mode */}
+          {/* Unified Filters Section */}
           <div className="mt-6 space-y-4">
-            <Label className="text-sm font-medium text-gray-200">{getFilterLabel()}</Label>
-            
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                {allAvailableOptions.map(option => (
-                  <div key={option} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`filter-${option}`}
-                      checked={selectedValues.includes(option)}
-                      onCheckedChange={(checked) => handleFilterChange(option, !!checked)}
-                      className="border-gray-500"
-                    />
-                    <Label htmlFor={`filter-${option}`} className="text-xs text-gray-300 cursor-pointer">
-                      {option}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-              {allAvailableOptions.length === 0 && (
-                <p className="text-xs text-gray-400">No options available for current selection</p>
-              )}
-            </div>
-          </div>
-
-          {/* Basic Filters Section */}
-          <div className="mt-6 space-y-4">
-            <Label className="text-sm font-medium text-gray-200">Basic Filters</Label>
+            <Label className="text-sm font-medium text-gray-200">Filters</Label>
             
             {/* Client Filter - always available */}
             <div className="space-y-2">
@@ -405,6 +291,132 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               <Label htmlFor="online-only" className="text-xs text-gray-300 cursor-pointer">
                 Show only online buildings
               </Label>
+            </div>
+
+            {/* Feature Filters */}
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-300">Features</Label>
+              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasClimateBaseline"
+                    checked={filters.features.hasClimateBaseline}
+                    onCheckedChange={(checked) => onFiltersChange({ 
+                      ...filters, 
+                      features: { ...filters.features, hasClimateBaseline: !!checked }
+                    })}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasClimateBaseline" className="text-xs text-gray-300 cursor-pointer">
+                    Climate Baseline
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasReadWriteDiscrepancies"
+                    checked={filters.features.hasReadWriteDiscrepancies}
+                    onCheckedChange={(checked) => onFiltersChange({ 
+                      ...filters, 
+                      features: { ...filters.features, hasReadWriteDiscrepancies: !!checked }
+                    })}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasReadWriteDiscrepancies" className="text-xs text-gray-300 cursor-pointer">
+                    R/W Issues
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasZoneAssets"
+                    checked={filters.features.hasZoneAssets}
+                    onCheckedChange={(checked) => onFiltersChange({ 
+                      ...filters, 
+                      features: { ...filters.features, hasZoneAssets: !!checked }
+                    })}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasZoneAssets" className="text-xs text-gray-300 cursor-pointer">
+                    Zone Assets
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasHeatingCircuit"
+                    checked={filters.features.hasHeatingCircuit}
+                    onCheckedChange={(checked) => onFiltersChange({ 
+                      ...filters, 
+                      features: { ...filters.features, hasHeatingCircuit: !!checked }
+                    })}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasHeatingCircuit" className="text-xs text-gray-300 cursor-pointer">
+                    Heating Circuit
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasVentilation"
+                    checked={filters.features.hasVentilation}
+                    onCheckedChange={(checked) => onFiltersChange({ 
+                      ...filters, 
+                      features: { ...filters.features, hasVentilation: !!checked }
+                    })}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasVentilation" className="text-xs text-gray-300 cursor-pointer">
+                    Ventilation
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="componentsErrors"
+                    checked={filters.features.componentsErrors}
+                    onCheckedChange={(checked) => onFiltersChange({ 
+                      ...filters, 
+                      features: { ...filters.features, componentsErrors: !!checked }
+                    })}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="componentsErrors" className="text-xs text-gray-300 cursor-pointer">
+                    Component Errors
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasDistrictHeatingMeter"
+                    checked={filters.features.hasDistrictHeatingMeter}
+                    onCheckedChange={(checked) => onFiltersChange({ 
+                      ...filters, 
+                      features: { ...filters.features, hasDistrictHeatingMeter: !!checked }
+                    })}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasDistrictHeatingMeter" className="text-xs text-gray-300 cursor-pointer">
+                    Heating Meter
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasElectricityMeter"
+                    checked={filters.features.hasElectricityMeter}
+                    onCheckedChange={(checked) => onFiltersChange({ 
+                      ...filters, 
+                      features: { ...filters.features, hasElectricityMeter: !!checked }
+                    })}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasElectricityMeter" className="text-xs text-gray-300 cursor-pointer">
+                    Electricity Meter
+                  </Label>
+                </div>
+              </div>
             </div>
           </div>
         </div>
