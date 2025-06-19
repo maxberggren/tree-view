@@ -33,6 +33,24 @@ const generateRandomBuilding = (index: number, forcedClient?: string) => {
       return Math.random() * 0.3;
     }
   };
+
+  // Generate uptime values biased towards good uptime
+  const generateUptime = () => {
+    const rand = Math.random();
+    if (rand < 0.75) {
+      // 75% chance of excellent uptime (95-100%)
+      return 0.95 + Math.random() * 0.05;
+    } else if (rand < 0.90) {
+      // 15% chance of good uptime (90-95%)
+      return 0.90 + Math.random() * 0.05;
+    } else if (rand < 0.97) {
+      // 7% chance of fair uptime (80-90%)
+      return 0.80 + Math.random() * 0.10;
+    } else {
+      // 3% chance of poor uptime (50-80%)
+      return 0.50 + Math.random() * 0.30;
+    }
+  };
   
   return {
     id: `BLD-${String(index + 1).padStart(4, '0')}`,
@@ -61,6 +79,7 @@ const generateRandomBuilding = (index: number, forcedClient?: string) => {
       hasDistrictHeatingMeter: Math.random() > 0.5, // 50% have district heating meter
       hasDistrictCoolingMeter: Math.random() > 0.6, // 40% have district cooling meter
       hasElectricityMeter: Math.random() > 0.2, // 80% have electricity meter
+      lastWeekUptime: generateUptime(), // Biased towards good uptime
     },
   };
 };

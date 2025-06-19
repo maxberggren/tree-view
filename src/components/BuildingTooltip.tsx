@@ -27,6 +27,7 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
       if (key === 'savingEnergy') return `${(value * 100).toFixed(1)}%`;
       if (key === 'modelTrainingTestR2Score') return value.toFixed(3);
       if (key === 'adaptiveMin' || key === 'adaptiveMax') return value.toFixed(3);
+      if (key === 'lastWeekUptime') return `${(value * 100).toFixed(1)}%`;
       return value.toString();
     }
     return value?.toString() || 'N/A';
@@ -51,7 +52,8 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
       hasDistrictCoolingMeter: 'District Cooling Meter',
       hasElectricityMeter: 'Electricity Meter',
       adaptiveMin: 'Adaptive Min',
-      adaptiveMax: 'Adaptive Max'
+      adaptiveMax: 'Adaptive Max',
+      lastWeekUptime: 'Last Week Uptime'
     };
     return labelMap[key] || key;
   };
@@ -186,9 +188,19 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
                 <span className="text-gray-400 w-12 flex-shrink-0">Temp:</span>
                 <span className="flex-1 text-white pr-3">{building.temperature}°C</span>
               </div>
-              <div className="flex col-span-2">
+              <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">Country:</span>
-                <span className="flex-1 text-white pr-6" title={building.country}>{building.country}</span>
+                <span className="flex-1 text-white pr-3" title={building.country}>{building.country}</span>
+              </div>
+              <div className="flex">
+                <span className="text-gray-400 w-12 flex-shrink-0">Uptime:</span>
+                <span className={`flex-1 pr-3 ${
+                  building.features.lastWeekUptime >= 0.95 ? 'text-green-400' :
+                  building.features.lastWeekUptime >= 0.90 ? 'text-green-300' :
+                  building.features.lastWeekUptime >= 0.80 ? 'text-yellow-400' : 'text-red-400'
+                }`}>
+                  {(building.features.lastWeekUptime * 100).toFixed(1)}%
+                </span>
               </div>
             </div>
 
