@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -211,6 +210,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   const handleGroupOptionToggle = (optionName: string) => {
     switch (filters.groupMode) {
       case 'client':
+        // Toggle client selection instead of replacing
         handleClientToggle(optionName);
         break;
       case 'country':
@@ -406,18 +406,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                     </Label>
                   </div>
                 ))}
-              </div>
-              
-              <div className="flex items-center space-x-2 pt-2 border-t border-gray-600">
-                <Checkbox
-                  id="online-only"
-                  checked={filters.onlineOnly}
-                  onCheckedChange={(checked) => onFiltersChange({ ...filters, onlineOnly: !!checked })}
-                  className="border-gray-500"
-                />
-                <Label htmlFor="online-only" className="text-sm text-gray-300 cursor-pointer">
-                  Online only
-                </Label>
               </div>
             </div>
 
