@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { ChevronDown, ChevronUp, Settings, Play, Pause } from 'lucide-react';
 import { ColorMode, GroupMode } from '@/types/TreemapData';
@@ -105,6 +105,87 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: '30', label: '30 seconds' },
   ];
 
+  // Get available options based on group mode
+  const getAvailableOptions = () => {
+    if (!filteredData || filteredData.length === 0) return [];
+    
+    switch (filters.groupMode) {
+      case 'client':
+        return [...new Set(filteredData.map(building => building.client))];
+      case 'country':
+        return [...new Set(filteredData.map(building => building.country))];
+      case 'isOnline':
+        return ['Online', 'Offline'];
+      case 'lastWeekUptime':
+        return ['Excellent (95%+)', 'Good (90-95%)', 'Fair (80-90%)', 'Poor (<80%)'];
+      default:
+        // For feature-based grouping
+        return ['Yes', 'No'];
+    }
+  };
+
+  const getSelectedOptions = () => {
+    switch (filters.groupMode) {
+      case 'client':
+        return filters.clients;
+      case 'country':
+        // Extract countries from selected clients
+        const selectedCountries = filteredData
+          .filter(building => filters.clients.includes(building.client))
+          .map(building => building.country);
+        return [...new Set(selectedCountries)];
+      case 'isOnline':
+        return filters.onlineOnly ? ['Online'] : [];
+      default:
+        const featureKey = filters.groupMode as keyof typeof filters.features;
+        return filters.features[featureKey] ? ['Yes'] : [];
+    }
+  };
+
+  const handleOptionToggle = (option: string) => {
+    const currentSelected = getSelectedOptions();
+    const newSelected = currentSelected.includes(option)
+      ? currentSelected.filter(item => item !== option)
+      : [...currentSelected, option];
+
+    switch (filters.groupMode) {
+      case 'client':
+        onFiltersChange({ ...filters, clients: newSelected });
+        break;
+      case 'country':
+        // Find all clients from the selected countries
+        const clientsFromCountries = filteredData
+          .filter(building => newSelected.includes(building.country))
+          .map(building => building.client);
+        const uniqueClients = [...new Set(clientsFromCountries)];
+        onFiltersChange({ ...filters, clients: uniqueClients });
+        break;
+      case 'isOnline':
+        onFiltersChange({ ...filters, onlineOnly: newSelected.includes('Online') });
+        break;
+      default:
+        const featureKey = filters.groupMode as keyof typeof filters.features;
+        onFiltersChange({
+          ...filters,
+          features: {
+            ...filters.features,
+            [featureKey]: newSelected.includes('Yes')
+          }
+        });
+        break;
+    }
+  };
+
+  const getGroupModeLabel = () => {
+    const option = groupModeOptions.find(opt => opt.value === filters.groupMode);
+    return option ? option.label : filters.groupMode;
+  };
+
+  const getCurrentGroupModeLabel = () => {
+    const option = groupModeOptions.find(opt => opt.value === filters.groupMode);
+    return option ? option.label : filters.groupMode;
+  };
+
   const getActiveFiltersCount = () => {
     let count = 0;
     if (filters.clients.length > 0) count++;
@@ -134,6 +215,16 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
         hasDistrictCoolingMeter: false,
         hasElectricityMeter: false,
         lastWeekUptime: false,
+      }
+    });
+  };
+
+  const handleFeatureToggle = (feature: keyof FilterState['features']) => {
+    onFiltersChange({
+      ...filters,
+      features: {
+        ...filters.features,
+        [feature]: !filters.features[feature]
       }
     });
   };
@@ -172,21 +263,18 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
       {/* Expanded Filter Panel */}
       {isExpanded && (
         <div className="p-4 bg-gray-800 border-t border-gray-700 max-h-96 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Group Mode Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Group Mode & Color Mode Section */}
             <div className="space-y-3">
               <Label className="text-sm font-medium text-gray-200">Group Mode</Label>
               <Select 
                 value={filters.groupMode} 
-                onValueChange={(value) => {
-                  console.log('Group mode changing to:', value);
-                  onFiltersChange({ ...filters, groupMode: value as GroupMode });
-                }}
+                onValueChange={(value) => onFiltersChange({ ...filters, groupMode: value as GroupMode })}
               >
                 <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600 z-50">
+                <SelectContent className="bg-gray-700 border-gray-600">
                   {groupModeOptions.map(option => (
                     <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
                       {option.label}
@@ -194,10 +282,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
 
-            {/* Color Mode Section */}
-            <div className="space-y-3">
               <Label className="text-sm font-medium text-gray-200">Color Mode</Label>
               <Select 
                 value={filters.colorMode} 
@@ -206,7 +291,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                 <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600 z-50">
+                <SelectContent className="bg-gray-700 border-gray-600">
                   {colorModeOptions.map(option => (
                     <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
                       {option.label}
@@ -214,97 +299,71 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
 
-            {/* Cycle Controls */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                {filters.cycleEnabled ? (
-                  <Play className="w-4 h-4 text-green-400" />
-                ) : (
-                  <Pause className="w-4 h-4 text-gray-400" />
+              {/* Cycle Controls */}
+              <div className="space-y-2 pt-2 border-t border-gray-600">
+                <div className="flex items-center gap-2">
+                  {filters.cycleEnabled ? (
+                    <Play className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <Pause className="w-4 h-4 text-gray-400" />
+                  )}
+                  <Label className="text-sm text-gray-200">Cycle every X</Label>
+                  <Switch
+                    checked={filters.cycleEnabled}
+                    onCheckedChange={(checked) => onFiltersChange({ ...filters, cycleEnabled: checked })}
+                  />
+                </div>
+                
+                {filters.cycleEnabled && (
+                  <Select 
+                    value={filters.cycleInterval.toString()} 
+                    onValueChange={(value) => onFiltersChange({ ...filters, cycleInterval: parseInt(value) })}
+                  >
+                    <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-700 border-gray-600">
+                      {cycleIntervalOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
-                <Label className="text-sm text-gray-200">Cycle Colors</Label>
-                <Switch
-                  checked={filters.cycleEnabled}
-                  onCheckedChange={(checked) => onFiltersChange({ ...filters, cycleEnabled: checked })}
-                />
               </div>
-              
-              {filters.cycleEnabled && (
-                <Select 
-                  value={filters.cycleInterval.toString()} 
-                  onValueChange={(value) => onFiltersChange({ ...filters, cycleInterval: parseInt(value) })}
-                >
-                  <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600 z-50">
-                    {cycleIntervalOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
             </div>
-          </div>
 
-          {/* Unified Filters Section */}
-          <div className="mt-6 space-y-4">
-            <Label className="text-sm font-medium text-gray-200">Filters</Label>
-            
-            {/* Client Filter - always available */}
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-300">Clients</Label>
-              <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
-                {availableClients.map(client => (
-                  <div key={client} className="flex items-center space-x-2">
+            {/* Dynamic Group Filters */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-200">{getGroupModeLabel()}</Label>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {getAvailableOptions().map(option => (
+                  <div key={option} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`client-${client}`}
-                      checked={filters.clients.includes(client)}
-                      onCheckedChange={(checked) => {
-                        const newClients = checked 
-                          ? [...filters.clients, client]
-                          : filters.clients.filter(c => c !== client);
-                        onFiltersChange({ ...filters, clients: newClients });
-                      }}
+                      id={`option-${option}`}
+                      checked={getSelectedOptions().includes(option)}
+                      onCheckedChange={() => handleOptionToggle(option)}
                       className="border-gray-500"
                     />
-                    <Label htmlFor={`client-${client}`} className="text-xs text-gray-300 cursor-pointer">
-                      {client}
+                    <Label htmlFor={`option-${option}`} className="text-sm text-gray-300 cursor-pointer">
+                      {option}
                     </Label>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Online Only Filter */}
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="online-only"
-                checked={filters.onlineOnly}
-                onCheckedChange={(checked) => onFiltersChange({ ...filters, onlineOnly: !!checked })}
-                className="border-gray-500"
-              />
-              <Label htmlFor="online-only" className="text-xs text-gray-300 cursor-pointer">
-                Show only online buildings
-              </Label>
-            </div>
-
             {/* Feature Filters */}
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-300">Features</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-200">Features</Label>
+              <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="hasClimateBaseline"
                     checked={filters.features.hasClimateBaseline}
-                    onCheckedChange={(checked) => onFiltersChange({ 
-                      ...filters, 
-                      features: { ...filters.features, hasClimateBaseline: !!checked }
-                    })}
+                    onCheckedChange={() => handleFeatureToggle('hasClimateBaseline')}
                     className="border-gray-500"
                   />
                   <Label htmlFor="hasClimateBaseline" className="text-xs text-gray-300 cursor-pointer">
@@ -316,10 +375,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <Checkbox
                     id="hasReadWriteDiscrepancies"
                     checked={filters.features.hasReadWriteDiscrepancies}
-                    onCheckedChange={(checked) => onFiltersChange({ 
-                      ...filters, 
-                      features: { ...filters.features, hasReadWriteDiscrepancies: !!checked }
-                    })}
+                    onCheckedChange={() => handleFeatureToggle('hasReadWriteDiscrepancies')}
                     className="border-gray-500"
                   />
                   <Label htmlFor="hasReadWriteDiscrepancies" className="text-xs text-gray-300 cursor-pointer">
@@ -331,10 +387,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <Checkbox
                     id="hasZoneAssets"
                     checked={filters.features.hasZoneAssets}
-                    onCheckedChange={(checked) => onFiltersChange({ 
-                      ...filters, 
-                      features: { ...filters.features, hasZoneAssets: !!checked }
-                    })}
+                    onCheckedChange={() => handleFeatureToggle('hasZoneAssets')}
                     className="border-gray-500"
                   />
                   <Label htmlFor="hasZoneAssets" className="text-xs text-gray-300 cursor-pointer">
@@ -346,10 +399,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <Checkbox
                     id="hasHeatingCircuit"
                     checked={filters.features.hasHeatingCircuit}
-                    onCheckedChange={(checked) => onFiltersChange({ 
-                      ...filters, 
-                      features: { ...filters.features, hasHeatingCircuit: !!checked }
-                    })}
+                    onCheckedChange={() => handleFeatureToggle('hasHeatingCircuit')}
                     className="border-gray-500"
                   />
                   <Label htmlFor="hasHeatingCircuit" className="text-xs text-gray-300 cursor-pointer">
@@ -361,10 +411,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <Checkbox
                     id="hasVentilation"
                     checked={filters.features.hasVentilation}
-                    onCheckedChange={(checked) => onFiltersChange({ 
-                      ...filters, 
-                      features: { ...filters.features, hasVentilation: !!checked }
-                    })}
+                    onCheckedChange={() => handleFeatureToggle('hasVentilation')}
                     className="border-gray-500"
                   />
                   <Label htmlFor="hasVentilation" className="text-xs text-gray-300 cursor-pointer">
@@ -376,10 +423,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <Checkbox
                     id="componentsErrors"
                     checked={filters.features.componentsErrors}
-                    onCheckedChange={(checked) => onFiltersChange({ 
-                      ...filters, 
-                      features: { ...filters.features, componentsErrors: !!checked }
-                    })}
+                    onCheckedChange={() => handleFeatureToggle('componentsErrors')}
                     className="border-gray-500"
                   />
                   <Label htmlFor="componentsErrors" className="text-xs text-gray-300 cursor-pointer">
@@ -391,10 +435,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <Checkbox
                     id="hasDistrictHeatingMeter"
                     checked={filters.features.hasDistrictHeatingMeter}
-                    onCheckedChange={(checked) => onFiltersChange({ 
-                      ...filters, 
-                      features: { ...filters.features, hasDistrictHeatingMeter: !!checked }
-                    })}
+                    onCheckedChange={() => handleFeatureToggle('hasDistrictHeatingMeter')}
                     className="border-gray-500"
                   />
                   <Label htmlFor="hasDistrictHeatingMeter" className="text-xs text-gray-300 cursor-pointer">
@@ -404,16 +445,37 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
+                    id="hasDistrictCoolingMeter"
+                    checked={filters.features.hasDistrictCoolingMeter}
+                    onCheckedChange={() => handleFeatureToggle('hasDistrictCoolingMeter')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="hasDistrictCoolingMeter" className="text-xs text-gray-300 cursor-pointer">
+                    Cooling Meter
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
                     id="hasElectricityMeter"
                     checked={filters.features.hasElectricityMeter}
-                    onCheckedChange={(checked) => onFiltersChange({ 
-                      ...filters, 
-                      features: { ...filters.features, hasElectricityMeter: !!checked }
-                    })}
+                    onCheckedChange={() => handleFeatureToggle('hasElectricityMeter')}
                     className="border-gray-500"
                   />
                   <Label htmlFor="hasElectricityMeter" className="text-xs text-gray-300 cursor-pointer">
                     Electricity Meter
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="lastWeekUptime"
+                    checked={filters.features.lastWeekUptime}
+                    onCheckedChange={() => handleFeatureToggle('lastWeekUptime')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="lastWeekUptime" className="text-xs text-gray-300 cursor-pointer">
+                    Last Week Uptime
                   </Label>
                 </div>
               </div>
