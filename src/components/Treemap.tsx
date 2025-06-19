@@ -118,7 +118,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
 
     return {
       ...initialFilters,
-      colorMode: urlColorMode && Object.keys(initialFilters).includes('colorMode') ? urlColorMode : initialFilters.colorMode,
+      colorMode: urlColorMode && colorModes.includes(urlColorMode) ? urlColorMode : initialFilters.colorMode,
       groupMode: urlGroupMode || initialFilters.groupMode,
       clients: urlClients,
       onlineOnly: urlOnlineOnly,
@@ -343,6 +343,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   };
 
   const handleGroupClick = (groupName: string) => {
+    console.log('Group clicked:', groupName, 'Current group mode:', filters.groupMode);
+    
     switch (filters.groupMode) {
       case 'client':
         setFilters({
@@ -381,11 +383,14 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         // For feature-based grouping, toggle the corresponding feature filter
         if (filters.groupMode in filters.features) {
           const featureKey = filters.groupMode as keyof typeof filters.features;
+          const shouldEnable = groupName === 'Yes';
+          console.log('Setting feature', featureKey, 'to', shouldEnable);
+          
           setFilters({
             ...filters,
             features: {
               ...filters.features,
-              [featureKey]: groupName === 'Yes'
+              [featureKey]: shouldEnable
             },
             clients: [] // Clear client filter when filtering by features
           });
