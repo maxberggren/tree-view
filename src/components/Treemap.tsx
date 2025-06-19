@@ -659,6 +659,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           filters={filters}
           onFiltersChange={setFilters}
           availableClients={availableClients}
+          filteredData={filteredData}
         />
         <StatsCard filteredBuildings={filteredData} />
         <div className="flex items-center justify-center h-full text-white">
@@ -677,6 +678,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         filters={filters}
         onFiltersChange={setFilters}
         availableClients={availableClients}
+        filteredData={filteredData}
       />
 
       {/* Main treemap - positioned below filter bar with spacing */}
