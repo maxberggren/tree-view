@@ -3,7 +3,7 @@ import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
 import { BuildingFilters } from './BuildingFilters';
 import { StatsCard } from './StatsCard';
-import { TreemapNode, ColorMode, GroupMode } from '@/types/TreemapData';
+import { TreemapNode, ColorMode, GroupMode, BuildingData } from '@/types/TreemapData';
 import { mockBuildingData } from '@/data/mockBuildingData';
 import { useSearchParams } from 'react-router-dom';
 
@@ -660,7 +660,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           onFiltersChange={setFilters}
           availableClients={availableClients}
         />
-        <StatsCard filteredBuildings={allFilteredBuildings} />
+        <StatsCard filteredBuildings={filteredData} />
         <div className="flex items-center justify-center h-full text-white">
           <p>No buildings match the current filters</p>
         </div>
@@ -862,7 +862,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       )}
 
       {/* Stats Card - positioned at bottom left */}
-      <StatsCard filteredBuildings={allFilteredBuildings} />
+      <StatsCard filteredBuildings={filteredData} />
 
       {/* Dynamic Legend */}
       <div className="absolute bottom-4 right-4 bg-black bg-opacity-90 text-white p-3 rounded-lg max-w-xs z-20">
