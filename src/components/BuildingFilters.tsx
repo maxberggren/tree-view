@@ -40,6 +40,7 @@ interface BuildingFiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   availableClients: string[];
+  filteredData: any[];
 }
 
 export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
@@ -47,7 +48,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   onToggle,
   filters,
   onFiltersChange,
-  availableClients
+  availableClients,
+  filteredData
 }) => {
   const groupModeOptions = [
     { value: 'client', label: 'Client' },
@@ -103,6 +105,82 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: '30', label: '30 seconds' },
   ];
 
+  // Get available options based on group mode
+  const getAvailableOptions = () => {
+    if (!filteredData || filteredData.length === 0) return [];
+    
+    switch (filters.groupMode) {
+      case 'client':
+        return [...new Set(filteredData.map(building => building.client))];
+      case 'country':
+        return [...new Set(filteredData.map(building => building.country))];
+      case 'isOnline':
+        return ['Online', 'Offline'];
+      case 'lastWeekUptime':
+        return ['Excellent (95%+)', 'Good (90-95%)', 'Fair (80-90%)', 'Poor (<80%)'];
+      default:
+        // For feature-based grouping
+        return ['Yes', 'No'];
+    }
+  };
+
+  const getSelectedOptions = () => {
+    switch (filters.groupMode) {
+      case 'client':
+        return filters.clients;
+      case 'country':
+        // Extract countries from selected clients
+        const selectedCountries = filteredData
+          .filter(building => filters.clients.includes(building.client))
+          .map(building => building.country);
+        return [...new Set(selectedCountries)];
+      case 'isOnline':
+        return filters.onlineOnly ? ['Online'] : [];
+      default:
+        const featureKey = filters.groupMode as keyof typeof filters.features;
+        return filters.features[featureKey] ? ['Yes'] : [];
+    }
+  };
+
+  const handleOptionToggle = (option: string) => {
+    const currentSelected = getSelectedOptions();
+    const newSelected = currentSelected.includes(option)
+      ? currentSelected.filter(item => item !== option)
+      : [...currentSelected, option];
+
+    switch (filters.groupMode) {
+      case 'client':
+        onFiltersChange({ ...filters, clients: newSelected });
+        break;
+      case 'country':
+        // Find all clients from the selected countries
+        const clientsFromCountries = filteredData
+          .filter(building => newSelected.includes(building.country))
+          .map(building => building.client);
+        const uniqueClients = [...new Set(clientsFromCountries)];
+        onFiltersChange({ ...filters, clients: uniqueClients });
+        break;
+      case 'isOnline':
+        onFiltersChange({ ...filters, onlineOnly: newSelected.includes('Online') });
+        break;
+      default:
+        const featureKey = filters.groupMode as keyof typeof filters.features;
+        onFiltersChange({
+          ...filters,
+          features: {
+            ...filters.features,
+            [featureKey]: newSelected.includes('Yes')
+          }
+        });
+        break;
+    }
+  };
+
+  const getGroupModeLabel = () => {
+    const option = groupModeOptions.find(opt => opt.value === filters.groupMode);
+    return option ? option.label : filters.groupMode;
+  };
+
   const getCurrentGroupModeLabel = () => {
     const option = groupModeOptions.find(opt => opt.value === filters.groupMode);
     return option ? option.label : filters.groupMode;
@@ -139,14 +217,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
         lastWeekUptime: false,
       }
     });
-  };
-
-  const handleClientToggle = (clientName: string) => {
-    const newClients = filters.clients.includes(clientName)
-      ? filters.clients.filter(c => c !== clientName)
-      : [...filters.clients, clientName];
-    
-    onFiltersChange({ ...filters, clients: newClients });
   };
 
   const handleFeatureToggle = (feature: keyof FilterState['features']) => {
@@ -265,35 +335,23 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               </div>
             </div>
 
-            {/* Client Filters */}
+            {/* Dynamic Group Filters */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium text-gray-200">Clients</Label>
+              <Label className="text-sm font-medium text-gray-200">{getGroupModeLabel()}</Label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {availableClients.map(client => (
-                  <div key={client} className="flex items-center space-x-2">
+                {getAvailableOptions().map(option => (
+                  <div key={option} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`client-${client}`}
-                      checked={filters.clients.includes(client)}
-                      onCheckedChange={() => handleClientToggle(client)}
+                      id={`option-${option}`}
+                      checked={getSelectedOptions().includes(option)}
+                      onCheckedChange={() => handleOptionToggle(option)}
                       className="border-gray-500"
                     />
-                    <Label htmlFor={`client-${client}`} className="text-sm text-gray-300 cursor-pointer">
-                      {client}
+                    <Label htmlFor={`option-${option}`} className="text-sm text-gray-300 cursor-pointer">
+                      {option}
                     </Label>
                   </div>
                 ))}
-              </div>
-              
-              <div className="flex items-center space-x-2 pt-2 border-t border-gray-600">
-                <Checkbox
-                  id="online-only"
-                  checked={filters.onlineOnly}
-                  onCheckedChange={(checked) => onFiltersChange({ ...filters, onlineOnly: !!checked })}
-                  className="border-gray-500"
-                />
-                <Label htmlFor="online-only" className="text-sm text-gray-300 cursor-pointer">
-                  Online only
-                </Label>
               </div>
             </div>
 
