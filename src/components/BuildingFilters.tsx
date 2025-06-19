@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,6 +25,7 @@ interface FilterState {
     hasDistrictHeatingMeter: boolean;
     hasDistrictCoolingMeter: boolean;
     hasElectricityMeter: boolean;
+    lastWeekUptime: boolean;
   };
   temperatureRange: [number, number];
   colorMode: ColorMode;
@@ -67,6 +67,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: 'hasDistrictHeatingMeter', label: 'Heating Meter' },
     { value: 'hasDistrictCoolingMeter', label: 'Cooling Meter' },
     { value: 'hasElectricityMeter', label: 'Electricity Meter' },
+    { value: 'lastWeekUptime', label: 'Last Week Uptime' },
   ];
 
   const colorModeOptions = [
@@ -90,6 +91,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: 'hasDistrictHeatingMeter', label: 'Heating Meter' },
     { value: 'hasDistrictCoolingMeter', label: 'Cooling Meter' },
     { value: 'hasElectricityMeter', label: 'Electricity Meter' },
+    { value: 'lastWeekUptime', label: 'Last Week Uptime' },
   ];
 
   const cycleIntervalOptions = [
@@ -134,6 +136,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
         hasDistrictHeatingMeter: false,
         hasDistrictCoolingMeter: false,
         hasElectricityMeter: false,
+        lastWeekUptime: false,
       }
     });
   };
@@ -403,6 +406,18 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   />
                   <Label htmlFor="hasElectricityMeter" className="text-xs text-gray-300 cursor-pointer">
                     Electricity Meter
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="lastWeekUptime"
+                    checked={filters.features.lastWeekUptime}
+                    onCheckedChange={() => handleFeatureToggle('lastWeekUptime')}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor="lastWeekUptime" className="text-xs text-gray-300 cursor-pointer">
+                    Last Week Uptime
                   </Label>
                 </div>
               </div>

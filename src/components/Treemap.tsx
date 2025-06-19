@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
@@ -31,6 +30,7 @@ interface FilterState {
     hasDistrictHeatingMeter: boolean;
     hasDistrictCoolingMeter: boolean;
     hasElectricityMeter: boolean;
+    lastWeekUptime: boolean;
   };
   temperatureRange: [number, number];
   colorMode: ColorMode;
@@ -57,6 +57,7 @@ const initialFilters: FilterState = {
     hasDistrictHeatingMeter: false,
     hasDistrictCoolingMeter: false,
     hasElectricityMeter: false,
+    lastWeekUptime: false,
   },
   temperatureRange: [5, 35],
   colorMode: 'temperature',
@@ -87,6 +88,7 @@ const colorModes: ColorMode[] = [
   'hasDistrictHeatingMeter',
   'hasDistrictCoolingMeter',
   'hasElectricityMeter',
+  'lastWeekUptime',
 ];
 
 export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
@@ -230,6 +232,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           if (filters.features.hasDistrictHeatingMeter && !building.features.hasDistrictHeatingMeter) return false;
           if (filters.features.hasDistrictCoolingMeter && !building.features.hasDistrictCoolingMeter) return false;
           if (filters.features.hasElectricityMeter && !building.features.hasElectricityMeter) return false;
+          if (filters.features.lastWeekUptime && building.features.lastWeekUptime < 0.95) return false; // Filter for high uptime (95%+)
 
           return true;
         })
@@ -262,6 +265,14 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           break;
         case 'isOnline':
           groupKey = building.isOnline ? 'Online' : 'Offline';
+          break;
+        case 'lastWeekUptime':
+          // Group by uptime ranges
+          const uptime = building.features.lastWeekUptime;
+          if (uptime >= 0.95) groupKey = 'Excellent (95%+)';
+          else if (uptime >= 0.90) groupKey = 'Good (90-95%)';
+          else if (uptime >= 0.80) groupKey = 'Fair (80-90%)';
+          else groupKey = 'Poor (<80%)';
           break;
         default:
           // For feature-based grouping
@@ -370,6 +381,16 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           onlineOnly: groupName === 'Online'
         });
         break;
+      case 'lastWeekUptime':
+        // For uptime grouping, we can enable the uptime filter
+        setFilters({
+          ...filters,
+          features: {
+            ...filters.features,
+            lastWeekUptime: true
+          }
+        });
+        break;
       default:
         // For feature-based grouping, toggle the corresponding feature filter
         if (filters.groupMode in filters.features) {
@@ -411,6 +432,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       'hasDistrictHeatingMeter': 'Heating Meter',
       'hasDistrictCoolingMeter': 'Cooling Meter',
       'hasElectricityMeter': 'Electricity Meter',
+      'lastWeekUptime': 'Last Week Uptime',
     };
 
     const prefix = groupModeLabels[filters.groupMode] || filters.groupMode;
@@ -481,6 +503,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         return `${(building.features.savingEnergy * 100).toFixed(1)}%`;
       case 'modelTrainingTestR2Score':
         return `${(building.features.modelTrainingTestR2Score * 100).toFixed(1)}%`;
+      case 'lastWeekUptime':
+        return `${(building.features.lastWeekUptime * 100).toFixed(1)}%`;
       default:
         return building.features[feature] ? 'Yes' : 'No';
     }
@@ -601,6 +625,13 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           { color: '#7C2D12', label: 'Has Electricity Meter' },
           { color: '#6B7280', label: 'No Electricity Meter' },
         ];
+      case 'lastWeekUptime':
+        return [
+          { color: '#059669', label: 'Excellent (95%+)' },
+          { color: '#10B981', label: 'Good (90-95%)' },
+          { color: '#FBBF24', label: 'Fair (80-90%)' },
+          { color: '#EF4444', label: 'Poor (<80%)' },
+        ];
       default:
         return [];
     }
@@ -628,6 +659,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       case 'hasDistrictHeatingMeter': return 'Heating Meter';
       case 'hasDistrictCoolingMeter': return 'Cooling Meter';
       case 'hasElectricityMeter': return 'Electricity Meter';
+      case 'lastWeekUptime': return 'Last Week Uptime';
       default: return 'Legend';
     }
   };
@@ -826,6 +858,16 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
                 <span className="opacity-75">Electricity Meter: </span>
                 <span className={(hoveredNode.data as any).features.hasElectricityMeter ? 'text-amber-600' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasElectricityMeter')}
+                </span>
+              </div>
+              <div>
+                <span className="opacity-75">Last Week Uptime: </span>
+                <span className={
+                  (hoveredNode.data as any).features.lastWeekUptime >= 0.95 ? 'text-green-500' :
+                  (hoveredNode.data as any).features.lastWeekUptime >= 0.90 ? 'text-green-400' :
+                  (hoveredNode.data as any).features.lastWeekUptime >= 0.80 ? 'text-yellow-400' : 'text-red-400'
+                }>
+                  {getFeatureValue(hoveredNode.data, 'lastWeekUptime')}
                 </span>
               </div>
             </div>

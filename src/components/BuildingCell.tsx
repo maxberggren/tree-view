@@ -208,6 +208,13 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode }) =
           ? { bg: '#7C2D12', border: '#92400E' } // Brown
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
+      case 'lastWeekUptime':
+        const uptime = building.features.lastWeekUptime;
+        if (uptime >= 0.95) return { bg: '#059669', border: '#047857' }; // Excellent - Dark green
+        if (uptime >= 0.90) return { bg: '#10B981', border: '#059669' }; // Good - Green
+        if (uptime >= 0.80) return { bg: '#FBBF24', border: '#F59E0B' }; // Fair - Yellow
+        return { bg: '#EF4444', border: '#DC2626' }; // Poor - Red
+
       default:
         return { bg: '#6B7280', border: '#4B5563' };
     }

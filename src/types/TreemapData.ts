@@ -26,6 +26,7 @@ export interface BuildingData {
     hasDistrictHeatingMeter: boolean;
     hasDistrictCoolingMeter: boolean;
     hasElectricityMeter: boolean;
+    lastWeekUptime: number; // 0-1 value representing uptime percentage
   };
 }
 
@@ -45,6 +46,6 @@ export interface TreemapNode {
   value?: number;
 }
 
-export type ColorMode = 'temperature' | 'comfort' | 'adaptiveMin' | 'adaptiveMax' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies' | 'hasZoneAssets' | 'hasHeatingCircuit' | 'hasVentilation' | 'missingVSGTOVConnections' | 'missingLBGPOVConnections' | 'missingLBGTOVConnections' | 'savingEnergy' | 'automaticComfortScheduleActive' | 'manualComfortScheduleActive' | 'componentsErrors' | 'modelTrainingTestR2Score' | 'hasDistrictHeatingMeter' | 'hasDistrictCoolingMeter' | 'hasElectricityMeter';
+export type ColorMode = 'temperature' | 'comfort' | 'adaptiveMin' | 'adaptiveMax' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies' | 'hasZoneAssets' | 'hasHeatingCircuit' | 'hasVentilation' | 'missingVSGTOVConnections' | 'missingLBGPOVConnections' | 'missingLBGTOVConnections' | 'savingEnergy' | 'automaticComfortScheduleActive' | 'manualComfortScheduleActive' | 'componentsErrors' | 'modelTrainingTestR2Score' | 'hasDistrictHeatingMeter' | 'hasDistrictCoolingMeter' | 'hasElectricityMeter' | 'lastWeekUptime';
 
-export type GroupMode = 'client' | 'country' | 'isOnline' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies' | 'hasZoneAssets' | 'hasHeatingCircuit' | 'hasVentilation' | 'missingVSGTOVConnections' | 'missingLBGPOVConnections' | 'missingLBGTOVConnections' | 'automaticComfortScheduleActive' | 'manualComfortScheduleActive' | 'componentsErrors' | 'hasDistrictHeatingMeter' | 'hasDistrictCoolingMeter' | 'hasElectricityMeter';
+export type GroupMode = 'client' | 'country' | 'isOnline' | 'hasClimateBaseline' | 'hasReadWriteDiscrepancies' | 'hasZoneAssets' | 'hasHeatingCircuit' | 'hasVentilation' | 'missingVSGTOVConnections' | 'missingLBGPOVConnections' | 'missingLBGTOVConnections' | 'automaticComfortScheduleActive' | 'manualComfortScheduleActive' | 'componentsErrors' | 'hasDistrictHeatingMeter' | 'hasDistrictCoolingMeter' | 'hasElectricityMeter' | 'lastWeekUptime';
