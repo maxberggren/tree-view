@@ -362,9 +362,11 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         });
         break;
       case 'isOnline':
+        const shouldShowOnlineOnly = groupName === 'Online';
+        console.log('Setting onlineOnly to:', shouldShowOnlineOnly);
         setFilters({
           ...filters,
-          onlineOnly: groupName === 'Online',
+          onlineOnly: shouldShowOnlineOnly,
           clients: [] // Clear client filter when filtering by online status
         });
         break;
