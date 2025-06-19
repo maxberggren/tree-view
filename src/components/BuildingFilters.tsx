@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,6 +41,7 @@ interface BuildingFiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   availableClients: string[];
+  filteredData: any[]; // Add this to get available options for current group mode
 }
 
 export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
@@ -47,7 +49,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   onToggle,
   filters,
   onFiltersChange,
-  availableClients
+  availableClients,
+  filteredData
 }) => {
   const groupModeOptions = [
     { value: 'client', label: 'Client' },
@@ -103,6 +106,51 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: '30', label: '30 seconds' },
   ];
 
+  // Get available options for current group mode
+  const getAvailableGroupOptions = () => {
+    if (!filteredData || filteredData.length === 0) return [];
+
+    const uniqueOptions = new Set<string>();
+
+    filteredData.forEach(building => {
+      let groupKey: string;
+      
+      switch (filters.groupMode) {
+        case 'client':
+          groupKey = building.client;
+          break;
+        case 'country':
+          groupKey = building.country;
+          break;
+        case 'isOnline':
+          groupKey = building.isOnline ? 'Online' : 'Offline';
+          break;
+        case 'lastWeekUptime':
+          const uptime = building.features.lastWeekUptime;
+          if (uptime >= 0.95) groupKey = 'Excellent (95%+)';
+          else if (uptime >= 0.90) groupKey = 'Good (90-95%)';
+          else if (uptime >= 0.80) groupKey = 'Fair (80-90%)';
+          else groupKey = 'Poor (<80%)';
+          break;
+        default:
+          // For feature-based grouping
+          if (filters.groupMode in building.features) {
+            const featureValue = building.features[filters.groupMode as keyof typeof building.features];
+            groupKey = typeof featureValue === 'boolean' 
+              ? (featureValue ? 'Yes' : 'No')
+              : featureValue.toString();
+          } else {
+            groupKey = 'Unknown';
+          }
+          break;
+      }
+      
+      uniqueOptions.add(groupKey);
+    });
+
+    return Array.from(uniqueOptions).sort();
+  };
+
   const getCurrentGroupModeLabel = () => {
     const option = groupModeOptions.find(opt => opt.value === filters.groupMode);
     return option ? option.label : filters.groupMode;
@@ -157,6 +205,82 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
         [feature]: !filters.features[feature]
       }
     });
+  };
+
+  // Handle group option selection based on current group mode
+  const handleGroupOptionToggle = (optionName: string) => {
+    switch (filters.groupMode) {
+      case 'client':
+        handleClientToggle(optionName);
+        break;
+      case 'country':
+        // Filter to show only buildings from the selected country
+        const buildingsFromCountry = filteredData.filter(building => building.country === optionName);
+        const uniqueClients = [...new Set(buildingsFromCountry.map(building => building.client))];
+        onFiltersChange({
+          ...filters,
+          clients: uniqueClients
+        });
+        break;
+      case 'isOnline':
+        const shouldShowOnlineOnly = optionName === 'Online';
+        onFiltersChange({
+          ...filters,
+          onlineOnly: shouldShowOnlineOnly,
+          clients: []
+        });
+        break;
+      case 'lastWeekUptime':
+        onFiltersChange({
+          ...filters,
+          features: {
+            ...filters.features,
+            lastWeekUptime: true
+          },
+          clients: []
+        });
+        break;
+      default:
+        // For feature-based grouping
+        if (filters.groupMode in filters.features) {
+          const featureKey = filters.groupMode as keyof typeof filters.features;
+          const shouldEnable = optionName === 'Yes';
+          
+          onFiltersChange({
+            ...filters,
+            features: {
+              ...filters.features,
+              [featureKey]: shouldEnable
+            },
+            clients: []
+          });
+        }
+        break;
+    }
+  };
+
+  // Check if a group option is currently selected
+  const isGroupOptionSelected = (optionName: string) => {
+    switch (filters.groupMode) {
+      case 'client':
+        return filters.clients.includes(optionName);
+      case 'country':
+        // Check if any buildings from this country are in the client filter
+        const buildingsFromCountry = filteredData.filter(building => building.country === optionName);
+        const clientsFromCountry = [...new Set(buildingsFromCountry.map(building => building.client))];
+        return clientsFromCountry.some(client => filters.clients.includes(client));
+      case 'isOnline':
+        return (optionName === 'Online' && filters.onlineOnly) || (optionName === 'Offline' && !filters.onlineOnly && filters.clients.length === 0);
+      case 'lastWeekUptime':
+        return filters.features.lastWeekUptime;
+      default:
+        // For feature-based grouping
+        if (filters.groupMode in filters.features) {
+          const featureKey = filters.groupMode as keyof typeof filters.features;
+          return (optionName === 'Yes' && filters.features[featureKey]) || (optionName === 'No' && !filters.features[featureKey]);
+        }
+        return false;
+    }
   };
 
   return (
@@ -265,20 +389,20 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               </div>
             </div>
 
-            {/* Client Filters */}
+            {/* Dynamic Group Filters */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium text-gray-200">Clients</Label>
+              <Label className="text-sm font-medium text-gray-200">{getCurrentGroupModeLabel()}</Label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {availableClients.map(client => (
-                  <div key={client} className="flex items-center space-x-2">
+                {getAvailableGroupOptions().map(option => (
+                  <div key={option} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`client-${client}`}
-                      checked={filters.clients.includes(client)}
-                      onCheckedChange={() => handleClientToggle(client)}
+                      id={`group-${option}`}
+                      checked={isGroupOptionSelected(option)}
+                      onCheckedChange={() => handleGroupOptionToggle(option)}
                       className="border-gray-500"
                     />
-                    <Label htmlFor={`client-${client}`} className="text-sm text-gray-300 cursor-pointer">
-                      {client}
+                    <Label htmlFor={`group-${option}`} className="text-sm text-gray-300 cursor-pointer">
+                      {option}
                     </Label>
                   </div>
                 ))}
