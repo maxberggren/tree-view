@@ -105,12 +105,12 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: '30', label: '30 seconds' },
   ];
 
-  // Get available filter options based on group mode
-  const getAvailableFilterOptions = () => {
+  // Get all available values for any group mode from the original data, not filtered data
+  const getAllAvailableValues = (groupMode: GroupMode, data: any[]) => {
     const uniqueValues = new Set<string>();
     
-    filteredData.forEach(building => {
-      switch (filters.groupMode) {
+    data.forEach(building => {
+      switch (groupMode) {
         case 'client':
           uniqueValues.add(building.client);
           break;
@@ -129,8 +129,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
           break;
         default:
           // For feature-based grouping
-          if (filters.groupMode in building.features) {
-            const featureValue = building.features[filters.groupMode as keyof typeof building.features];
+          if (groupMode in building.features) {
+            const featureValue = building.features[groupMode as keyof typeof building.features];
             uniqueValues.add(typeof featureValue === 'boolean' ? (featureValue ? 'Yes' : 'No') : featureValue.toString());
           }
           break;
@@ -140,20 +140,15 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     return Array.from(uniqueValues).sort();
   };
 
-  const getFilterLabel = () => {
-    const groupModeLabel = groupModeOptions.find(option => option.value === filters.groupMode)?.label || filters.groupMode;
-    return `Filter by ${groupModeLabel}`;
-  };
-
-  const getCurrentFilterValues = () => {
-    // Return the appropriate filter values based on group mode
+  // Get currently selected values for the active group mode
+  const getSelectedValues = () => {
     switch (filters.groupMode) {
       case 'client':
         return filters.clients;
       case 'isOnline':
         return filters.onlineOnly ? ['Online'] : [];
       default:
-        // For feature-based filters, check if the feature is enabled
+        // For feature-based filters
         if (filters.groupMode in filters.features) {
           const featureEnabled = filters.features[filters.groupMode as keyof typeof filters.features];
           return featureEnabled ? ['Yes'] : [];
@@ -163,6 +158,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   };
 
   const handleFilterChange = (value: string, checked: boolean) => {
+    console.log('Filter change:', { value, checked, groupMode: filters.groupMode });
+    
     switch (filters.groupMode) {
       case 'client':
         const newClients = checked 
@@ -220,8 +217,14 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     });
   };
 
-  const availableOptions = getAvailableFilterOptions();
-  const currentValues = getCurrentFilterValues();
+  // Use the original data from props, not filtered data, to get all available options
+  const allAvailableOptions = getAllAvailableValues(filters.groupMode, filteredData);
+  const selectedValues = getSelectedValues();
+
+  const getFilterLabel = () => {
+    const groupModeLabel = groupModeOptions.find(option => option.value === filters.groupMode)?.label || filters.groupMode;
+    return `Filter by ${groupModeLabel}`;
+  };
 
   return (
     <div className="absolute top-0 left-0 w-full z-30 bg-gray-800 border-b border-gray-700">
@@ -263,12 +266,15 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               <Label className="text-sm font-medium text-gray-200">Group Mode</Label>
               <Select 
                 value={filters.groupMode} 
-                onValueChange={(value) => onFiltersChange({ ...filters, groupMode: value as GroupMode })}
+                onValueChange={(value) => {
+                  console.log('Group mode changing to:', value);
+                  onFiltersChange({ ...filters, groupMode: value as GroupMode });
+                }}
               >
                 <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
+                <SelectContent className="bg-gray-700 border-gray-600 z-50">
                   {groupModeOptions.map(option => (
                     <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
                       {option.label}
@@ -288,7 +294,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                 <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
+                <SelectContent className="bg-gray-700 border-gray-600 z-50">
                   {colorModeOptions.map(option => (
                     <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
                       {option.label}
@@ -321,7 +327,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectContent className="bg-gray-700 border-gray-600 z-50">
                     {cycleIntervalOptions.map(option => (
                       <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
                         {option.label}
@@ -339,11 +345,11 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
             
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                {availableOptions.map(option => (
+                {allAvailableOptions.map(option => (
                   <div key={option} className="flex items-center space-x-2">
                     <Checkbox
                       id={`filter-${option}`}
-                      checked={currentValues.includes(option)}
+                      checked={selectedValues.includes(option)}
                       onCheckedChange={(checked) => handleFilterChange(option, !!checked)}
                       className="border-gray-500"
                     />
@@ -353,9 +359,52 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   </div>
                 ))}
               </div>
-              {availableOptions.length === 0 && (
+              {allAvailableOptions.length === 0 && (
                 <p className="text-xs text-gray-400">No options available for current selection</p>
               )}
+            </div>
+          </div>
+
+          {/* Basic Filters Section */}
+          <div className="mt-6 space-y-4">
+            <Label className="text-sm font-medium text-gray-200">Basic Filters</Label>
+            
+            {/* Client Filter - always available */}
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-300">Clients</Label>
+              <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
+                {availableClients.map(client => (
+                  <div key={client} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`client-${client}`}
+                      checked={filters.clients.includes(client)}
+                      onCheckedChange={(checked) => {
+                        const newClients = checked 
+                          ? [...filters.clients, client]
+                          : filters.clients.filter(c => c !== client);
+                        onFiltersChange({ ...filters, clients: newClients });
+                      }}
+                      className="border-gray-500"
+                    />
+                    <Label htmlFor={`client-${client}`} className="text-xs text-gray-300 cursor-pointer">
+                      {client}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Online Only Filter */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="online-only"
+                checked={filters.onlineOnly}
+                onCheckedChange={(checked) => onFiltersChange({ ...filters, onlineOnly: !!checked })}
+                className="border-gray-500"
+              />
+              <Label htmlFor="online-only" className="text-xs text-gray-300 cursor-pointer">
+                Show only online buildings
+              </Label>
             </div>
           </div>
         </div>
