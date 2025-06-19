@@ -1,10 +1,9 @@
-
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
 import { BuildingCell } from './BuildingCell';
 import { BuildingFilters } from './BuildingFilters';
 import { StatsCard } from './StatsCard';
-import { TreemapNode, ColorMode, GroupMode, BuildingData } from '@/types/TreemapData';
+import { TreemapNode, ColorMode, GroupMode } from '@/types/TreemapData';
 import { mockBuildingData } from '@/data/mockBuildingData';
 import { useSearchParams } from 'react-router-dom';
 
@@ -119,7 +118,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
 
     return {
       ...initialFilters,
-      colorMode: urlColorMode && colorModes.includes(urlColorMode) ? urlColorMode : initialFilters.colorMode,
+      colorMode: urlColorMode && Object.keys(initialFilters).includes('colorMode') ? urlColorMode : initialFilters.colorMode,
       groupMode: urlGroupMode || initialFilters.groupMode,
       clients: urlClients,
       onlineOnly: urlOnlineOnly,
@@ -344,8 +343,6 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   };
 
   const handleGroupClick = (groupName: string) => {
-    console.log('Group clicked:', groupName, 'Current group mode:', filters.groupMode);
-    
     switch (filters.groupMode) {
       case 'client':
         setFilters({
@@ -354,48 +351,42 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         });
         break;
       case 'country':
-        // Filter to show only buildings from the clicked country
-        const buildingsFromCountry = filteredData.filter(building => building.country === groupName);
-        const uniqueClients = [...new Set(buildingsFromCountry.map(building => building.client))];
+        // Filter by the clicked country
+        const buildingsFromCountry = mockBuildingData
+          .filter(building => building.country === groupName)
+          .map(building => building.client);
+        const uniqueClients = [...new Set(buildingsFromCountry)];
         setFilters({
           ...filters,
           clients: uniqueClients
         });
         break;
       case 'isOnline':
-        const shouldShowOnlineOnly = groupName === 'Online';
-        console.log('Setting onlineOnly to:', shouldShowOnlineOnly);
         setFilters({
           ...filters,
-          onlineOnly: shouldShowOnlineOnly,
-          clients: [] // Clear client filter when filtering by online status
+          onlineOnly: groupName === 'Online'
         });
         break;
       case 'lastWeekUptime':
-        // For uptime grouping, enable the uptime filter and clear client filter
+        // For uptime grouping, we can enable the uptime filter
         setFilters({
           ...filters,
           features: {
             ...filters.features,
             lastWeekUptime: true
-          },
-          clients: []
+          }
         });
         break;
       default:
         // For feature-based grouping, toggle the corresponding feature filter
         if (filters.groupMode in filters.features) {
           const featureKey = filters.groupMode as keyof typeof filters.features;
-          const shouldEnable = groupName === 'Yes';
-          console.log('Setting feature', featureKey, 'to', shouldEnable);
-          
           setFilters({
             ...filters,
             features: {
               ...filters.features,
-              [featureKey]: shouldEnable
-            },
-            clients: [] // Clear client filter when filtering by features
+              [featureKey]: groupName === 'Yes'
+            }
           });
         }
         break;
@@ -668,9 +659,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           filters={filters}
           onFiltersChange={setFilters}
           availableClients={availableClients}
-          filteredData={filteredData}
         />
-        <StatsCard filteredBuildings={filteredData} />
+        <StatsCard filteredBuildings={allFilteredBuildings} />
         <div className="flex items-center justify-center h-full text-white">
           <p>No buildings match the current filters</p>
         </div>
@@ -687,7 +677,6 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         filters={filters}
         onFiltersChange={setFilters}
         availableClients={availableClients}
-        filteredData={filteredData}
       />
 
       {/* Main treemap - positioned below filter bar with spacing */}
@@ -873,7 +862,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       )}
 
       {/* Stats Card - positioned at bottom left */}
-      <StatsCard filteredBuildings={filteredData} />
+      <StatsCard filteredBuildings={allFilteredBuildings} />
 
       {/* Dynamic Legend */}
       <div className="absolute bottom-4 right-4 bg-black bg-opacity-90 text-white p-3 rounded-lg max-w-xs z-20">
