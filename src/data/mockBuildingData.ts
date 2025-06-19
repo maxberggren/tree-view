@@ -1,5 +1,5 @@
 
-import { ClientData } from "@/types/TreemapData";
+import { BuildingData } from "@/types/TreemapData";
 
 const buildingNames = [
   "Central Plaza", "Tech Tower", "Medical Center", "Shopping Mall", "Office Complex",
@@ -17,7 +17,7 @@ const clients = [
 
 const countries = ["Sweden", "Denmark", "Finland", "USA", "Argentina"];
 
-const generateRandomBuilding = (index: number, forcedClient?: string) => {
+const generateRandomBuilding = (index: number, forcedClient?: string): BuildingData => {
   const clientIndex = forcedClient ? clients.indexOf(forcedClient) : Math.floor(Math.random() * clients.length);
   const nameIndex = Math.floor(Math.random() * buildingNames.length);
   const countryIndex = Math.floor(Math.random() * countries.length);
@@ -85,7 +85,7 @@ const generateRandomBuilding = (index: number, forcedClient?: string) => {
 };
 
 // Generate buildings with SISAB getting 3x more
-const allBuildings = [];
+const allBuildings: BuildingData[] = [];
 let buildingIndex = 0;
 
 // First, generate normal distribution for non-SISAB clients
@@ -109,16 +109,4 @@ while (allBuildings.length < 250) {
   allBuildings.push(generateRandomBuilding(buildingIndex++));
 }
 
-// Group by client
-const clientGroups: { [key: string]: typeof allBuildings } = {};
-allBuildings.forEach(building => {
-  if (!clientGroups[building.client]) {
-    clientGroups[building.client] = [];
-  }
-  clientGroups[building.client].push(building);
-});
-
-export const mockBuildingData: ClientData[] = Object.entries(clientGroups).map(([clientName, buildings]) => ({
-  name: clientName,
-  children: buildings
-}));
+export const mockBuildingData: BuildingData[] = allBuildings;

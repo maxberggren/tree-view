@@ -199,67 +199,56 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   }, [filters, setSearchParams]);
 
   const availableClients = useMemo(() => {
-    return mockBuildingData.map(client => client.name);
+    return [...new Set(mockBuildingData.map(building => building.client))];
   }, []);
 
   const filteredData = useMemo(() => {
-    return mockBuildingData
-      .map(client => ({
-        ...client,
-        children: client.children.filter(building => {
-          // Client filter
-          if (filters.clients.length > 0 && !filters.clients.includes(building.client)) {
-            return false;
-          }
+    return mockBuildingData.filter(building => {
+      // Client filter
+      if (filters.clients.length > 0 && !filters.clients.includes(building.client)) {
+        return false;
+      }
 
-          // Online filter
-          if (filters.onlineOnly && !building.isOnline) {
-            return false;
-          }
+      // Online filter
+      if (filters.onlineOnly && !building.isOnline) {
+        return false;
+      }
 
-          // Feature filters
-          if (filters.features.hasClimateBaseline && !building.features.hasClimateBaseline) return false;
-          if (filters.features.hasReadWriteDiscrepancies && !building.features.hasReadWriteDiscrepancies) return false;
-          if (filters.features.hasZoneAssets && !building.features.hasZoneAssets) return false;
-          if (filters.features.hasHeatingCircuit && !building.features.hasHeatingCircuit) return false;
-          if (filters.features.hasVentilation && !building.features.hasVentilation) return false;
-          if (filters.features.missingVSGTOVConnections && !building.features.missingVSGTOVConnections) return false;
-          if (filters.features.missingLBGPOVConnections && !building.features.missingLBGPOVConnections) return false;
-          if (filters.features.missingLBGTOVConnections && !building.features.missingLBGTOVConnections) return false;
-          if (filters.features.automaticComfortScheduleActive && !building.features.automaticComfortScheduleActive) return false;
-          if (filters.features.manualComfortScheduleActive && !building.features.manualComfortScheduleActive) return false;
-          if (filters.features.componentsErrors && !building.features.componentsErrors) return false;
-          if (filters.features.hasDistrictHeatingMeter && !building.features.hasDistrictHeatingMeter) return false;
-          if (filters.features.hasDistrictCoolingMeter && !building.features.hasDistrictCoolingMeter) return false;
-          if (filters.features.hasElectricityMeter && !building.features.hasElectricityMeter) return false;
-          if (filters.features.lastWeekUptime && building.features.lastWeekUptime < 0.95) return false; // Filter for high uptime (95%+)
+      // Feature filters
+      if (filters.features.hasClimateBaseline && !building.features.hasClimateBaseline) return false;
+      if (filters.features.hasReadWriteDiscrepancies && !building.features.hasReadWriteDiscrepancies) return false;
+      if (filters.features.hasZoneAssets && !building.features.hasZoneAssets) return false;
+      if (filters.features.hasHeatingCircuit && !building.features.hasHeatingCircuit) return false;
+      if (filters.features.hasVentilation && !building.features.hasVentilation) return false;
+      if (filters.features.missingVSGTOVConnections && !building.features.missingVSGTOVConnections) return false;
+      if (filters.features.missingLBGPOVConnections && !building.features.missingLBGPOVConnections) return false;
+      if (filters.features.missingLBGTOVConnections && !building.features.missingLBGTOVConnections) return false;
+      if (filters.features.automaticComfortScheduleActive && !building.features.automaticComfortScheduleActive) return false;
+      if (filters.features.manualComfortScheduleActive && !building.features.manualComfortScheduleActive) return false;
+      if (filters.features.componentsErrors && !building.features.componentsErrors) return false;
+      if (filters.features.hasDistrictHeatingMeter && !building.features.hasDistrictHeatingMeter) return false;
+      if (filters.features.hasDistrictCoolingMeter && !building.features.hasDistrictCoolingMeter) return false;
+      if (filters.features.hasElectricityMeter && !building.features.hasElectricityMeter) return false;
+      if (filters.features.lastWeekUptime && building.features.lastWeekUptime < 0.95) return false; // Filter for high uptime (95%+)
 
-          return true;
-        })
-      }))
-      .filter(client => client.children.length > 0);
+      return true;
+    });
   }, [filters]);
-
-  // Get all filtered buildings for stats calculation
-  const allFilteredBuildings = useMemo(() => {
-    return filteredData.flatMap(client => client.children);
-  }, [filteredData]);
 
   // Group buildings based on the selected group mode
   const groupedData = useMemo(() => {
-    const buildings = allFilteredBuildings;
+    const buildings = filteredData;
     
-    if (filters.groupMode === 'client') {
-      return filteredData;
-    }
-
-    // Group by other attributes
-    const groups = new Map<string, any[]>();
+    // Group by selected attribute
+    const groups = new Map<string, BuildingData[]>();
     
     buildings.forEach(building => {
       let groupKey: string;
       
       switch (filters.groupMode) {
+        case 'client':
+          groupKey = building.client;
+          break;
         case 'country':
           groupKey = building.country;
           break;
@@ -297,7 +286,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       name: groupName,
       children
     }));
-  }, [allFilteredBuildings, filters.groupMode, filteredData]);
+  }, [filteredData, filters.groupMode]);
 
   // Use fixed height for filter bar and add space for client tags
   const filterBarHeight = 25; // Fixed height for the toggle bar
@@ -362,11 +351,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         });
         break;
       case 'country':
-        // Filter by the clicked country - we need to filter buildings by country
-        // Since we don't have a country filter in the filters state, we can use the client filter
-        // to show only buildings from that country
+        // Filter by the clicked country
         const buildingsFromCountry = mockBuildingData
-          .flatMap(client => client.children)
           .filter(building => building.country === groupName)
           .map(building => building.client);
         const uniqueClients = [...new Set(buildingsFromCountry)];
