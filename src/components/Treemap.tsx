@@ -351,11 +351,9 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         });
         break;
       case 'country':
-        // Filter by the clicked country
-        const buildingsFromCountry = mockBuildingData
-          .filter(building => building.country === groupName)
-          .map(building => building.client);
-        const uniqueClients = [...new Set(buildingsFromCountry)];
+        // Filter to show only buildings from the clicked country
+        const buildingsFromCountry = filteredData.filter(building => building.country === groupName);
+        const uniqueClients = [...new Set(buildingsFromCountry.map(building => building.client))];
         setFilters({
           ...filters,
           clients: uniqueClients
@@ -364,17 +362,19 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       case 'isOnline':
         setFilters({
           ...filters,
-          onlineOnly: groupName === 'Online'
+          onlineOnly: groupName === 'Online',
+          clients: [] // Clear client filter when filtering by online status
         });
         break;
       case 'lastWeekUptime':
-        // For uptime grouping, we can enable the uptime filter
+        // For uptime grouping, enable the uptime filter and clear client filter
         setFilters({
           ...filters,
           features: {
             ...filters.features,
             lastWeekUptime: true
-          }
+          },
+          clients: []
         });
         break;
       default:
@@ -386,7 +386,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             features: {
               ...filters.features,
               [featureKey]: groupName === 'Yes'
-            }
+            },
+            clients: [] // Clear client filter when filtering by features
           });
         }
         break;
