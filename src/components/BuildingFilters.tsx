@@ -125,54 +125,91 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     }
   };
 
-  const getSelectedOptions = () => {
+  // Check if an option is selected
+  const isOptionSelected = (option: string) => {
     switch (filters.groupMode) {
       case 'client':
-        return filters.clients;
+        return filters.clients.includes(option);
       case 'country':
-        // Extract countries from selected clients
-        const selectedCountries = filteredData
-          .filter(building => filters.clients.includes(building.client))
-          .map(building => building.country);
-        return [...new Set(selectedCountries)];
+        // Check if any client from this country is selected
+        const clientsFromCountry = filteredData
+          .filter(building => building.country === option)
+          .map(building => building.client);
+        return clientsFromCountry.some(client => filters.clients.includes(client));
       case 'isOnline':
-        return filters.onlineOnly ? ['Online'] : [];
+        return (option === 'Online' && filters.onlineOnly) || (option === 'Offline' && !filters.onlineOnly);
       default:
-        const featureKey = filters.groupMode as keyof typeof filters.features;
-        return filters.features[featureKey] ? ['Yes'] : [];
+        // For feature-based grouping
+        if (filters.groupMode in filters.features) {
+          const featureKey = filters.groupMode as keyof typeof filters.features;
+          const featureValue = filters.features[featureKey];
+          return (option === 'Yes' && featureValue) || (option === 'No' && !featureValue);
+        }
+        return false;
     }
   };
 
   const handleOptionToggle = (option: string) => {
-    const currentSelected = getSelectedOptions();
-    const newSelected = currentSelected.includes(option)
-      ? currentSelected.filter(item => item !== option)
-      : [...currentSelected, option];
-
     switch (filters.groupMode) {
       case 'client':
-        onFiltersChange({ ...filters, clients: newSelected });
+        // Toggle client selection
+        const newClients = filters.clients.includes(option)
+          ? filters.clients.filter(client => client !== option)
+          : [...filters.clients, option];
+        onFiltersChange({ ...filters, clients: newClients });
         break;
+        
       case 'country':
-        // Find all clients from the selected countries
-        const clientsFromCountries = filteredData
-          .filter(building => newSelected.includes(building.country))
+        // Find all clients from the selected country
+        const clientsFromCountry = filteredData
+          .filter(building => building.country === option)
           .map(building => building.client);
-        const uniqueClients = [...new Set(clientsFromCountries)];
-        onFiltersChange({ ...filters, clients: uniqueClients });
+        
+        // Check if any client from this country is already selected
+        const hasSelectedClients = clientsFromCountry.some(client => filters.clients.includes(client));
+        
+        if (hasSelectedClients) {
+          // Remove all clients from this country
+          const remainingClients = filters.clients.filter(client => !clientsFromCountry.includes(client));
+          onFiltersChange({ ...filters, clients: remainingClients });
+        } else {
+          // Add all clients from this country
+          const uniqueClients = [...new Set([...filters.clients, ...clientsFromCountry])];
+          onFiltersChange({ ...filters, clients: uniqueClients });
+        }
         break;
+        
       case 'isOnline':
-        onFiltersChange({ ...filters, onlineOnly: newSelected.includes('Online') });
+        // Toggle online filter
+        if (option === 'Online') {
+          onFiltersChange({ ...filters, onlineOnly: !filters.onlineOnly });
+        } else if (option === 'Offline') {
+          onFiltersChange({ ...filters, onlineOnly: !filters.onlineOnly });
+        }
         break;
+        
       default:
-        const featureKey = filters.groupMode as keyof typeof filters.features;
-        onFiltersChange({
-          ...filters,
-          features: {
-            ...filters.features,
-            [featureKey]: newSelected.includes('Yes')
+        // For feature-based grouping
+        if (filters.groupMode in filters.features) {
+          const featureKey = filters.groupMode as keyof typeof filters.features;
+          const currentValue = filters.features[featureKey];
+          
+          // Toggle the feature based on the option clicked
+          let newValue = currentValue;
+          if (option === 'Yes') {
+            newValue = !currentValue; // Toggle when clicking Yes
+          } else if (option === 'No') {
+            newValue = !currentValue; // Toggle when clicking No
           }
-        });
+          
+          onFiltersChange({
+            ...filters,
+            features: {
+              ...filters.features,
+              [featureKey]: newValue
+            }
+          });
+        }
         break;
     }
   };
@@ -329,11 +366,15 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   <div key={option} className="flex items-center space-x-2">
                     <Checkbox
                       id={`option-${option}`}
-                      checked={getSelectedOptions().includes(option)}
+                      checked={isOptionSelected(option)}
                       onCheckedChange={() => handleOptionToggle(option)}
                       className="border-gray-500"
                     />
-                    <Label htmlFor={`option-${option}`} className="text-sm text-gray-300 cursor-pointer">
+                    <Label 
+                      htmlFor={`option-${option}`} 
+                      className="text-sm text-gray-300 cursor-pointer"
+                      onClick={() => handleOptionToggle(option)}
+                    >
                       {option}
                     </Label>
                   </div>
