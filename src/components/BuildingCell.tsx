@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { TreemapNode, ColorMode } from '@/types/TreemapData';
 import { BuildingTooltip } from './BuildingTooltip';
@@ -92,7 +93,7 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode }) =
 
       case 'adaptiveMin':
         // Yellow (0) to Grey (1) gradient
-        const minValue = building.features.adaptiveMin;
+        const minValue = building.adaptiveMin;
         const yellowR = Math.round(251 + (107 - 251) * minValue);
         const yellowG = Math.round(191 + (116 - 191) * minValue);
         const yellowB = Math.round(36 + (128 - 36) * minValue);
@@ -108,7 +109,7 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode }) =
 
       case 'adaptiveMax':
         // Purple (0) to Grey (1) gradient
-        const maxValue = building.features.adaptiveMax;
+        const maxValue = building.adaptiveMax;
         const purpleR = Math.round(139 + (107 - 139) * maxValue);
         const purpleG = Math.round(92 + (116 - 92) * maxValue);
         const purpleB = Math.round(246 + (128 - 246) * maxValue);
@@ -123,47 +124,47 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode }) =
         };
 
       case 'hasClimateBaseline':
-        return building.features.hasClimateBaseline 
+        return building.hasClimateBaseline 
           ? { bg: '#059669', border: '#047857' } // Green
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'hasReadWriteDiscrepancies':
-        return building.features.hasReadWriteDiscrepancies 
+        return building.hasReadWriteDiscrepancies 
           ? { bg: '#EA580C', border: '#C2410C' } // Orange
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'hasZoneAssets':
-        return building.features.hasZoneAssets 
+        return building.hasZoneAssets 
           ? { bg: '#7C3AED', border: '#6D28D9' } // Purple
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'hasHeatingCircuit':
-        return building.features.hasHeatingCircuit 
+        return building.hasHeatingCircuit 
           ? { bg: '#DC2626', border: '#991B1B' } // Red
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'hasVentilation':
-        return building.features.hasVentilation 
+        return building.hasVentilation 
           ? { bg: '#0EA5E9', border: '#0284C7' } // Sky blue
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'missingVSGTOVConnections':
-        return building.features.missingVSGTOVConnections 
+        return building.missingVSGTOVConnections 
           ? { bg: '#F59E0B', border: '#D97706' } // Amber
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'missingLBGPOVConnections':
-        return building.features.missingLBGPOVConnections 
+        return building.missingLBGPOVConnections 
           ? { bg: '#EF4444', border: '#DC2626' } // Red
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'missingLBGTOVConnections':
-        return building.features.missingLBGTOVConnections 
+        return building.missingLBGTOVConnections 
           ? { bg: '#F97316', border: '#EA580C' } // Orange
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'savingEnergy':
-        const savingValue = building.features.savingEnergy;
+        const savingValue = building.savingEnergy;
         if (savingValue <= -0.1) return { bg: '#DC2626', border: '#991B1B' }; // Red for -10% or more
         if (savingValue <= -0.05) return { bg: '#EF4444', border: '#DC2626' }; // Light red for -5% to -10%
         if (savingValue <= 0.05) return { bg: '#6B7280', border: '#4B5563' }; // Gray for neutral
@@ -172,44 +173,44 @@ export const BuildingCell: React.FC<BuildingCellProps> = ({ node, colorMode }) =
         return { bg: '#059669', border: '#047857' }; // Dark green for 20+
 
       case 'automaticComfortScheduleActive':
-        return building.features.automaticComfortScheduleActive 
+        return building.automaticComfortScheduleActive 
           ? { bg: '#16A34A', border: '#15803D' } // Green
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'manualComfortScheduleActive':
-        return building.features.manualComfortScheduleActive 
+        return building.manualComfortScheduleActive 
           ? { bg: '#CA8A04', border: '#A16207' } // Yellow
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'componentsErrors':
-        return building.features.componentsErrors 
+        return building.componentsErrors 
           ? { bg: '#DC2626', border: '#991B1B' } // Red
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'modelTrainingTestR2Score':
-        const r2Score = building.features.modelTrainingTestR2Score;
+        const r2Score = building.modelTrainingTestR2Score;
         if (r2Score < 0.3) return { bg: '#DC2626', border: '#991B1B' }; // Red for poor
         if (r2Score < 0.6) return { bg: '#F59E0B', border: '#D97706' }; // Amber for fair
         if (r2Score < 0.8) return { bg: '#FBBF24', border: '#F59E0B' }; // Yellow for good
         return { bg: '#10B981', border: '#059669' }; // Green for excellent
 
       case 'hasDistrictHeatingMeter':
-        return building.features.hasDistrictHeatingMeter 
+        return building.hasDistrictHeatingMeter 
           ? { bg: '#BE123C', border: '#9F1239' } // Rose
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'hasDistrictCoolingMeter':
-        return building.features.hasDistrictCoolingMeter 
+        return building.hasDistrictCoolingMeter 
           ? { bg: '#0891B2', border: '#0E7490' } // Cyan
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'hasElectricityMeter':
-        return building.features.hasElectricityMeter 
+        return building.hasElectricityMeter 
           ? { bg: '#7C2D12', border: '#92400E' } // Brown
           : { bg: '#6B7280', border: '#4B5563' }; // Gray
 
       case 'lastWeekUptime':
-        const uptime = building.features.lastWeekUptime;
+        const uptime = building.lastWeekUptime;
         if (uptime >= 0.95) return { bg: '#059669', border: '#047857' }; // Excellent - Dark green
         if (uptime >= 0.90) return { bg: '#10B981', border: '#059669' }; // Good - Green
         if (uptime >= 0.80) return { bg: '#FBBF24', border: '#F59E0B' }; // Fair - Yellow
