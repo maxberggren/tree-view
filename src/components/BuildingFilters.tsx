@@ -138,6 +138,9 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
         return clientsFromCountry.some(client => filters.clients.includes(client));
       case 'isOnline':
         return (option === 'Online' && filters.onlineOnly) || (option === 'Offline' && !filters.onlineOnly);
+      case 'lastWeekUptime':
+        // For uptime ranges, check if the lastWeekUptime filter is enabled
+        return filters.features.lastWeekUptime;
       default:
         // For feature-based grouping
         if (filters.groupMode in filters.features) {
@@ -186,6 +189,17 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
         } else if (option === 'Offline') {
           onFiltersChange({ ...filters, onlineOnly: !filters.onlineOnly });
         }
+        break;
+
+      case 'lastWeekUptime':
+        // For uptime grouping, toggle the uptime filter
+        onFiltersChange({
+          ...filters,
+          features: {
+            ...filters.features,
+            lastWeekUptime: !filters.features.lastWeekUptime
+          }
+        });
         break;
         
       default:
