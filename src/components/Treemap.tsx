@@ -105,6 +105,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     const urlColorMode = searchParams.get('colorMode') as ColorMode;
     const urlGroupMode = searchParams.get('groupMode') as GroupMode;
     const urlClients = searchParams.get('clients')?.split(',').filter(Boolean) || [];
+    const urlSelectedOptions = searchParams.get('selectedOptions')?.split(',').filter(Boolean) || [];
     const urlOnlineOnly = searchParams.get('onlineOnly') === 'true';
     const urlCycleEnabled = searchParams.get('cycleEnabled') === 'true';
     const urlCycleInterval = parseInt(searchParams.get('cycleInterval') || '5');
@@ -120,9 +121,10 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
 
     return {
       ...initialFilters,
-      colorMode: urlColorMode && Object.keys(initialFilters).includes('colorMode') ? urlColorMode : initialFilters.colorMode,
+      colorMode: urlColorMode && colorModes.includes(urlColorMode) ? urlColorMode : initialFilters.colorMode,
       groupMode: urlGroupMode || initialFilters.groupMode,
       clients: urlClients,
+      selectedOptions: urlSelectedOptions.length > 0 ? urlSelectedOptions : urlClients, // Use selectedOptions or fallback to clients for backward compatibility
       onlineOnly: urlOnlineOnly,
       features: urlFeatures,
       cycleEnabled: urlCycleEnabled,
@@ -171,7 +173,12 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       newParams.set('groupMode', filters.groupMode);
     }
     
-    // Add clients
+    // Add selectedOptions (new unified system)
+    if (filters.selectedOptions.length > 0) {
+      newParams.set('selectedOptions', filters.selectedOptions.join(','));
+    }
+    
+    // Keep clients for backward compatibility
     if (filters.clients.length > 0) {
       newParams.set('clients', filters.clients.join(','));
     }
