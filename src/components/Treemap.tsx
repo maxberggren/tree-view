@@ -371,54 +371,24 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   };
 
   const handleGroupClick = (groupName: string) => {
-    switch (filters.groupMode) {
-      case 'client':
-        setFilters({
-          ...filters,
-          clients: [groupName]
-        });
-        break;
-      case 'country':
-        // Filter by the clicked country
-        const buildingsFromCountry = mockBuildingData
-          .filter(building => building.country === groupName)
-          .map(building => building.client);
-        const uniqueClients = [...new Set(buildingsFromCountry)];
-        setFilters({
-          ...filters,
-          clients: uniqueClients
-        });
-        break;
-      case 'isOnline':
-        setFilters({
-          ...filters,
-          onlineOnly: groupName === 'Online'
-        });
-        break;
-      case 'lastWeekUptime':
-        // For uptime grouping, we can enable the uptime filter
-        setFilters({
-          ...filters,
-          features: {
-            ...filters.features,
-            lastWeekUptime: true
-          }
-        });
-        break;
-      default:
-        // For feature-based grouping, toggle the corresponding feature filter
-        if (filters.groupMode in filters.features) {
-          const featureKey = filters.groupMode as keyof typeof filters.features;
-          setFilters({
-            ...filters,
-            features: {
-              ...filters.features,
-              [featureKey]: groupName === 'Yes'
-            }
-          });
-        }
-        break;
+    // Use the unified selectedOptions system
+    const isSelected = filters.selectedOptions.includes(groupName);
+    let newSelectedOptions;
+    
+    if (isSelected) {
+      // Remove the option
+      newSelectedOptions = filters.selectedOptions.filter(opt => opt !== groupName);
+    } else {
+      // Add the option
+      newSelectedOptions = [...filters.selectedOptions, groupName];
     }
+    
+    setFilters({
+      ...filters,
+      selectedOptions: newSelectedOptions,
+      // Keep clients in sync for backward compatibility
+      clients: filters.groupMode === 'client' ? newSelectedOptions : filters.clients
+    });
   };
 
   const handleGridClick = () => {

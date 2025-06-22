@@ -138,14 +138,14 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
       // Remove option
       newSelectedOptions = filters.selectedOptions.filter(opt => opt !== option);
     } else {
-      // Add option
+      // Add option (allow multiple selections)
       newSelectedOptions = [...filters.selectedOptions, option];
     }
     
     onFiltersChange({ 
       ...filters, 
       selectedOptions: newSelectedOptions,
-      // Keep clients in sync for backward compatibility
+      // Keep clients in sync for backward compatibility when in client mode
       clients: filters.groupMode === 'client' ? newSelectedOptions : filters.clients
     });
   };
