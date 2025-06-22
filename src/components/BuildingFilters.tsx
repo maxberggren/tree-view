@@ -1,37 +1,18 @@
+
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { ChevronDown, ChevronUp, Settings, Play, Pause } from 'lucide-react';
 import { ColorMode, GroupMode } from '@/types/TreemapData';
 
 interface FilterState {
-  clients: string[];
-  onlineOnly: boolean;
-  features: {
-    hasClimateBaseline: boolean;
-    hasReadWriteDiscrepancies: boolean;
-    hasZoneAssets: boolean;
-    hasHeatingCircuit: boolean;
-    hasVentilation: boolean;
-    missingVSGTOVConnections: boolean;
-    missingLBGPOVConnections: boolean;
-    missingLBGTOVConnections: boolean;
-    automaticComfortScheduleActive: boolean;
-    manualComfortScheduleActive: boolean;
-    componentsErrors: boolean;
-    hasDistrictHeatingMeter: boolean;
-    hasDistrictCoolingMeter: boolean;
-    hasElectricityMeter: boolean;
-    lastWeekUptime: boolean;
-  };
-  temperatureRange: [number, number];
   colorMode: ColorMode;
   groupMode: GroupMode;
   cycleEnabled: boolean;
   cycleInterval: number;
+  selectedValues: string[]; // Dynamic filter values based on group mode
 }
 
 interface BuildingFiltersProps {
@@ -105,75 +86,68 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: '30', label: '30 seconds' },
   ];
 
-  // Get available options based on group mode
-  const getAvailableOptions = () => {
+  // Get available filter options based on the current group mode
+  const getFilterOptions = () => {
     if (!filteredData || filteredData.length === 0) return [];
     
     switch (filters.groupMode) {
       case 'client':
-        return [...new Set(filteredData.map(building => building.client))];
+        return [...new Set(filteredData.map(building => building.client))].sort();
       case 'country':
-        return [...new Set(filteredData.map(building => building.country))];
+        return [...new Set(filteredData.map(building => building.country))].sort();
       case 'isOnline':
         return ['Online', 'Offline'];
       case 'lastWeekUptime':
         return ['Excellent (95%+)', 'Good (90-95%)', 'Fair (80-90%)', 'Poor (<80%)'];
       default:
-        // For feature-based grouping
+        // For boolean feature-based grouping
         return ['Yes', 'No'];
     }
   };
 
-  const getSelectedOptions = () => {
-    switch (filters.groupMode) {
+  // Get the display value for a building based on the current group mode
+  const getDisplayValue = (building: any, groupMode: GroupMode): string => {
+    switch (groupMode) {
       case 'client':
-        return filters.clients;
+        return building.client;
       case 'country':
-        // Extract countries from selected clients
-        const selectedCountries = filteredData
-          .filter(building => filters.clients.includes(building.client))
-          .map(building => building.country);
-        return [...new Set(selectedCountries)];
+        return building.country;
       case 'isOnline':
-        return filters.onlineOnly ? ['Online'] : [];
+        return building.isOnline ? 'Online' : 'Offline';
+      case 'lastWeekUptime':
+        const uptime = building.lastWeekUptime;
+        if (uptime >= 0.95) return 'Excellent (95%+)';
+        if (uptime >= 0.90) return 'Good (90-95%)';
+        if (uptime >= 0.80) return 'Fair (80-90%)';
+        return 'Poor (<80%)';
       default:
-        const featureKey = filters.groupMode as keyof typeof filters.features;
-        return filters.features[featureKey] ? ['Yes'] : [];
+        // For boolean features
+        return building[groupMode] ? 'Yes' : 'No';
     }
   };
 
-  const handleOptionToggle = (option: string) => {
-    const currentSelected = getSelectedOptions();
-    const newSelected = currentSelected.includes(option)
-      ? currentSelected.filter(item => item !== option)
-      : [...currentSelected, option];
+  const handleFilterToggle = (value: string) => {
+    const newSelected = filters.selectedValues.includes(value)
+      ? filters.selectedValues.filter(v => v !== value)
+      : [...filters.selectedValues, value];
+    
+    onFiltersChange({ ...filters, selectedValues: newSelected });
+  };
 
-    switch (filters.groupMode) {
-      case 'client':
-        onFiltersChange({ ...filters, clients: newSelected });
-        break;
-      case 'country':
-        // Find all clients from the selected countries
-        const clientsFromCountries = filteredData
-          .filter(building => newSelected.includes(building.country))
-          .map(building => building.client);
-        const uniqueClients = [...new Set(clientsFromCountries)];
-        onFiltersChange({ ...filters, clients: uniqueClients });
-        break;
-      case 'isOnline':
-        onFiltersChange({ ...filters, onlineOnly: newSelected.includes('Online') });
-        break;
-      default:
-        const featureKey = filters.groupMode as keyof typeof filters.features;
-        onFiltersChange({
-          ...filters,
-          features: {
-            ...filters.features,
-            [featureKey]: newSelected.includes('Yes')
-          }
-        });
-        break;
-    }
+  const handleGroupModeChange = (newGroupMode: GroupMode) => {
+    // Clear selected values when changing group mode
+    onFiltersChange({ 
+      ...filters, 
+      groupMode: newGroupMode,
+      selectedValues: []
+    });
+  };
+
+  const clearAllFilters = () => {
+    onFiltersChange({
+      ...filters,
+      selectedValues: []
+    });
   };
 
   const getGroupModeLabel = () => {
@@ -181,52 +155,8 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     return option ? option.label : filters.groupMode;
   };
 
-  const getCurrentGroupModeLabel = () => {
-    const option = groupModeOptions.find(opt => opt.value === filters.groupMode);
-    return option ? option.label : filters.groupMode;
-  };
-
   const getActiveFiltersCount = () => {
-    let count = 0;
-    if (filters.clients.length > 0) count++;
-    if (filters.onlineOnly) count++;
-    if (Object.values(filters.features).some(feature => feature)) count++;
-    return count;
-  };
-
-  const clearAllFilters = () => {
-    onFiltersChange({
-      ...filters,
-      clients: [],
-      onlineOnly: false,
-      features: {
-        hasClimateBaseline: false,
-        hasReadWriteDiscrepancies: false,
-        hasZoneAssets: false,
-        hasHeatingCircuit: false,
-        hasVentilation: false,
-        missingVSGTOVConnections: false,
-        missingLBGPOVConnections: false,
-        missingLBGTOVConnections: false,
-        automaticComfortScheduleActive: false,
-        manualComfortScheduleActive: false,
-        componentsErrors: false,
-        hasDistrictHeatingMeter: false,
-        hasDistrictCoolingMeter: false,
-        hasElectricityMeter: false,
-        lastWeekUptime: false,
-      }
-    });
-  };
-
-  const handleFeatureToggle = (feature: keyof FilterState['features']) => {
-    onFiltersChange({
-      ...filters,
-      features: {
-        ...filters.features,
-        [feature]: !filters.features[feature]
-      }
-    });
+    return filters.selectedValues.length;
   };
 
   return (
@@ -269,7 +199,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               <Label className="text-sm font-medium text-gray-200">Group Mode</Label>
               <Select 
                 value={filters.groupMode} 
-                onValueChange={(value) => onFiltersChange({ ...filters, groupMode: value as GroupMode })}
+                onValueChange={handleGroupModeChange}
               >
                 <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
@@ -335,19 +265,19 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               </div>
             </div>
 
-            {/* Dynamic Group Filters */}
+            {/* Dynamic Filter Section */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium text-gray-200">{getGroupModeLabel()}</Label>
+              <Label className="text-sm font-medium text-gray-200">Filter by {getGroupModeLabel()}</Label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {getAvailableOptions().map(option => (
+                {getFilterOptions().map(option => (
                   <div key={option} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`option-${option}`}
-                      checked={getSelectedOptions().includes(option)}
-                      onCheckedChange={() => handleOptionToggle(option)}
+                      id={`filter-${option}`}
+                      checked={filters.selectedValues.includes(option)}
+                      onCheckedChange={() => handleFilterToggle(option)}
                       className="border-gray-500"
                     />
-                    <Label htmlFor={`option-${option}`} className="text-sm text-gray-300 cursor-pointer">
+                    <Label htmlFor={`filter-${option}`} className="text-sm text-gray-300 cursor-pointer">
                       {option}
                     </Label>
                   </div>
@@ -355,129 +285,13 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               </div>
             </div>
 
-            {/* Feature Filters */}
+            {/* Stats Section */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium text-gray-200">Features</Label>
-              <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasClimateBaseline"
-                    checked={filters.features.hasClimateBaseline}
-                    onCheckedChange={() => handleFeatureToggle('hasClimateBaseline')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasClimateBaseline" className="text-xs text-gray-300 cursor-pointer">
-                    Climate Baseline
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasReadWriteDiscrepancies"
-                    checked={filters.features.hasReadWriteDiscrepancies}
-                    onCheckedChange={() => handleFeatureToggle('hasReadWriteDiscrepancies')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasReadWriteDiscrepancies" className="text-xs text-gray-300 cursor-pointer">
-                    R/W Issues
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasZoneAssets"
-                    checked={filters.features.hasZoneAssets}
-                    onCheckedChange={() => handleFeatureToggle('hasZoneAssets')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasZoneAssets" className="text-xs text-gray-300 cursor-pointer">
-                    Zone Assets
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasHeatingCircuit"
-                    checked={filters.features.hasHeatingCircuit}
-                    onCheckedChange={() => handleFeatureToggle('hasHeatingCircuit')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasHeatingCircuit" className="text-xs text-gray-300 cursor-pointer">
-                    Heating Circuit
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasVentilation"
-                    checked={filters.features.hasVentilation}
-                    onCheckedChange={() => handleFeatureToggle('hasVentilation')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasVentilation" className="text-xs text-gray-300 cursor-pointer">
-                    Ventilation
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="componentsErrors"
-                    checked={filters.features.componentsErrors}
-                    onCheckedChange={() => handleFeatureToggle('componentsErrors')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="componentsErrors" className="text-xs text-gray-300 cursor-pointer">
-                    Component Errors
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasDistrictHeatingMeter"
-                    checked={filters.features.hasDistrictHeatingMeter}
-                    onCheckedChange={() => handleFeatureToggle('hasDistrictHeatingMeter')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasDistrictHeatingMeter" className="text-xs text-gray-300 cursor-pointer">
-                    Heating Meter
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasDistrictCoolingMeter"
-                    checked={filters.features.hasDistrictCoolingMeter}
-                    onCheckedChange={() => handleFeatureToggle('hasDistrictCoolingMeter')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasDistrictCoolingMeter" className="text-xs text-gray-300 cursor-pointer">
-                    Cooling Meter
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasElectricityMeter"
-                    checked={filters.features.hasElectricityMeter}
-                    onCheckedChange={() => handleFeatureToggle('hasElectricityMeter')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasElectricityMeter" className="text-xs text-gray-300 cursor-pointer">
-                    Electricity Meter
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="lastWeekUptime"
-                    checked={filters.features.lastWeekUptime}
-                    onCheckedChange={() => handleFeatureToggle('lastWeekUptime')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="lastWeekUptime" className="text-xs text-gray-300 cursor-pointer">
-                    Last Week Uptime
-                  </Label>
-                </div>
+              <Label className="text-sm font-medium text-gray-200">Statistics</Label>
+              <div className="text-sm text-gray-300 space-y-1">
+                <div>Total Buildings: {filteredData?.length || 0}</div>
+                <div>Active Filters: {getActiveFiltersCount()}</div>
+                <div>Group Mode: {getGroupModeLabel()}</div>
               </div>
             </div>
           </div>

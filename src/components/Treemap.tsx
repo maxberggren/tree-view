@@ -1,11 +1,11 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { treemap, hierarchy } from 'd3-hierarchy';
-import { BuildingCell } from './BuildingCell';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import * as d3 from 'd3-hierarchy';
+import { TreemapCell } from './TreemapCell';
 import { BuildingFilters } from './BuildingFilters';
 import { StatsCard } from './StatsCard';
-import { TreemapNode, ColorMode, GroupMode, BuildingData } from '@/types/TreemapData';
-import { mockBuildingData } from '@/data/mockBuildingData';
-import { useSearchParams } from 'react-router-dom';
+import { TreemapNode, BuildingData, ColorMode, GroupMode } from '@/types/TreemapData';
+import { buildingData } from '@/data/mockBuildingData';
 
 interface TreemapProps {
   width: number;
@@ -13,878 +13,201 @@ interface TreemapProps {
 }
 
 interface FilterState {
-  clients: string[];
-  onlineOnly: boolean;
-  features: {
-    hasClimateBaseline: boolean;
-    hasReadWriteDiscrepancies: boolean;
-    hasZoneAssets: boolean;
-    hasHeatingCircuit: boolean;
-    hasVentilation: boolean;
-    missingVSGTOVConnections: boolean;
-    missingLBGPOVConnections: boolean;
-    missingLBGTOVConnections: boolean;
-    automaticComfortScheduleActive: boolean;
-    manualComfortScheduleActive: boolean;
-    componentsErrors: boolean;
-    hasDistrictHeatingMeter: boolean;
-    hasDistrictCoolingMeter: boolean;
-    hasElectricityMeter: boolean;
-    lastWeekUptime: boolean;
-  };
-  temperatureRange: [number, number];
   colorMode: ColorMode;
   groupMode: GroupMode;
   cycleEnabled: boolean;
   cycleInterval: number;
+  selectedValues: string[];
 }
 
-const initialFilters: FilterState = {
-  clients: [],
-  onlineOnly: false,
-  features: {
-    hasClimateBaseline: false,
-    hasReadWriteDiscrepancies: false,
-    hasZoneAssets: false,
-    hasHeatingCircuit: false,
-    hasVentilation: false,
-    missingVSGTOVConnections: false,
-    missingLBGPOVConnections: false,
-    missingLBGTOVConnections: false,
-    automaticComfortScheduleActive: false,
-    manualComfortScheduleActive: false,
-    componentsErrors: false,
-    hasDistrictHeatingMeter: false,
-    hasDistrictCoolingMeter: false,
-    hasElectricityMeter: false,
-    lastWeekUptime: false,
-  },
-  temperatureRange: [5, 35],
-  colorMode: 'temperature',
-  groupMode: 'client',
-  cycleEnabled: false,
-  cycleInterval: 5,
-};
-
-// All available color modes for cycling
-const colorModes: ColorMode[] = [
-  'temperature',
-  'comfort',
-  'adaptiveMin',
-  'adaptiveMax',
-  'hasClimateBaseline',
-  'hasReadWriteDiscrepancies',
-  'hasZoneAssets',
-  'hasHeatingCircuit',
-  'hasVentilation',
-  'missingVSGTOVConnections',
-  'missingLBGPOVConnections',
-  'missingLBGTOVConnections',
-  'savingEnergy',
-  'automaticComfortScheduleActive',
-  'manualComfortScheduleActive',
-  'componentsErrors',
-  'modelTrainingTestR2Score',
-  'hasDistrictHeatingMeter',
-  'hasDistrictCoolingMeter',
-  'hasElectricityMeter',
-  'lastWeekUptime',
-];
-
 export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
-  const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
-  const [filtersExpanded, setFiltersExpanded] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const cycleIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Initialize filters from URL params
-  const [filters, setFilters] = useState<FilterState>(() => {
-    const urlColorMode = searchParams.get('colorMode') as ColorMode;
-    const urlGroupMode = searchParams.get('groupMode') as GroupMode;
-    const urlClients = searchParams.get('clients')?.split(',').filter(Boolean) || [];
-    const urlOnlineOnly = searchParams.get('onlineOnly') === 'true';
-    const urlCycleEnabled = searchParams.get('cycleEnabled') === 'true';
-    const urlCycleInterval = parseInt(searchParams.get('cycleInterval') || '5');
-    
-    // Parse feature filters from URL
-    const urlFeatures = { ...initialFilters.features };
-    Object.keys(initialFilters.features).forEach(key => {
-      const urlValue = searchParams.get(key);
-      if (urlValue === 'true') {
-        urlFeatures[key as keyof FilterState['features']] = true;
-      }
-    });
-
-    return {
-      ...initialFilters,
-      colorMode: urlColorMode && Object.keys(initialFilters).includes('colorMode') ? urlColorMode : initialFilters.colorMode,
-      groupMode: urlGroupMode || initialFilters.groupMode,
-      clients: urlClients,
-      onlineOnly: urlOnlineOnly,
-      features: urlFeatures,
-      cycleEnabled: urlCycleEnabled,
-      cycleInterval: isNaN(urlCycleInterval) ? 5 : urlCycleInterval,
-    };
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    colorMode: 'temperature',
+    groupMode: 'client',
+    cycleEnabled: false,
+    cycleInterval: 5,
+    selectedValues: []
   });
 
-  // Cycle through color modes
+  // Initialize filters from URL parameters
   useEffect(() => {
-    if (filters.cycleEnabled) {
-      cycleIntervalRef.current = setInterval(() => {
-        setFilters(prevFilters => {
-          const currentIndex = colorModes.indexOf(prevFilters.colorMode);
-          const nextIndex = (currentIndex + 1) % colorModes.length;
-          return {
-            ...prevFilters,
-            colorMode: colorModes[nextIndex]
-          };
-        });
-      }, filters.cycleInterval * 1000);
-
-      return () => {
-        if (cycleIntervalRef.current) {
-          clearInterval(cycleIntervalRef.current);
-        }
-      };
-    } else {
-      if (cycleIntervalRef.current) {
-        clearInterval(cycleIntervalRef.current);
-        cycleIntervalRef.current = null;
-      }
+    const urlParams = new URLSearchParams(window.location.search);
+    const colorMode = urlParams.get('colorMode') as ColorMode;
+    const groupMode = urlParams.get('groupMode') as GroupMode;
+    
+    if (colorMode || groupMode) {
+      setFilters(prev => ({
+        ...prev,
+        ...(colorMode && { colorMode }),
+        ...(groupMode && { groupMode })
+      }));
     }
-  }, [filters.cycleEnabled, filters.cycleInterval]);
+  }, []);
 
   // Update URL when filters change
   useEffect(() => {
-    const newParams = new URLSearchParams();
-    
-    // Add color mode
-    if (filters.colorMode !== initialFilters.colorMode) {
-      newParams.set('colorMode', filters.colorMode);
-    }
+    const url = new URL(window.location.href);
+    url.searchParams.set('colorMode', filters.colorMode);
+    url.searchParams.set('groupMode', filters.groupMode);
+    window.history.replaceState({}, '', url.toString());
+  }, [filters.colorMode, filters.groupMode]);
 
-    // Add group mode
-    if (filters.groupMode !== initialFilters.groupMode) {
-      newParams.set('groupMode', filters.groupMode);
-    }
-    
-    // Add clients
-    if (filters.clients.length > 0) {
-      newParams.set('clients', filters.clients.join(','));
-    }
-    
-    // Add online only
-    if (filters.onlineOnly !== initialFilters.onlineOnly) {
-      newParams.set('onlineOnly', filters.onlineOnly.toString());
-    }
+  // Cycle through color modes
+  useEffect(() => {
+    if (!filters.cycleEnabled) return;
 
-    // Add cycle settings
-    if (filters.cycleEnabled !== initialFilters.cycleEnabled) {
-      newParams.set('cycleEnabled', filters.cycleEnabled.toString());
-    }
+    const colorModes: ColorMode[] = [
+      'temperature', 'comfort', 'hasClimateBaseline', 'hasReadWriteDiscrepancies',
+      'hasZoneAssets', 'hasHeatingCircuit', 'hasVentilation', 'componentsErrors',
+      'lastWeekUptime', 'savingEnergy', 'modelTrainingTestR2Score'
+    ];
 
-    if (filters.cycleInterval !== initialFilters.cycleInterval) {
-      newParams.set('cycleInterval', filters.cycleInterval.toString());
-    }
-    
-    // Add feature filters
-    Object.entries(filters.features).forEach(([key, value]) => {
-      if (value !== initialFilters.features[key as keyof FilterState['features']]) {
-        newParams.set(key, value.toString());
-      }
-    });
+    const interval = setInterval(() => {
+      setFilters(prev => {
+        const currentIndex = colorModes.indexOf(prev.colorMode);
+        const nextIndex = (currentIndex + 1) % colorModes.length;
+        return { ...prev, colorMode: colorModes[nextIndex] };
+      });
+    }, filters.cycleInterval * 1000);
 
-    setSearchParams(newParams, { replace: true });
-  }, [filters, setSearchParams]);
+    return () => clearInterval(interval);
+  }, [filters.cycleEnabled, filters.cycleInterval]);
 
-  const availableClients = useMemo(() => {
-    return [...new Set(mockBuildingData.map(building => building.client))];
-  }, []);
-
+  // Filter data based on selected values and group mode
   const filteredData = useMemo(() => {
-    return mockBuildingData.filter(building => {
-      // Client filter
-      if (filters.clients.length > 0 && !filters.clients.includes(building.client)) {
-        return false;
-      }
+    if (filters.selectedValues.length === 0) {
+      return buildingData;
+    }
 
-      // Online filter
-      if (filters.onlineOnly && !building.isOnline) {
-        return false;
-      }
-
-      // Feature filters - now accessing directly from building instead of building.features
-      if (filters.features.hasClimateBaseline && !building.hasClimateBaseline) return false;
-      if (filters.features.hasReadWriteDiscrepancies && !building.hasReadWriteDiscrepancies) return false;
-      if (filters.features.hasZoneAssets && !building.hasZoneAssets) return false;
-      if (filters.features.hasHeatingCircuit && !building.hasHeatingCircuit) return false;
-      if (filters.features.hasVentilation && !building.hasVentilation) return false;
-      if (filters.features.missingVSGTOVConnections && !building.missingVSGTOVConnections) return false;
-      if (filters.features.missingLBGPOVConnections && !building.missingLBGPOVConnections) return false;
-      if (filters.features.missingLBGTOVConnections && !building.missingLBGTOVConnections) return false;
-      if (filters.features.automaticComfortScheduleActive && !building.automaticComfortScheduleActive) return false;
-      if (filters.features.manualComfortScheduleActive && !building.manualComfortScheduleActive) return false;
-      if (filters.features.componentsErrors && !building.componentsErrors) return false;
-      if (filters.features.hasDistrictHeatingMeter && !building.hasDistrictHeatingMeter) return false;
-      if (filters.features.hasDistrictCoolingMeter && !building.hasDistrictCoolingMeter) return false;
-      if (filters.features.hasElectricityMeter && !building.hasElectricityMeter) return false;
-      if (filters.features.lastWeekUptime && building.lastWeekUptime < 0.95) return false; // Filter for high uptime (95%+)
-
-      return true;
+    return buildingData.filter(building => {
+      const displayValue = getDisplayValue(building, filters.groupMode);
+      return filters.selectedValues.includes(displayValue);
     });
-  }, [filters]);
+  }, [filters.selectedValues, filters.groupMode]);
 
-  // Group buildings based on the selected group mode
+  // Helper function to get display value for a building
+  const getDisplayValue = (building: BuildingData, groupMode: GroupMode): string => {
+    switch (groupMode) {
+      case 'client':
+        return building.client;
+      case 'country':
+        return building.country;
+      case 'isOnline':
+        return building.isOnline ? 'Online' : 'Offline';
+      case 'lastWeekUptime':
+        const uptime = building.lastWeekUptime;
+        if (uptime >= 0.95) return 'Excellent (95%+)';
+        if (uptime >= 0.90) return 'Good (90-95%)';
+        if (uptime >= 0.80) return 'Fair (80-90%)';
+        return 'Poor (<80%)';
+      default:
+        // For boolean features
+        return building[groupMode] ? 'Yes' : 'No';
+    }
+  };
+
+  // Group data based on group mode
   const groupedData = useMemo(() => {
-    const buildings = filteredData;
-    
-    // Group by selected attribute
     const groups = new Map<string, BuildingData[]>();
     
-    buildings.forEach(building => {
-      let groupKey: string;
-      
-      switch (filters.groupMode) {
-        case 'client':
-          groupKey = building.client;
-          break;
-        case 'country':
-          groupKey = building.country;
-          break;
-        case 'isOnline':
-          groupKey = building.isOnline ? 'Online' : 'Offline';
-          break;
-        case 'lastWeekUptime':
-          // Group by uptime ranges
-          const uptime = building.lastWeekUptime;
-          if (uptime >= 0.95) groupKey = 'Excellent (95%+)';
-          else if (uptime >= 0.90) groupKey = 'Good (90-95%)';
-          else if (uptime >= 0.80) groupKey = 'Fair (80-90%)';
-          else groupKey = 'Poor (<80%)';
-          break;
-        default:
-          // For feature-based grouping - now accessing directly from building
-          if (filters.groupMode in building) {
-            const featureValue = building[filters.groupMode as keyof BuildingData];
-            groupKey = typeof featureValue === 'boolean' 
-              ? (featureValue ? 'Yes' : 'No')
-              : featureValue.toString();
-          } else {
-            groupKey = 'Unknown';
-          }
-          break;
+    filteredData.forEach(building => {
+      const key = getDisplayValue(building, filters.groupMode);
+      if (!groups.has(key)) {
+        groups.set(key, []);
       }
-      
-      if (!groups.has(groupKey)) {
-        groups.set(groupKey, []);
-      }
-      groups.get(groupKey)!.push(building);
+      groups.get(key)!.push(building);
     });
 
-    return Array.from(groups.entries()).map(([groupName, children]) => ({
-      name: groupName,
-      children
+    return Array.from(groups.entries()).map(([name, children]) => ({
+      name,
+      children,
+      value: children.reduce((sum, building) => sum + building.squareMeters, 0)
     }));
   }, [filteredData, filters.groupMode]);
 
-  // Use fixed height for filter bar and add space for client tags
-  const filterBarHeight = 25; // Fixed height for the toggle bar
-  const clientTagSpacing = 20; // Space for client tags above the grid
-  const treemapHeight = height - filterBarHeight - clientTagSpacing;
-  const treemapTop = filterBarHeight + clientTagSpacing;
-
+  // Create treemap layout
   const treemapData = useMemo(() => {
     if (groupedData.length === 0) return null;
 
-    const rootData = {
-      name: 'Buildings',
-      children: groupedData.map(group => ({
-        name: group.name,
-        children: group.children
-      }))
-    };
-
-    const root = hierarchy(rootData)
-      .sum((d: any) => d.squareMeters || 0)
+    const root = d3.hierarchy({ children: groupedData } as any)
+      .sum((d: any) => d.squareMeters || d.value || 0)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-    const treemapLayout = treemap<any>()
-      .size([width, treemapHeight])
-      .padding(3)
+    const treemap = d3.treemap<any>()
+      .size([width, height - (isFiltersExpanded ? 120 : 40)])
+      .padding(2)
       .round(true);
 
-    return treemapLayout(root);
-  }, [width, treemapHeight, groupedData]);
+    return treemap(root);
+  }, [groupedData, width, height, isFiltersExpanded]);
 
-  const handleNodeHover = (node: TreemapNode | null) => {
-    // Clear any existing timeout
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
+  const availableClients = useMemo(() => {
+    return [...new Set(buildingData.map(building => building.client))];
+  }, []);
 
-    if (node) {
-      // Immediately show the tooltip when hovering
-      setHoveredNode(node);
-    } else {
-      // Add a small delay before hiding the tooltip
-      hoverTimeoutRef.current = setTimeout(() => {
-        setHoveredNode(null);
-      }, 150); // 150ms delay
-    }
-  };
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const totalBuildings = filteredData.length;
+    const onlineBuildings = filteredData.filter(b => b.isOnline).length;
+    const avgTemp = filteredData.reduce((sum, b) => sum + b.temperature, 0) / totalBuildings;
+    const totalArea = filteredData.reduce((sum, b) => sum + b.squareMeters, 0);
 
-  const handleClientClick = (clientName: string) => {
-    setFilters({
-      ...filters,
-      clients: [clientName]
-    });
-  };
-
-  const handleGroupClick = (groupName: string) => {
-    switch (filters.groupMode) {
-      case 'client':
-        setFilters({
-          ...filters,
-          clients: [groupName]
-        });
-        break;
-      case 'country':
-        // Filter by the clicked country
-        const buildingsFromCountry = mockBuildingData
-          .filter(building => building.country === groupName)
-          .map(building => building.client);
-        const uniqueClients = [...new Set(buildingsFromCountry)];
-        setFilters({
-          ...filters,
-          clients: uniqueClients
-        });
-        break;
-      case 'isOnline':
-        setFilters({
-          ...filters,
-          onlineOnly: groupName === 'Online'
-        });
-        break;
-      case 'lastWeekUptime':
-        // For uptime grouping, we can enable the uptime filter
-        setFilters({
-          ...filters,
-          features: {
-            ...filters.features,
-            lastWeekUptime: true
-          }
-        });
-        break;
-      default:
-        // For feature-based grouping, toggle the corresponding feature filter
-        if (filters.groupMode in filters.features) {
-          const featureKey = filters.groupMode as keyof typeof filters.features;
-          setFilters({
-            ...filters,
-            features: {
-              ...filters.features,
-              [featureKey]: groupName === 'Yes'
-            }
-          });
-        }
-        break;
-    }
-  };
-
-  const handleGridClick = () => {
-    if (filtersExpanded) {
-      setFiltersExpanded(false);
-    }
-  };
-
-  const getGroupLabel = (groupName: string) => {
-    const groupModeLabels: Record<GroupMode, string> = {
-      'client': 'Client',
-      'country': 'Country',
-      'isOnline': 'Status',
-      'hasClimateBaseline': 'Climate Baseline',
-      'hasReadWriteDiscrepancies': 'R/W Issues',
-      'hasZoneAssets': 'Zone Assets',
-      'hasHeatingCircuit': 'Heating Circuit',
-      'hasVentilation': 'Ventilation',
-      'missingVSGTOVConnections': 'Missing VSGT OV',
-      'missingLBGPOVConnections': 'Missing LBGP OV',
-      'missingLBGTOVConnections': 'Missing LBGT OV',
-      'automaticComfortScheduleActive': 'Auto Schedule',
-      'manualComfortScheduleActive': 'Manual Schedule',
-      'componentsErrors': 'Component Errors',
-      'hasDistrictHeatingMeter': 'Heating Meter',
-      'hasDistrictCoolingMeter': 'Cooling Meter',
-      'hasElectricityMeter': 'Electricity Meter',
-      'lastWeekUptime': 'Last Week Uptime',
+    return {
+      totalBuildings,
+      onlineBuildings,
+      avgTemp: isNaN(avgTemp) ? 0 : avgTemp,
+      totalArea
     };
-
-    const prefix = groupModeLabels[filters.groupMode] || filters.groupMode;
-    return `${prefix}: ${groupName}`;
-  };
-
-  const renderNodes = (node: any): React.ReactNode[] => {
-    const nodes: React.ReactNode[] = [];
-    
-    if (node.children) {
-      // Render group border for grouping
-      if (node.depth === 1) {
-        const groupWidth = node.x1 - node.x0;
-        const groupHeight = node.y1 - node.y0;
-        
-        nodes.push(
-          <div
-            key={`group-${node.data.name}`}
-            className="absolute border-2 border-blue-600 border-opacity-50"
-            style={{
-              left: node.x0,
-              top: node.y0,
-              width: groupWidth,
-              height: groupHeight,
-            }}
-          >
-            <div 
-              className="absolute text-white text-sm font-medium px-2 rounded cursor-pointer hover:text-gray-200 transition-colors z-10"
-              style={{
-                left: '6px',
-                top: '-22px',
-                backgroundColor: '#06112d',
-              }}
-              onClick={() => handleGroupClick(node.data.name)}
-              title={`Filter by ${node.data.name}`}
-            >
-              {getGroupLabel(node.data.name)}
-            </div>
-          </div>
-        );
-      }
-
-      // Render children recursively
-      node.children.forEach((child: any, index: number) => {  
-        nodes.push(...renderNodes(child));
-      });
-    } else {
-      // Render leaf node (building) without any offset
-      nodes.push(
-        <BuildingCell
-          key={`${node.data.id}-${node.x0}-${node.y0}`}
-          node={node}
-          colorMode={filters.colorMode}
-        />
-      );
-    }
-    
-    return nodes;
-  };
-
-  const getFeatureValue = (building: any, feature: string) => {
-    switch (feature) {
-      case 'adaptiveMin':
-        return `${(building.adaptiveMin * 100).toFixed(1)}%`;
-      case 'adaptiveMax':
-        return `${(building.adaptiveMax * 100).toFixed(1)}%`;
-      case 'savingEnergy':
-        return `${(building.savingEnergy * 100).toFixed(1)}%`;
-      case 'modelTrainingTestR2Score':
-        return `${(building.modelTrainingTestR2Score * 100).toFixed(1)}%`;
-      case 'lastWeekUptime':
-        return `${(building.lastWeekUptime * 100).toFixed(1)}%`;
-      default:
-        return building[feature] ? 'Yes' : 'No';
-    }
-  };
-
-  const getLegendItems = () => {
-    switch (filters.colorMode) {
-      case 'temperature':
-        return [
-          { color: '#3B82F6', label: 'Cold (<10°C)' },
-          { color: '#06B6D4', label: 'Cool (10-18°C)' },
-          { color: '#10B981', label: 'Comfort (18-25°C)' },
-          { color: '#F59E0B', label: 'Warm (25-30°C)' },
-          { color: '#EF4444', label: 'Hot (>30°C)' },
-        ];
-      case 'comfort':
-        return [
-          { color: '#22C55E', label: 'Comfortable (20-25°C)' },
-          { color: '#F97316', label: 'Too Hot (>28°C)' },
-          { color: '#3B82F6', label: 'Too Cold (<18°C)' },
-          { color: '#A3A3A3', label: 'Mild' },
-        ];
-      case 'adaptiveMin':
-        return [
-          { color: '#FBBF24', label: 'Low (0.0)' },
-          { color: '#D4D4AA', label: 'Medium (0.5)' },
-          { color: '#A3A3A3', label: 'High (1.0)' },
-        ];
-      case 'adaptiveMax':
-        return [
-          { color: '#8B5CF6', label: 'Low (0.0)' },
-          { color: '#A78BFA', label: 'Medium (0.5)' },
-          { color: '#A3A3A3', label: 'High (1.0)' },
-        ];
-      case 'hasClimateBaseline':
-        return [
-          { color: '#059669', label: 'Climate Baseline Active' },
-          { color: '#6B7280', label: 'No Climate Baseline' },
-        ];
-      case 'hasReadWriteDiscrepancies':
-        return [
-          { color: '#EA580C', label: 'Has R/W Issues' },
-          { color: '#6B7280', label: 'No R/W Issues' },
-        ];
-      case 'hasZoneAssets':
-        return [
-          { color: '#7C3AED', label: 'Has Zone Assets' },
-          { color: '#6B7280', label: 'No Zone Assets' },
-        ];
-      case 'hasHeatingCircuit':
-        return [
-          { color: '#DC2626', label: 'Has Heating Circuit' },
-          { color: '#6B7280', label: 'No Heating Circuit' },
-        ];
-      case 'hasVentilation':
-        return [
-          { color: '#0EA5E9', label: 'Has Ventilation' },
-          { color: '#6B7280', label: 'No Ventilation' },
-        ];
-      case 'missingVSGTOVConnections':
-        return [
-          { color: '#F59E0B', label: 'Missing VSGT OV' },
-          { color: '#6B7280', label: 'VSGT OV Connected' },
-        ];
-      case 'missingLBGPOVConnections':
-        return [
-          { color: '#EF4444', label: 'Missing LBGP OV' },
-          { color: '#6B7280', label: 'LBGP OV Connected' },
-        ];
-      case 'missingLBGTOVConnections':
-        return [
-          { color: '#F97316', label: 'Missing LBGT OV' },
-          { color: '#6B7280', label: 'LBGT OV Connected' },
-        ];
-      case 'savingEnergy':
-        return [
-          { color: '#DC2626', label: 'Wasting (-10% or more)' },
-          { color: '#EF4444', label: 'Slight waste (-5% to -10%)' },
-          { color: '#6B7280', label: 'Neutral (-5% to +5%)' },
-          { color: '#FBBF24', label: 'Saving (5% to 10%)' },
-          { color: '#10B981', label: 'Good saving (10% to 20%)' },
-          { color: '#059669', label: 'Excellent saving (20%+)' },
-        ];
-      case 'automaticComfortScheduleActive':
-        return [
-          { color: '#16A34A', label: 'Auto Schedule Active' },
-          { color: '#6B7280', label: 'Auto Schedule Inactive' },
-        ];
-      case 'manualComfortScheduleActive':
-        return [
-          { color: '#CA8A04', label: 'Manual Schedule Active' },
-          { color: '#6B7280', label: 'Manual Schedule Inactive' },
-        ];
-      case 'componentsErrors':
-        return [
-          { color: '#DC2626', label: 'Component Errors' },
-          { color: '#6B7280', label: 'No Component Errors' },
-        ];
-      case 'modelTrainingTestR2Score':
-        return [
-          { color: '#DC2626', label: 'Poor (0.0-0.3)' },
-          { color: '#F59E0B', label: 'Fair (0.3-0.6)' },
-          { color: '#FBBF24', label: 'Good (0.6-0.8)' },
-          { color: '#10B981', label: 'Excellent (0.8-1.0)' },
-        ];
-      case 'hasDistrictHeatingMeter':
-        return [
-          { color: '#BE123C', label: 'Has Heating Meter' },
-          { color: '#6B7280', label: 'No Heating Meter' },
-        ];
-      case 'hasDistrictCoolingMeter':
-        return [
-          { color: '#0891B2', label: 'Has Cooling Meter' },
-          { color: '#6B7280', label: 'No Cooling Meter' },
-        ];
-      case 'hasElectricityMeter':
-        return [
-          { color: '#7C2D12', label: 'Has Electricity Meter' },
-          { color: '#6B7280', label: 'No Electricity Meter' },
-        ];
-      case 'lastWeekUptime':
-        return [
-          { color: '#059669', label: 'Excellent (95%+)' },
-          { color: '#10B981', label: 'Good (90-95%)' },
-          { color: '#FBBF24', label: 'Fair (80-90%)' },
-          { color: '#EF4444', label: 'Poor (<80%)' },
-        ];
-      default:
-        return [];
-    }
-  };
-
-  const getLegendTitle = () => {
-    switch (filters.colorMode) {
-      case 'temperature': return 'Temperature Scale';
-      case 'comfort': return 'Comfort Zones';
-      case 'adaptiveMin': return 'Adaptive Min (0-1)';
-      case 'adaptiveMax': return 'Adaptive Max (0-1)';
-      case 'hasClimateBaseline': return 'Climate Baseline Active';
-      case 'hasReadWriteDiscrepancies': return 'Read/Write Issues';
-      case 'hasZoneAssets': return 'Zone Assets';
-      case 'hasHeatingCircuit': return 'Heating Circuit';
-      case 'hasVentilation': return 'Ventilation';
-      case 'missingVSGTOVConnections': return 'VSGT OV Connections';
-      case 'missingLBGPOVConnections': return 'LBGP OV Connections';
-      case 'missingLBGTOVConnections': return 'LBGT OV Connections';
-      case 'savingEnergy': return 'Energy Saving';
-      case 'automaticComfortScheduleActive': return 'Automatic Comfort Schedule';
-      case 'manualComfortScheduleActive': return 'Manual Comfort Schedule';
-      case 'componentsErrors': return 'Component Errors';
-      case 'modelTrainingTestR2Score': return 'Model R2 Score';
-      case 'hasDistrictHeatingMeter': return 'Heating Meter';
-      case 'hasDistrictCoolingMeter': return 'Cooling Meter';
-      case 'hasElectricityMeter': return 'Electricity Meter';
-      case 'lastWeekUptime': return 'Last Week Uptime';
-      default: return 'Legend';
-    }
-  };
+  }, [filteredData]);
 
   if (!treemapData) {
     return (
-      <div className="relative w-full h-full bg-gray-900 overflow-hidden">
-        <BuildingFilters
-          isExpanded={filtersExpanded}
-          onToggle={() => setFiltersExpanded(!filtersExpanded)}
-          filters={filters}
-          onFiltersChange={setFilters}
-          availableClients={availableClients}
-          filteredData={filteredData}
-        />
-        <StatsCard filteredBuildings={filteredData} />
-        <div className="flex items-center justify-center h-full text-white">
-          <p>No buildings match the current filters</p>
+      <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white">
+        <div className="text-center">
+          <h2 className="text-xl mb-2">No Data Available</h2>
+          <p className="text-gray-400">Try adjusting your filters</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-full bg-gray-900 overflow-hidden">
-      {/* Filter Panel - positioned absolutely at top */}
+    <div className="relative w-full h-full bg-gray-900">
       <BuildingFilters
-        isExpanded={filtersExpanded}
-        onToggle={() => setFiltersExpanded(!filtersExpanded)}
+        isExpanded={isFiltersExpanded}
+        onToggle={() => setIsFiltersExpanded(!isFiltersExpanded)}
         filters={filters}
         onFiltersChange={setFilters}
         availableClients={availableClients}
         filteredData={filteredData}
       />
 
-      {/* Main treemap - positioned below filter bar with spacing */}
       <div 
-        className="absolute w-full cursor-pointer"
-        style={{
-          top: treemapTop,
-          height: treemapHeight
+        className="relative"
+        style={{ 
+          marginTop: isFiltersExpanded ? 120 : 40,
+          height: height - (isFiltersExpanded ? 120 : 40)
         }}
-        onClick={handleGridClick}
       >
-        {renderNodes(treemapData)}
-      </div>
-      
-      {/* Hover tooltip - updated to work with flattened structure */}
-      {hoveredNode && 'id' in hoveredNode.data && (
-        <div 
-          className="absolute bg-black bg-opacity-95 text-white p-4 rounded-lg pointer-events-none z-50 max-w-md transition-opacity duration-150"
-          style={{
-            top: '40px',
-            left: '16px'
-          }}
-        >
-          <div className="font-bold text-lg">{(hoveredNode.data as any).name}</div>
-          <div className="text-sm opacity-90 mb-2">Building id: {(hoveredNode.data as any).id.replace(/^BLD-/, '')}</div>
-          
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mb-3">
-            <div>
-              <span className="opacity-75">Client: </span>
-              <span className="text-blue-400">{(hoveredNode.data as any).client}</span>
-            </div>
-            <div>
-              <span className="opacity-75">Country: </span>
-              <span className="text-yellow-400">{(hoveredNode.data as any).country}</span>
-            </div>
-            <div>
-              <span className="opacity-75">Status: </span>
-              <span className={(hoveredNode.data as any).isOnline ? 'text-green-400' : 'text-red-400'}>
-                {(hoveredNode.data as any).isOnline ? 'Online' : 'Offline'}
-              </span>
-            </div>
-            <div>
-              <span className="opacity-75">Temperature: </span>
-              <span className="text-blue-400">{(hoveredNode.data as any).temperature}°C</span>
-            </div>
-            <div>
-              <span className="opacity-75">Size: </span>
-              <span>{(hoveredNode.data as any).squareMeters.toLocaleString()} m²</span>
-            </div>
-          </div>
-
-          {/* All Features - now accessing directly from building */}
-          <div className="text-xs">
-            <div className="opacity-75 mb-2 font-semibold">All Features:</div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-              <div>
-                <span className="opacity-75">Adaptive Min: </span>
-                <span className="text-yellow-400">{getFeatureValue(hoveredNode.data, 'adaptiveMin')}</span>
-              </div>
-              <div>
-                <span className="opacity-75">Adaptive Max: </span>
-                <span className="text-purple-400">{getFeatureValue(hoveredNode.data, 'adaptiveMax')}</span>
-              </div>
-              <div>
-                <span className="opacity-75">Climate Baseline: </span>
-                <span className={(hoveredNode.data as any).hasClimateBaseline ? 'text-green-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasClimateBaseline')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">R/W Issues: </span>
-                <span className={(hoveredNode.data as any).hasReadWriteDiscrepancies ? 'text-red-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasReadWriteDiscrepancies')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Zone Assets: </span>
-                <span className={(hoveredNode.data as any).hasZoneAssets ? 'text-purple-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasZoneAssets')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Heating Circuit: </span>
-                <span className={(hoveredNode.data as any).hasHeatingCircuit ? 'text-red-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasHeatingCircuit')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Ventilation: </span>
-                <span className={(hoveredNode.data as any).hasVentilation ? 'text-cyan-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasVentilation')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Missing VSGT OV: </span>
-                <span className={(hoveredNode.data as any).missingVSGTOVConnections ? 'text-amber-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'missingVSGTOVConnections')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Missing LBGP OV: </span>
-                <span className={(hoveredNode.data as any).missingLBGPOVConnections ? 'text-red-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'missingLBGPOVConnections')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Missing LBGT OV: </span>
-                <span className={(hoveredNode.data as any).missingLBGTOVConnections ? 'text-orange-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'missingLBGTOVConnections')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Energy Saving: </span>
-                <span className={
-                  (hoveredNode.data as any).savingEnergy <= -0.1 ? 'text-red-400' :
-                  (hoveredNode.data as any).savingEnergy <= -0.05 ? 'text-red-300' :
-                  (hoveredNode.data as any).savingEnergy <= 0.05 ? 'text-gray-400' :
-                  (hoveredNode.data as any).savingEnergy <= 0.1 ? 'text-yellow-400' :
-                  (hoveredNode.data as any).savingEnergy <= 0.2 ? 'text-green-400' : 'text-green-500'
-                }>
-                  {getFeatureValue(hoveredNode.data, 'savingEnergy')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Auto Schedule: </span>
-                <span className={(hoveredNode.data as any).automaticComfortScheduleActive ? 'text-green-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'automaticComfortScheduleActive')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Manual Schedule: </span>
-                <span className={(hoveredNode.data as any).manualComfortScheduleActive ? 'text-yellow-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'manualComfortScheduleActive')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Component Errors: </span>
-                <span className={(hoveredNode.data as any).componentsErrors ? 'text-red-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'componentsErrors')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Model R2 Score: </span>
-                <span className={
-                  (hoveredNode.data as any).modelTrainingTestR2Score < 0.3 ? 'text-red-400' :
-                  (hoveredNode.data as any).modelTrainingTestR2Score < 0.6 ? 'text-amber-400' :
-                  (hoveredNode.data as any).modelTrainingTestR2Score < 0.8 ? 'text-yellow-400' : 'text-green-400'
-                }>
-                  {getFeatureValue(hoveredNode.data, 'modelTrainingTestR2Score')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Heating Meter: </span>
-                <span className={(hoveredNode.data as any).hasDistrictHeatingMeter ? 'text-rose-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasDistrictHeatingMeter')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Cooling Meter: </span>
-                <span className={(hoveredNode.data as any).hasDistrictCoolingMeter ? 'text-cyan-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasDistrictCoolingMeter')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Electricity Meter: </span>
-                <span className={(hoveredNode.data as any).hasElectricityMeter ? 'text-amber-600' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasElectricityMeter')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Last Week Uptime: </span>
-                <span className={
-                  (hoveredNode.data as any).lastWeekUptime >= 0.95 ? 'text-green-500' :
-                  (hoveredNode.data as any).lastWeekUptime >= 0.90 ? 'text-green-400' :
-                  (hoveredNode.data as any).lastWeekUptime >= 0.80 ? 'text-yellow-400' : 'text-red-400'
-                }>
-                  {getFeatureValue(hoveredNode.data, 'lastWeekUptime')}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stats Card - positioned at bottom left */}
-      <StatsCard filteredBuildings={filteredData} />
-
-      {/* Dynamic Legend */}
-      <div className="absolute bottom-4 right-4 bg-black bg-opacity-90 text-white p-3 rounded-lg max-w-xs z-20">
-        <div className="text-xs font-bold mb-2">
-          {getLegendTitle()}
-          {filters.cycleEnabled && (
-            <span className="text-blue-400 ml-2">(Auto-cycling)</span>
-          )}
-        </div>
-        <div className="flex flex-col gap-1 text-xs mb-3">
-          {getLegendItems().map((item, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
-              <span>{item.label}</span>
-            </div>
+        <svg width={width} height={height - (isFiltersExpanded ? 120 : 40)}>
+          {treemapData.descendants().map((node, index) => (
+            <TreemapCell
+              key={`${node.data.name || node.data.id || index}`}
+              node={node as TreemapNode}
+              colorMode={filters.colorMode}
+            />
           ))}
-        </div>
-        <div className="text-xs opacity-75">
-          Offline buildings are dimmed
-        </div>
+        </svg>
+
+        <StatsCard
+          totalBuildings={stats.totalBuildings}
+          onlineBuildings={stats.onlineBuildings}
+          avgTemperature={stats.avgTemp}
+          totalArea={stats.totalArea}
+          colorMode={filters.colorMode}
+          groupMode={filters.groupMode}
+        />
       </div>
     </div>
   );
