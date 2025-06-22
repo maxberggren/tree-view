@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { ChevronDown, ChevronUp, Settings, Play, Pause } from 'lucide-react';
 import { ColorMode, GroupMode } from '@/types/TreemapData';
+import { mockBuildingData } from '@/data/mockBuildingData';
 
 interface FilterState {
   clients: string[];
@@ -106,15 +107,13 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: '30', label: '30 seconds' },
   ];
 
-  // Get available options based on group mode
+  // Get available options based on group mode - use full dataset, not filtered
   const getAvailableOptions = () => {
-    if (!filteredData || filteredData.length === 0) return [];
-    
     switch (filters.groupMode) {
       case 'client':
-        return [...new Set(filteredData.map(building => building.client))];
+        return [...new Set(mockBuildingData.map(building => building.client))];
       case 'country':
-        return [...new Set(filteredData.map(building => building.country))];
+        return [...new Set(mockBuildingData.map(building => building.country))];
       case 'isOnline':
         return ['Online', 'Offline'];
       case 'lastWeekUptime':
