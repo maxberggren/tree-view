@@ -313,7 +313,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                     <Label 
                       htmlFor={`option-${option}`} 
                       className="text-sm text-gray-300 cursor-pointer"
-                      onClick={() => handleOptionToggle(option)}
                     >
                       {option}
                     </Label>
