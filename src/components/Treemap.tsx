@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import * as d3 from 'd3-hierarchy';
 import { TreemapCell } from './TreemapCell';
@@ -195,13 +196,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           height: height - (isFiltersExpanded ? 120 : 40)
         }}
       >
-        <div 
-          className="relative w-full h-full"
-          style={{ 
-            width,
-            height: height - (isFiltersExpanded ? 120 : 40)
-          }}
-        >
+        <svg width={width} height={height - (isFiltersExpanded ? 120 : 40)}>
           {treemapData.descendants().map((node, index) => (
             <TreemapCell
               key={getNodeKey(node, index)}
@@ -210,7 +205,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
               onHover={undefined}
             />
           ))}
-        </div>
+        </svg>
 
         <StatsCard
           filteredBuildings={filteredData}
