@@ -214,22 +214,22 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         return false;
       }
 
-      // Feature filters
-      if (filters.features.hasClimateBaseline && !building.features.hasClimateBaseline) return false;
-      if (filters.features.hasReadWriteDiscrepancies && !building.features.hasReadWriteDiscrepancies) return false;
-      if (filters.features.hasZoneAssets && !building.features.hasZoneAssets) return false;
-      if (filters.features.hasHeatingCircuit && !building.features.hasHeatingCircuit) return false;
-      if (filters.features.hasVentilation && !building.features.hasVentilation) return false;
-      if (filters.features.missingVSGTOVConnections && !building.features.missingVSGTOVConnections) return false;
-      if (filters.features.missingLBGPOVConnections && !building.features.missingLBGPOVConnections) return false;
-      if (filters.features.missingLBGTOVConnections && !building.features.missingLBGTOVConnections) return false;
-      if (filters.features.automaticComfortScheduleActive && !building.features.automaticComfortScheduleActive) return false;
-      if (filters.features.manualComfortScheduleActive && !building.features.manualComfortScheduleActive) return false;
-      if (filters.features.componentsErrors && !building.features.componentsErrors) return false;
-      if (filters.features.hasDistrictHeatingMeter && !building.features.hasDistrictHeatingMeter) return false;
-      if (filters.features.hasDistrictCoolingMeter && !building.features.hasDistrictCoolingMeter) return false;
-      if (filters.features.hasElectricityMeter && !building.features.hasElectricityMeter) return false;
-      if (filters.features.lastWeekUptime && building.features.lastWeekUptime < 0.95) return false; // Filter for high uptime (95%+)
+      // Feature filters - now accessing directly from building instead of building.features
+      if (filters.features.hasClimateBaseline && !building.hasClimateBaseline) return false;
+      if (filters.features.hasReadWriteDiscrepancies && !building.hasReadWriteDiscrepancies) return false;
+      if (filters.features.hasZoneAssets && !building.hasZoneAssets) return false;
+      if (filters.features.hasHeatingCircuit && !building.hasHeatingCircuit) return false;
+      if (filters.features.hasVentilation && !building.hasVentilation) return false;
+      if (filters.features.missingVSGTOVConnections && !building.missingVSGTOVConnections) return false;
+      if (filters.features.missingLBGPOVConnections && !building.missingLBGPOVConnections) return false;
+      if (filters.features.missingLBGTOVConnections && !building.missingLBGTOVConnections) return false;
+      if (filters.features.automaticComfortScheduleActive && !building.automaticComfortScheduleActive) return false;
+      if (filters.features.manualComfortScheduleActive && !building.manualComfortScheduleActive) return false;
+      if (filters.features.componentsErrors && !building.componentsErrors) return false;
+      if (filters.features.hasDistrictHeatingMeter && !building.hasDistrictHeatingMeter) return false;
+      if (filters.features.hasDistrictCoolingMeter && !building.hasDistrictCoolingMeter) return false;
+      if (filters.features.hasElectricityMeter && !building.hasElectricityMeter) return false;
+      if (filters.features.lastWeekUptime && building.lastWeekUptime < 0.95) return false; // Filter for high uptime (95%+)
 
       return true;
     });
@@ -257,16 +257,16 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           break;
         case 'lastWeekUptime':
           // Group by uptime ranges
-          const uptime = building.features.lastWeekUptime;
+          const uptime = building.lastWeekUptime;
           if (uptime >= 0.95) groupKey = 'Excellent (95%+)';
           else if (uptime >= 0.90) groupKey = 'Good (90-95%)';
           else if (uptime >= 0.80) groupKey = 'Fair (80-90%)';
           else groupKey = 'Poor (<80%)';
           break;
         default:
-          // For feature-based grouping
-          if (filters.groupMode in building.features) {
-            const featureValue = building.features[filters.groupMode as keyof typeof building.features];
+          // For feature-based grouping - now accessing directly from building
+          if (filters.groupMode in building) {
+            const featureValue = building[filters.groupMode as keyof BuildingData];
             groupKey = typeof featureValue === 'boolean' 
               ? (featureValue ? 'Yes' : 'No')
               : featureValue.toString();
@@ -482,17 +482,17 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
   const getFeatureValue = (building: any, feature: string) => {
     switch (feature) {
       case 'adaptiveMin':
-        return `${(building.features.adaptiveMin * 100).toFixed(1)}%`;
+        return `${(building.adaptiveMin * 100).toFixed(1)}%`;
       case 'adaptiveMax':
-        return `${(building.features.adaptiveMax * 100).toFixed(1)}%`;
+        return `${(building.adaptiveMax * 100).toFixed(1)}%`;
       case 'savingEnergy':
-        return `${(building.features.savingEnergy * 100).toFixed(1)}%`;
+        return `${(building.savingEnergy * 100).toFixed(1)}%`;
       case 'modelTrainingTestR2Score':
-        return `${(building.features.modelTrainingTestR2Score * 100).toFixed(1)}%`;
+        return `${(building.modelTrainingTestR2Score * 100).toFixed(1)}%`;
       case 'lastWeekUptime':
-        return `${(building.features.lastWeekUptime * 100).toFixed(1)}%`;
+        return `${(building.lastWeekUptime * 100).toFixed(1)}%`;
       default:
-        return building.features[feature] ? 'Yes' : 'No';
+        return building[feature] ? 'Yes' : 'No';
     }
   };
 
@@ -693,7 +693,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         {renderNodes(treemapData)}
       </div>
       
-      {/* Hover tooltip - positioned above filter bar with transition */}
+      {/* Hover tooltip - updated to work with flattened structure */}
       {hoveredNode && 'id' in hoveredNode.data && (
         <div 
           className="absolute bg-black bg-opacity-95 text-white p-4 rounded-lg pointer-events-none z-50 max-w-md transition-opacity duration-150"
@@ -730,7 +730,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             </div>
           </div>
 
-          {/* All Features */}
+          {/* All Features - now accessing directly from building */}
           <div className="text-xs">
             <div className="opacity-75 mb-2 font-semibold">All Features:</div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
@@ -744,116 +744,116 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
               </div>
               <div>
                 <span className="opacity-75">Climate Baseline: </span>
-                <span className={(hoveredNode.data as any).features.hasClimateBaseline ? 'text-green-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).hasClimateBaseline ? 'text-green-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasClimateBaseline')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">R/W Issues: </span>
-                <span className={(hoveredNode.data as any).features.hasReadWriteDiscrepancies ? 'text-red-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).hasReadWriteDiscrepancies ? 'text-red-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasReadWriteDiscrepancies')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Zone Assets: </span>
-                <span className={(hoveredNode.data as any).features.hasZoneAssets ? 'text-purple-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).hasZoneAssets ? 'text-purple-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasZoneAssets')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Heating Circuit: </span>
-                <span className={(hoveredNode.data as any).features.hasHeatingCircuit ? 'text-red-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).hasHeatingCircuit ? 'text-red-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasHeatingCircuit')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Ventilation: </span>
-                <span className={(hoveredNode.data as any).features.hasVentilation ? 'text-cyan-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).hasVentilation ? 'text-cyan-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasVentilation')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Missing VSGT OV: </span>
-                <span className={(hoveredNode.data as any).features.missingVSGTOVConnections ? 'text-amber-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).missingVSGTOVConnections ? 'text-amber-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'missingVSGTOVConnections')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Missing LBGP OV: </span>
-                <span className={(hoveredNode.data as any).features.missingLBGPOVConnections ? 'text-red-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).missingLBGPOVConnections ? 'text-red-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'missingLBGPOVConnections')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Missing LBGT OV: </span>
-                <span className={(hoveredNode.data as any).features.missingLBGTOVConnections ? 'text-orange-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).missingLBGTOVConnections ? 'text-orange-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'missingLBGTOVConnections')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Energy Saving: </span>
                 <span className={
-                  (hoveredNode.data as any).features.savingEnergy <= -0.1 ? 'text-red-400' :
-                  (hoveredNode.data as any).features.savingEnergy <= -0.05 ? 'text-red-300' :
-                  (hoveredNode.data as any).features.savingEnergy <= 0.05 ? 'text-gray-400' :
-                  (hoveredNode.data as any).features.savingEnergy <= 0.1 ? 'text-yellow-400' :
-                  (hoveredNode.data as any).features.savingEnergy <= 0.2 ? 'text-green-400' : 'text-green-500'
+                  (hoveredNode.data as any).savingEnergy <= -0.1 ? 'text-red-400' :
+                  (hoveredNode.data as any).savingEnergy <= -0.05 ? 'text-red-300' :
+                  (hoveredNode.data as any).savingEnergy <= 0.05 ? 'text-gray-400' :
+                  (hoveredNode.data as any).savingEnergy <= 0.1 ? 'text-yellow-400' :
+                  (hoveredNode.data as any).savingEnergy <= 0.2 ? 'text-green-400' : 'text-green-500'
                 }>
                   {getFeatureValue(hoveredNode.data, 'savingEnergy')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Auto Schedule: </span>
-                <span className={(hoveredNode.data as any).features.automaticComfortScheduleActive ? 'text-green-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).automaticComfortScheduleActive ? 'text-green-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'automaticComfortScheduleActive')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Manual Schedule: </span>
-                <span className={(hoveredNode.data as any).features.manualComfortScheduleActive ? 'text-yellow-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).manualComfortScheduleActive ? 'text-yellow-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'manualComfortScheduleActive')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Component Errors: </span>
-                <span className={(hoveredNode.data as any).features.componentsErrors ? 'text-red-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).componentsErrors ? 'text-red-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'componentsErrors')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Model R2 Score: </span>
                 <span className={
-                  (hoveredNode.data as any).features.modelTrainingTestR2Score < 0.3 ? 'text-red-400' :
-                  (hoveredNode.data as any).features.modelTrainingTestR2Score < 0.6 ? 'text-amber-400' :
-                  (hoveredNode.data as any).features.modelTrainingTestR2Score < 0.8 ? 'text-yellow-400' : 'text-green-400'
+                  (hoveredNode.data as any).modelTrainingTestR2Score < 0.3 ? 'text-red-400' :
+                  (hoveredNode.data as any).modelTrainingTestR2Score < 0.6 ? 'text-amber-400' :
+                  (hoveredNode.data as any).modelTrainingTestR2Score < 0.8 ? 'text-yellow-400' : 'text-green-400'
                 }>
                   {getFeatureValue(hoveredNode.data, 'modelTrainingTestR2Score')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Heating Meter: </span>
-                <span className={(hoveredNode.data as any).features.hasDistrictHeatingMeter ? 'text-rose-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).hasDistrictHeatingMeter ? 'text-rose-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasDistrictHeatingMeter')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Cooling Meter: </span>
-                <span className={(hoveredNode.data as any).features.hasDistrictCoolingMeter ? 'text-cyan-400' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).hasDistrictCoolingMeter ? 'text-cyan-400' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasDistrictCoolingMeter')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Electricity Meter: </span>
-                <span className={(hoveredNode.data as any).features.hasElectricityMeter ? 'text-amber-600' : 'text-gray-400'}>
+                <span className={(hoveredNode.data as any).hasElectricityMeter ? 'text-amber-600' : 'text-gray-400'}>
                   {getFeatureValue(hoveredNode.data, 'hasElectricityMeter')}
                 </span>
               </div>
               <div>
                 <span className="opacity-75">Last Week Uptime: </span>
                 <span className={
-                  (hoveredNode.data as any).features.lastWeekUptime >= 0.95 ? 'text-green-500' :
-                  (hoveredNode.data as any).features.lastWeekUptime >= 0.90 ? 'text-green-400' :
-                  (hoveredNode.data as any).features.lastWeekUptime >= 0.80 ? 'text-yellow-400' : 'text-red-400'
+                  (hoveredNode.data as any).lastWeekUptime >= 0.95 ? 'text-green-500' :
+                  (hoveredNode.data as any).lastWeekUptime >= 0.90 ? 'text-green-400' :
+                  (hoveredNode.data as any).lastWeekUptime >= 0.80 ? 'text-yellow-400' : 'text-red-400'
                 }>
                   {getFeatureValue(hoveredNode.data, 'lastWeekUptime')}
                 </span>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TreemapNode } from '@/types/TreemapData';
+import { TreemapNode, formatFeatureValue } from '@/types/TreemapData';
 
 interface BuildingTooltipProps {
   node: TreemapNode;
@@ -20,18 +20,6 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
   const tooltipId = React.useRef(`tooltip-${Math.random().toString(36).substr(2, 9)}`);
   
   const building = node.data as any;
-  
-  const formatValue = (key: string, value: any) => {
-    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-    if (typeof value === 'number') {
-      if (key === 'savingEnergy') return `${(value * 100).toFixed(1)}%`;
-      if (key === 'modelTrainingTestR2Score') return value.toFixed(3);
-      if (key === 'adaptiveMin' || key === 'adaptiveMax') return value.toFixed(3);
-      if (key === 'lastWeekUptime') return `${(value * 100).toFixed(1)}%`;
-      return value.toString();
-    }
-    return value?.toString() || 'N/A';
-  };
 
   const formatLabel = (key: string) => {
     const labelMap: { [key: string]: string } = {
@@ -139,7 +127,11 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
     };
   }, []);
 
-  const features = Object.entries(building.features);
+  // Get feature keys from the building data (excluding basic properties)
+  const basicProperties = ['id', 'name', 'squareMeters', 'temperature', 'client', 'country', 'isOnline'];
+  const featureKeys = Object.keys(building).filter(key => !basicProperties.includes(key));
+  const features = featureKeys.map(key => [key, building[key]]);
+  
   const halfLength = Math.ceil(features.length / 2);
   const leftColumn = features.slice(0, halfLength);
   const rightColumn = features.slice(halfLength);
@@ -195,11 +187,11 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
               <div className="flex">
                 <span className="text-gray-400 w-12 flex-shrink-0">Uptime:</span>
                 <span className={`flex-1 pr-3 ${
-                  building.features.lastWeekUptime >= 0.95 ? 'text-green-400' :
-                  building.features.lastWeekUptime >= 0.90 ? 'text-green-300' :
-                  building.features.lastWeekUptime >= 0.80 ? 'text-yellow-400' : 'text-red-400'
+                  building.lastWeekUptime >= 0.95 ? 'text-green-400' :
+                  building.lastWeekUptime >= 0.90 ? 'text-green-300' :
+                  building.lastWeekUptime >= 0.80 ? 'text-yellow-400' : 'text-red-400'
                 }`}>
-                  {(building.features.lastWeekUptime * 100).toFixed(1)}%
+                  {(building.lastWeekUptime * 100).toFixed(1)}%
                 </span>
               </div>
             </div>
@@ -213,8 +205,8 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
                       <span className="text-gray-400 w-32 flex-shrink-0 truncate" title={formatLabel(key)}>
                         {formatLabel(key)}:
                       </span>
-                      <span className="w-16 flex-shrink-0 text-right font-mono text-white pr-2" title={formatValue(key, value)}>
-                        {formatValue(key, value)}
+                      <span className="w-16 flex-shrink-0 text-right font-mono text-white pr-2" title={formatFeatureValue(key, value)}>
+                        {formatFeatureValue(key, value)}
                       </span>
                     </div>
                   ))}
@@ -225,8 +217,8 @@ export const BuildingTooltip: React.FC<BuildingTooltipProps> = ({ node, children
                       <span className="text-gray-400 w-32 flex-shrink-0 truncate" title={formatLabel(key)}>
                         {formatLabel(key)}:
                       </span>
-                      <span className="w-16 flex-shrink-0 text-right font-mono text-white pr-2" title={formatValue(key, value)}>
-                        {formatValue(key, value)}
+                      <span className="w-16 flex-shrink-0 text-right font-mono text-white pr-2" title={formatFeatureValue(key, value)}>
+                        {formatFeatureValue(key, value)}
                       </span>
                     </div>
                   ))}
