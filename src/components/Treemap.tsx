@@ -5,7 +5,7 @@ import { TreemapCell } from './TreemapCell';
 import { BuildingFilters } from './BuildingFilters';
 import { StatsCard } from './StatsCard';
 import { TreemapNode, BuildingData, ColorMode, GroupMode } from '@/types/TreemapData';
-import { buildingData } from '@/data/mockBuildingData';
+import { mockBuildingData } from '@/data/mockBuildingData';
 
 interface TreemapProps {
   width: number;
@@ -74,18 +74,6 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     return () => clearInterval(interval);
   }, [filters.cycleEnabled, filters.cycleInterval]);
 
-  // Filter data based on selected values and group mode
-  const filteredData = useMemo(() => {
-    if (filters.selectedValues.length === 0) {
-      return buildingData;
-    }
-
-    return buildingData.filter(building => {
-      const displayValue = getDisplayValue(building, filters.groupMode);
-      return filters.selectedValues.includes(displayValue);
-    });
-  }, [filters.selectedValues, filters.groupMode]);
-
   // Helper function to get display value for a building
   const getDisplayValue = (building: BuildingData, groupMode: GroupMode): string => {
     switch (groupMode) {
@@ -106,6 +94,28 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         return building[groupMode] ? 'Yes' : 'No';
     }
   };
+
+  // Get available filter values based on group mode
+  const availableValues = useMemo(() => {
+    const values = new Set<string>();
+    mockBuildingData.forEach(building => {
+      const value = getDisplayValue(building, filters.groupMode);
+      values.add(value);
+    });
+    return Array.from(values).sort();
+  }, [filters.groupMode]);
+
+  // Filter data based on selected values and group mode
+  const filteredData = useMemo(() => {
+    if (filters.selectedValues.length === 0) {
+      return mockBuildingData;
+    }
+
+    return mockBuildingData.filter(building => {
+      const displayValue = getDisplayValue(building, filters.groupMode);
+      return filters.selectedValues.includes(displayValue);
+    });
+  }, [filters.selectedValues, filters.groupMode]);
 
   // Group data based on group mode
   const groupedData = useMemo(() => {
@@ -142,10 +152,6 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     return treemap(root);
   }, [groupedData, width, height, isFiltersExpanded]);
 
-  const availableClients = useMemo(() => {
-    return [...new Set(buildingData.map(building => building.client))];
-  }, []);
-
   // Calculate statistics
   const stats = useMemo(() => {
     const totalBuildings = filteredData.length;
@@ -179,7 +185,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         onToggle={() => setIsFiltersExpanded(!isFiltersExpanded)}
         filters={filters}
         onFiltersChange={setFilters}
-        availableClients={availableClients}
+        availableValues={availableValues}
         filteredData={filteredData}
       />
 
@@ -201,12 +207,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         </svg>
 
         <StatsCard
-          totalBuildings={stats.totalBuildings}
-          onlineBuildings={stats.onlineBuildings}
-          avgTemperature={stats.avgTemp}
-          totalArea={stats.totalArea}
-          colorMode={filters.colorMode}
-          groupMode={filters.groupMode}
+          filteredBuildings={filteredData}
         />
       </div>
     </div>

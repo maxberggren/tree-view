@@ -12,7 +12,7 @@ interface FilterState {
   groupMode: GroupMode;
   cycleEnabled: boolean;
   cycleInterval: number;
-  selectedValues: string[]; // Dynamic filter values based on group mode
+  selectedValues: string[];
 }
 
 interface BuildingFiltersProps {
@@ -20,7 +20,7 @@ interface BuildingFiltersProps {
   onToggle: () => void;
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
-  availableClients: string[];
+  availableValues: string[];
   filteredData: any[];
 }
 
@@ -29,7 +29,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   onToggle,
   filters,
   onFiltersChange,
-  availableClients,
+  availableValues,
   filteredData
 }) => {
   const groupModeOptions = [
@@ -86,46 +86,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     { value: '30', label: '30 seconds' },
   ];
 
-  // Get available filter options based on the current group mode
-  const getFilterOptions = () => {
-    if (!filteredData || filteredData.length === 0) return [];
-    
-    switch (filters.groupMode) {
-      case 'client':
-        return [...new Set(filteredData.map(building => building.client))].sort();
-      case 'country':
-        return [...new Set(filteredData.map(building => building.country))].sort();
-      case 'isOnline':
-        return ['Online', 'Offline'];
-      case 'lastWeekUptime':
-        return ['Excellent (95%+)', 'Good (90-95%)', 'Fair (80-90%)', 'Poor (<80%)'];
-      default:
-        // For boolean feature-based grouping
-        return ['Yes', 'No'];
-    }
-  };
-
-  // Get the display value for a building based on the current group mode
-  const getDisplayValue = (building: any, groupMode: GroupMode): string => {
-    switch (groupMode) {
-      case 'client':
-        return building.client;
-      case 'country':
-        return building.country;
-      case 'isOnline':
-        return building.isOnline ? 'Online' : 'Offline';
-      case 'lastWeekUptime':
-        const uptime = building.lastWeekUptime;
-        if (uptime >= 0.95) return 'Excellent (95%+)';
-        if (uptime >= 0.90) return 'Good (90-95%)';
-        if (uptime >= 0.80) return 'Fair (80-90%)';
-        return 'Poor (<80%)';
-      default:
-        // For boolean features
-        return building[groupMode] ? 'Yes' : 'No';
-    }
-  };
-
   const handleFilterToggle = (value: string) => {
     const newSelected = filters.selectedValues.includes(value)
       ? filters.selectedValues.filter(v => v !== value)
@@ -156,7 +116,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
   };
 
   const getActiveFiltersCount = () => {
-    return filters.selectedValues.length;
+    return filters.selectedValues?.length || 0;
   };
 
   return (
@@ -238,7 +198,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                   ) : (
                     <Pause className="w-4 h-4 text-gray-400" />
                   )}
-                  <Label className="text-sm text-gray-200">Cycle every X</Label>
+                  <Label className="text-sm text-gray-200">Cycle Colors</Label>
                   <Switch
                     checked={filters.cycleEnabled}
                     onCheckedChange={(checked) => onFiltersChange({ ...filters, cycleEnabled: checked })}
@@ -269,7 +229,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
             <div className="space-y-3">
               <Label className="text-sm font-medium text-gray-200">Filter by {getGroupModeLabel()}</Label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {getFilterOptions().map(option => (
+                {availableValues.map(option => (
                   <div key={option} className="flex items-center space-x-2">
                     <Checkbox
                       id={`filter-${option}`}
