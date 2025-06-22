@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -181,11 +182,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     return option ? option.label : filters.groupMode;
   };
 
-  const getCurrentGroupModeLabel = () => {
-    const option = groupModeOptions.find(opt => opt.value === filters.groupMode);
-    return option ? option.label : filters.groupMode;
-  };
-
   const getActiveFiltersCount = () => {
     let count = 0;
     if (filters.clients.length > 0) count++;
@@ -215,16 +211,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
         hasDistrictCoolingMeter: false,
         hasElectricityMeter: false,
         lastWeekUptime: false,
-      }
-    });
-  };
-
-  const handleFeatureToggle = (feature: keyof FilterState['features']) => {
-    onFiltersChange({
-      ...filters,
-      features: {
-        ...filters.features,
-        [feature]: !filters.features[feature]
       }
     });
   };
@@ -263,7 +249,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
       {/* Expanded Filter Panel */}
       {isExpanded && (
         <div className="p-4 bg-gray-800 border-t border-gray-700 max-h-96 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Group Mode & Color Mode Section */}
             <div className="space-y-3">
               <Label className="text-sm font-medium text-gray-200">Group Mode</Label>
@@ -352,132 +338,6 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
                     </Label>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Feature Filters */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium text-gray-200">Features</Label>
-              <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasClimateBaseline"
-                    checked={filters.features.hasClimateBaseline}
-                    onCheckedChange={() => handleFeatureToggle('hasClimateBaseline')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasClimateBaseline" className="text-xs text-gray-300 cursor-pointer">
-                    Climate Baseline
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasReadWriteDiscrepancies"
-                    checked={filters.features.hasReadWriteDiscrepancies}
-                    onCheckedChange={() => handleFeatureToggle('hasReadWriteDiscrepancies')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasReadWriteDiscrepancies" className="text-xs text-gray-300 cursor-pointer">
-                    R/W Issues
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasZoneAssets"
-                    checked={filters.features.hasZoneAssets}
-                    onCheckedChange={() => handleFeatureToggle('hasZoneAssets')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasZoneAssets" className="text-xs text-gray-300 cursor-pointer">
-                    Zone Assets
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasHeatingCircuit"
-                    checked={filters.features.hasHeatingCircuit}
-                    onCheckedChange={() => handleFeatureToggle('hasHeatingCircuit')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasHeatingCircuit" className="text-xs text-gray-300 cursor-pointer">
-                    Heating Circuit
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasVentilation"
-                    checked={filters.features.hasVentilation}
-                    onCheckedChange={() => handleFeatureToggle('hasVentilation')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasVentilation" className="text-xs text-gray-300 cursor-pointer">
-                    Ventilation
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="componentsErrors"
-                    checked={filters.features.componentsErrors}
-                    onCheckedChange={() => handleFeatureToggle('componentsErrors')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="componentsErrors" className="text-xs text-gray-300 cursor-pointer">
-                    Component Errors
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasDistrictHeatingMeter"
-                    checked={filters.features.hasDistrictHeatingMeter}
-                    onCheckedChange={() => handleFeatureToggle('hasDistrictHeatingMeter')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasDistrictHeatingMeter" className="text-xs text-gray-300 cursor-pointer">
-                    Heating Meter
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasDistrictCoolingMeter"
-                    checked={filters.features.hasDistrictCoolingMeter}
-                    onCheckedChange={() => handleFeatureToggle('hasDistrictCoolingMeter')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasDistrictCoolingMeter" className="text-xs text-gray-300 cursor-pointer">
-                    Cooling Meter
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasElectricityMeter"
-                    checked={filters.features.hasElectricityMeter}
-                    onCheckedChange={() => handleFeatureToggle('hasElectricityMeter')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="hasElectricityMeter" className="text-xs text-gray-300 cursor-pointer">
-                    Electricity Meter
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="lastWeekUptime"
-                    checked={filters.features.lastWeekUptime}
-                    onCheckedChange={() => handleFeatureToggle('lastWeekUptime')}
-                    className="border-gray-500"
-                  />
-                  <Label htmlFor="lastWeekUptime" className="text-xs text-gray-300 cursor-pointer">
-                    Last Week Uptime
-                  </Label>
-                </div>
               </div>
             </div>
           </div>
