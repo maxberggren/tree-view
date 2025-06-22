@@ -22,6 +22,16 @@ export const TreemapCell: React.FC<TreemapCellProps> = ({ node, colorMode, onHov
   }
 
   // For group nodes, render a container with label
+  // Generate a unique key based on the node's data
+  const getNodeKey = (node: TreemapNode, index: number): string => {
+    if ('id' in node.data) {
+      return node.data.id;
+    } else if ('name' in node.data) {
+      return node.data.name;
+    }
+    return `node-${index}`;
+  };
+
   return (
     <div
       className="absolute border border-gray-600 bg-gray-800 bg-opacity-50"
@@ -41,7 +51,7 @@ export const TreemapCell: React.FC<TreemapCellProps> = ({ node, colorMode, onHov
       {/* Render children */}
       {node.children?.map((child, index) => (
         <TreemapCell
-          key={`${child.data.name || child.data.id || index}`}
+          key={getNodeKey(child, index)}
           node={child}
           colorMode={colorMode}
           onHover={onHover}
