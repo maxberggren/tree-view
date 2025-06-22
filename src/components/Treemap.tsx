@@ -15,6 +15,7 @@ interface TreemapProps {
 interface FilterState {
   clients: string[];
   onlineOnly: boolean;
+  selectedOptions: string[]; // New: unified selection system
   features: {
     hasClimateBaseline: boolean;
     hasReadWriteDiscrepancies: boolean;
@@ -42,6 +43,7 @@ interface FilterState {
 const initialFilters: FilterState = {
   clients: [],
   onlineOnly: false,
+  selectedOptions: [],
   features: {
     hasClimateBaseline: false,
     hasReadWriteDiscrepancies: false,
@@ -204,32 +206,58 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
 
   const filteredData = useMemo(() => {
     return mockBuildingData.filter(building => {
-      // Client filter
-      if (filters.clients.length > 0 && !filters.clients.includes(building.client)) {
+      // If no specific options are selected, show all buildings (like client filtering)
+      if (filters.selectedOptions.length === 0) {
+        // Only apply online filter if it's set
+        if (filters.onlineOnly && !building.isOnline) {
+          return false;
+        }
+        return true;
+      }
+
+      // Apply selection-based filtering
+      let matchesSelection = false;
+
+      switch (filters.groupMode) {
+        case 'client':
+          matchesSelection = filters.selectedOptions.includes(building.client);
+          break;
+        case 'country':
+          matchesSelection = filters.selectedOptions.includes(building.country);
+          break;
+        case 'isOnline':
+          const onlineStatus = building.isOnline ? 'Online' : 'Offline';
+          matchesSelection = filters.selectedOptions.includes(onlineStatus);
+          break;
+        case 'lastWeekUptime':
+          const uptime = building.lastWeekUptime;
+          let uptimeRange;
+          if (uptime >= 0.95) uptimeRange = 'Excellent (95%+)';
+          else if (uptime >= 0.90) uptimeRange = 'Good (90-95%)';
+          else if (uptime >= 0.80) uptimeRange = 'Fair (80-90%)';
+          else uptimeRange = 'Poor (<80%)';
+          matchesSelection = filters.selectedOptions.includes(uptimeRange);
+          break;
+        default:
+          // For feature-based grouping
+          if (filters.groupMode in building) {
+            const featureValue = building[filters.groupMode as keyof BuildingData];
+            const featureStatus = typeof featureValue === 'boolean' 
+              ? (featureValue ? 'Yes' : 'No')
+              : featureValue.toString();
+            matchesSelection = filters.selectedOptions.includes(featureStatus);
+          }
+          break;
+      }
+
+      if (!matchesSelection) {
         return false;
       }
 
-      // Online filter
-      if (filters.onlineOnly && !building.isOnline) {
+      // Online filter (only if not already handled by isOnline group mode)
+      if (filters.groupMode !== 'isOnline' && filters.onlineOnly && !building.isOnline) {
         return false;
       }
-
-      // Feature filters - now accessing directly from building instead of building.features
-      if (filters.features.hasClimateBaseline && !building.hasClimateBaseline) return false;
-      if (filters.features.hasReadWriteDiscrepancies && !building.hasReadWriteDiscrepancies) return false;
-      if (filters.features.hasZoneAssets && !building.hasZoneAssets) return false;
-      if (filters.features.hasHeatingCircuit && !building.hasHeatingCircuit) return false;
-      if (filters.features.hasVentilation && !building.hasVentilation) return false;
-      if (filters.features.missingVSGTOVConnections && !building.missingVSGTOVConnections) return false;
-      if (filters.features.missingLBGPOVConnections && !building.missingLBGPOVConnections) return false;
-      if (filters.features.missingLBGTOVConnections && !building.missingLBGTOVConnections) return false;
-      if (filters.features.automaticComfortScheduleActive && !building.automaticComfortScheduleActive) return false;
-      if (filters.features.manualComfortScheduleActive && !building.manualComfortScheduleActive) return false;
-      if (filters.features.componentsErrors && !building.componentsErrors) return false;
-      if (filters.features.hasDistrictHeatingMeter && !building.hasDistrictHeatingMeter) return false;
-      if (filters.features.hasDistrictCoolingMeter && !building.hasDistrictCoolingMeter) return false;
-      if (filters.features.hasElectricityMeter && !building.hasElectricityMeter) return false;
-      if (filters.features.lastWeekUptime && building.lastWeekUptime < 0.95) return false; // Filter for high uptime (95%+)
 
       return true;
     });

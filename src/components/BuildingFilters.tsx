@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,6 +10,7 @@ import { ColorMode, GroupMode } from '@/types/TreemapData';
 interface FilterState {
   clients: string[];
   onlineOnly: boolean;
+  selectedOptions: string[]; // New: unified selection system
   features: {
     hasClimateBaseline: boolean;
     hasReadWriteDiscrepancies: boolean;
@@ -125,107 +125,29 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     }
   };
 
-  // Check if an option is selected
+  // Check if an option is selected using the unified selectedOptions array
   const isOptionSelected = (option: string) => {
-    switch (filters.groupMode) {
-      case 'client':
-        return filters.clients.includes(option);
-      case 'country':
-        // Check if any client from this country is selected
-        const clientsFromCountry = filteredData
-          .filter(building => building.country === option)
-          .map(building => building.client);
-        return clientsFromCountry.some(client => filters.clients.includes(client));
-      case 'isOnline':
-        return (option === 'Online' && filters.onlineOnly) || (option === 'Offline' && !filters.onlineOnly);
-      case 'lastWeekUptime':
-        // For uptime ranges, check if the lastWeekUptime filter is enabled
-        return filters.features.lastWeekUptime;
-      default:
-        // For feature-based grouping
-        if (filters.groupMode in filters.features) {
-          const featureKey = filters.groupMode as keyof typeof filters.features;
-          const featureValue = filters.features[featureKey];
-          return (option === 'Yes' && featureValue) || (option === 'No' && !featureValue);
-        }
-        return false;
-    }
+    return filters.selectedOptions.includes(option);
   };
 
   const handleOptionToggle = (option: string) => {
-    switch (filters.groupMode) {
-      case 'client':
-        // Toggle client selection
-        const newClients = filters.clients.includes(option)
-          ? filters.clients.filter(client => client !== option)
-          : [...filters.clients, option];
-        onFiltersChange({ ...filters, clients: newClients });
-        break;
-        
-      case 'country':
-        // Find all clients from the selected country
-        const clientsFromCountry = filteredData
-          .filter(building => building.country === option)
-          .map(building => building.client);
-        
-        // Check if any client from this country is already selected
-        const hasSelectedClients = clientsFromCountry.some(client => filters.clients.includes(client));
-        
-        if (hasSelectedClients) {
-          // Remove all clients from this country
-          const remainingClients = filters.clients.filter(client => !clientsFromCountry.includes(client));
-          onFiltersChange({ ...filters, clients: remainingClients });
-        } else {
-          // Add all clients from this country
-          const uniqueClients = [...new Set([...filters.clients, ...clientsFromCountry])];
-          onFiltersChange({ ...filters, clients: uniqueClients });
-        }
-        break;
-        
-      case 'isOnline':
-        // Toggle online filter
-        if (option === 'Online') {
-          onFiltersChange({ ...filters, onlineOnly: !filters.onlineOnly });
-        } else if (option === 'Offline') {
-          onFiltersChange({ ...filters, onlineOnly: !filters.onlineOnly });
-        }
-        break;
-
-      case 'lastWeekUptime':
-        // For uptime grouping, toggle the uptime filter
-        onFiltersChange({
-          ...filters,
-          features: {
-            ...filters.features,
-            lastWeekUptime: !filters.features.lastWeekUptime
-          }
-        });
-        break;
-        
-      default:
-        // For feature-based grouping
-        if (filters.groupMode in filters.features) {
-          const featureKey = filters.groupMode as keyof typeof filters.features;
-          const currentValue = filters.features[featureKey];
-          
-          // Toggle the feature based on the option clicked
-          let newValue = currentValue;
-          if (option === 'Yes') {
-            newValue = !currentValue; // Toggle when clicking Yes
-          } else if (option === 'No') {
-            newValue = !currentValue; // Toggle when clicking No
-          }
-          
-          onFiltersChange({
-            ...filters,
-            features: {
-              ...filters.features,
-              [featureKey]: newValue
-            }
-          });
-        }
-        break;
+    const isSelected = filters.selectedOptions.includes(option);
+    let newSelectedOptions;
+    
+    if (isSelected) {
+      // Remove option
+      newSelectedOptions = filters.selectedOptions.filter(opt => opt !== option);
+    } else {
+      // Add option
+      newSelectedOptions = [...filters.selectedOptions, option];
     }
+    
+    onFiltersChange({ 
+      ...filters, 
+      selectedOptions: newSelectedOptions,
+      // Keep clients in sync for backward compatibility
+      clients: filters.groupMode === 'client' ? newSelectedOptions : filters.clients
+    });
   };
 
   const getGroupModeLabel = () => {
@@ -235,7 +157,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
 
   const getActiveFiltersCount = () => {
     let count = 0;
-    if (filters.clients.length > 0) count++;
+    if (filters.selectedOptions.length > 0) count++;
     if (filters.onlineOnly) count++;
     if (Object.values(filters.features).some(feature => feature)) count++;
     return count;
@@ -245,6 +167,7 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
     onFiltersChange({
       ...filters,
       clients: [],
+      selectedOptions: [],
       onlineOnly: false,
       features: {
         hasClimateBaseline: false,
@@ -306,7 +229,11 @@ export const BuildingFilters: React.FC<BuildingFiltersProps> = ({
               <Label className="text-sm font-medium text-gray-200">Group Mode</Label>
               <Select 
                 value={filters.groupMode} 
-                onValueChange={(value) => onFiltersChange({ ...filters, groupMode: value as GroupMode })}
+                onValueChange={(value) => onFiltersChange({ 
+                  ...filters, 
+                  groupMode: value as GroupMode,
+                  selectedOptions: [] // Clear selections when changing group mode
+                })}
               >
                 <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
