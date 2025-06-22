@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import * as d3 from 'd3-hierarchy';
 import { TreemapCell } from './TreemapCell';
@@ -220,7 +219,7 @@ const getNodeKey = (node: any, index: number): string => {
   if (node.data && 'id' in node.data) {
     return node.data.id;
   } else if (node.data && 'name' in node.data) {
-    return node.data.name;
+    return `group-${node.data.name}`;
   }
   return `node-${index}`;
 };
