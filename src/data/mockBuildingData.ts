@@ -60,27 +60,27 @@ const generateRandomBuilding = (index: number, forcedClient?: string): BuildingD
     client: forcedClient || clients[clientIndex],
     country: countries[countryIndex],
     isOnline: Math.random() > 0.1, // 90% online
-    features: {
-      adaptiveMin: Math.random(), // 0-1 random value
-      adaptiveMax: Math.random(), // 0-1 random value
-      hasClimateBaseline: Math.random() > 0.3, // 70% have baseline
-      hasReadWriteDiscrepancies: Math.random() > 0.8, // 20% have discrepancies
-      hasZoneAssets: Math.random() > 0.98, // Only 3 buildings (~1.2% of 250)
-      hasHeatingCircuit: Math.random() > 0.25, // 75% have heating circuit
-      hasVentilation: Math.random() > 0.4, // 60% have ventilation
-      missingVSGTOVConnections: Math.random() > 0.85, // 15% missing VSGT OV
-      missingLBGPOVConnections: Math.random() > 0.82, // 18% missing LBGP OV
-      missingLBGTOVConnections: Math.random() > 0.88, // 12% missing LBGT OV
-      savingEnergy: generateEnergySaving(), // Biased towards positive energy saving
-      automaticComfortScheduleActive: Math.random() > 0.6, // 40% have automatic schedule
-      manualComfortScheduleActive: Math.random() > 0.7, // 30% have manual schedule
-      componentsErrors: Math.random() > 0.9, // 10% have component errors
-      modelTrainingTestR2Score: Math.random(), // 0-1 random score
-      hasDistrictHeatingMeter: Math.random() > 0.5, // 50% have district heating meter
-      hasDistrictCoolingMeter: Math.random() > 0.6, // 40% have district cooling meter
-      hasElectricityMeter: Math.random() > 0.2, // 80% have electricity meter
-      lastWeekUptime: generateUptime(), // Biased towards good uptime
-    },
+    
+    // Flattened features - no nested object
+    adaptiveMin: Math.random(), // 0-1 random value
+    adaptiveMax: Math.random(), // 0-1 random value
+    hasClimateBaseline: Math.random() > 0.3, // 70% have baseline
+    hasReadWriteDiscrepancies: Math.random() > 0.8, // 20% have discrepancies
+    hasZoneAssets: Math.random() > 0.98, // Only 3 buildings (~1.2% of 250)
+    hasHeatingCircuit: Math.random() > 0.25, // 75% have heating circuit
+    hasVentilation: Math.random() > 0.4, // 60% have ventilation
+    missingVSGTOVConnections: Math.random() > 0.85, // 15% missing VSGT OV
+    missingLBGPOVConnections: Math.random() > 0.82, // 18% missing LBGP OV
+    missingLBGTOVConnections: Math.random() > 0.88, // 12% missing LBGT OV
+    savingEnergy: generateEnergySaving(), // Biased towards positive energy saving
+    automaticComfortScheduleActive: Math.random() > 0.6, // 40% have automatic schedule
+    manualComfortScheduleActive: Math.random() > 0.7, // 30% have manual schedule
+    componentsErrors: Math.random() > 0.9, // 10% have component errors
+    modelTrainingTestR2Score: Math.random(), // 0-1 random score
+    hasDistrictHeatingMeter: Math.random() > 0.5, // 50% have district heating meter
+    hasDistrictCoolingMeter: Math.random() > 0.6, // 40% have district cooling meter
+    hasElectricityMeter: Math.random() > 0.2, // 80% have electricity meter
+    lastWeekUptime: generateUptime(), // Biased towards good uptime
   };
 };
 
