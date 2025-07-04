@@ -10,7 +10,7 @@ const buildingNames = [
 ];
 
 const clients = [
-  "SISAB", "Scheider", "Framfab", "Akademiska Hus", "Robertos WWIII bunkers",
+  "WEESAB", "Siemens", "Framfab", "Akademiska Hus", "Robertos WWIII bunkers",
   "Healthcare Partners", "Retail Solutions", "Manufacturing Co", 
   "Energy Systems", "Stef's castles"
 ];
