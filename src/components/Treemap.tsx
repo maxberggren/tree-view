@@ -50,8 +50,8 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
 
     // Initialize state from URL params
   const [treeState, setTreeState] = useState<TreemapFilterState>(() => {
-    const groupBy = searchParams.get('groupBy') || (groupableFields[0]?.field || '');
-    const colorBy = searchParams.get('colorBy') || (colorableFields[0]?.field || '');
+    const groupBy = searchParams.get('groupBy') || '';
+    const colorBy = searchParams.get('colorBy') || '';
     
     return {
       groupBy,
@@ -59,6 +59,17 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       filters: {}
     };
   });
+
+  // Set defaults after config loads
+  useEffect(() => {
+    if (config && groupableFields.length > 0 && colorableFields.length > 0) {
+      setTreeState(prev => ({
+        ...prev,
+        groupBy: prev.groupBy || groupableFields[0]?.field || '',
+        colorBy: prev.colorBy || colorableFields[0]?.field || ''
+      }));
+    }
+  }, [config, groupableFields, colorableFields]);
 
   // Update URL when state changes
   useEffect(() => {
@@ -88,6 +99,38 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     return groupData(processedData, treeState.groupBy);
   }, [processedData, treeState.groupBy]);
 
+  // Calculate data range for gradient fields
+  const dataRange = useMemo(() => {
+    if (!processedData.length || !config || !treeState.colorBy) return null;
+    
+    const fieldConfig = config[treeState.colorBy];
+    if (!fieldConfig || fieldConfig.colorMode !== 'gradient') return null;
+    
+    const values = processedData
+      .map(item => Number(item[treeState.colorBy]))
+      .filter(val => !isNaN(val));
+    
+    if (values.length === 0) return null;
+    
+    return {
+      min: Math.min(...values),
+      max: Math.max(...values)
+    };
+  }, [processedData, config, treeState.colorBy]);
+
+  // Calculate filter bar dimensions
+  const filterBarDimensions = useMemo(() => {    
+    // Simple height calculation since active filters summary is removed
+    const filterBarHeight = filtersExpanded ? 100 : 32; // Expanded vs collapsed
+      
+    return {
+      height: filterBarHeight,
+      availableHeight: height - filterBarHeight
+    };
+  }, [height, filtersExpanded]);
+
+  const availableHeight = filterBarDimensions.availableHeight;
+
   // Create treemap data
   const treemapData = useMemo(() => {
     if (!groupedData.length || !config) return null;
@@ -101,13 +144,30 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       .sum((d: any) => d[sizeField] || 1)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
+    // Reserve space at the top for group labels (25px for label height)
+    const labelSpacing = 25;
     const treemapLayout = treemap<any>()
-      .size([width, height - 100]) // Reserve space for controls
+      .size([width, availableHeight - labelSpacing])
       .padding(3)
       .round(true);
 
-    return treemapLayout(root);
-  }, [width, height, groupedData, sizeField, config]);
+    const layout = treemapLayout(root);
+    
+    // Offset all nodes down by the label spacing
+    const offsetNodes = (node: any) => {
+      node.x0 = node.x0;
+      node.y0 = node.y0 + labelSpacing;
+      node.x1 = node.x1;
+      node.y1 = node.y1 + labelSpacing;
+      
+      if (node.children) {
+        node.children.forEach(offsetNodes);
+      }
+    };
+    
+    offsetNodes(layout);
+    return layout;
+  }, [width, availableHeight, groupedData, sizeField, config]);
 
   const handleNodeHover = (node: TreemapNode | null) => {
     if (hoverTimeoutRef.current) {
@@ -121,6 +181,33 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
       hoverTimeoutRef.current = setTimeout(() => {
         setHoveredNode(null);
       }, 150);
+    }
+  };
+
+  const handleGroupClick = (groupValue: string) => {
+    if (!treeState.groupBy) return;
+    
+    const filterKey = `_group_${treeState.groupBy}`;
+    const currentFilter = treeState.filters[filterKey];
+    const isCurrentlyFiltered = Array.isArray(currentFilter) && currentFilter.includes(groupValue);
+    
+    if (isCurrentlyFiltered) {
+      // Clear the filter if this group is already filtered
+      const newFilters = { ...treeState.filters };
+      delete newFilters[filterKey];
+      setTreeState(prev => ({
+        ...prev,
+        filters: newFilters
+      }));
+    } else {
+      // Set filter to show only this group
+      setTreeState(prev => ({
+        ...prev,
+        filters: {
+          ...prev.filters,
+          [filterKey]: [groupValue]
+        }
+      }));
     }
   };
 
@@ -145,12 +232,21 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             }}
           >
             <div 
-              className="absolute text-white text-sm font-medium px-2 rounded cursor-pointer hover:text-gray-200 transition-colors z-10"
+              className="absolute text-white text-xs font-medium px-2 py-1 rounded cursor-pointer hover:text-gray-200 transition-colors z-10"
               style={{
                 left: '0px',
-                top: '-22px',
+                top: '-26px',
                 backgroundColor: '#06112d',
               }}
+              onClick={() => handleGroupClick(node.data.name)}
+              title={(() => {
+                const filterKey = `_group_${treeState.groupBy}`;
+                const currentFilter = treeState.filters[filterKey];
+                const isFiltered = Array.isArray(currentFilter) && currentFilter.includes(node.data.name);
+                return isFiltered 
+                  ? `Currently filtered to ${node.data.name} - click to clear filter`
+                  : `Click to filter to only ${node.data.name}`;
+              })()}
             >
               {config && treeState.groupBy && config[treeState.groupBy] 
                 ? `${config[treeState.groupBy].label}: ${node.data.name}`
@@ -172,6 +268,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           node={node}
           config={config!}
           colorField={treeState.colorBy}
+          dataRange={dataRange || undefined}
           onHover={handleNodeHover}
         />
       );
@@ -216,7 +313,13 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           isExpanded={filtersExpanded}
           onToggle={() => setFiltersExpanded(!filtersExpanded)}
         />
-        <div className="flex items-center justify-center h-full text-white">
+        <div 
+          className="absolute w-full flex items-center justify-center text-white transition-all duration-300 ease-out"
+          style={{
+            top: filterBarDimensions.height,
+            height: availableHeight
+          }}
+        >
           <p>No data matches the current filters</p>
         </div>
       </div>
@@ -237,10 +340,10 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
 
       {/* Main treemap with smooth transitions */}
       <div 
-        className="absolute w-full"
+        className="absolute w-full transition-all duration-300 ease-out"
         style={{
-          top: 60, // Space for filters
-          height: height - 60
+          top: filterBarDimensions.height,
+          height: availableHeight
         }}
         onClick={() => setFiltersExpanded(false)}
       >
@@ -253,6 +356,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
           node={hoveredNode}
           config={config}
           colorField={treeState.colorBy}
+          dataRange={dataRange || undefined}
         />
       )}
 
@@ -261,6 +365,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         <DataLegend
           config={config}
           colorField={treeState.colorBy}
+          dataRange={dataRange || undefined}
         />
       )}
     </div>

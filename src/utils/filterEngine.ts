@@ -39,6 +39,13 @@ export const applyFilters = (data: DataItem[], filters: FilterState, config: Con
         return true; // No filter applied
       }
 
+      // Handle special group filters
+      if (field.startsWith('_group_')) {
+        const groupField = field.replace('_group_', '');
+        const selectedGroups = Array.isArray(filterValue) ? filterValue : [filterValue];
+        return selectedGroups.includes(item[groupField]);
+      }
+
       const fieldConfig = config[field];
       if (!fieldConfig) return true;
 

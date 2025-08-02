@@ -7,10 +7,11 @@ interface DataCellProps {
   node: TreemapNode;
   config: ConfigSchema;
   colorField: string;
+  dataRange?: { min: number; max: number };
   onHover?: (node: TreemapNode | null) => void;
 }
 
-export const DataCell: React.FC<DataCellProps> = ({ node, config, colorField, onHover }) => {
+export const DataCell: React.FC<DataCellProps> = ({ node, config, colorField, dataRange, onHover }) => {
   const data = node.data as any;
   const fieldConfig = config[colorField];
   
@@ -18,7 +19,7 @@ export const DataCell: React.FC<DataCellProps> = ({ node, config, colorField, on
     return null;
   }
 
-  const colorResult = getColor(data[colorField], fieldConfig);
+  const colorResult = getColor(data[colorField], fieldConfig, dataRange);
   const width = node.x1 - node.x0;
   const height = node.y1 - node.y0;
 

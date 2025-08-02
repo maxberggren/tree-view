@@ -8,9 +8,10 @@ interface DataTooltipProps {
   node: TreemapNode;
   config: ConfigSchema;
   colorField: string;
+  dataRange?: { min: number; max: number };
 }
 
-export const DataTooltip: React.FC<DataTooltipProps> = ({ node, config, colorField }) => {
+export const DataTooltip: React.FC<DataTooltipProps> = ({ node, config, colorField, dataRange }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
   const calculatePosition = (mouseX: number, mouseY: number) => {
@@ -84,7 +85,7 @@ export const DataTooltip: React.FC<DataTooltipProps> = ({ node, config, colorFie
 
   // Get color information for current field
   const colorFieldConfig = config[colorField];
-  const colorResult = colorFieldConfig ? getColor(data[colorField], colorFieldConfig) : null;
+  const colorResult = colorFieldConfig ? getColor(data[colorField], colorFieldConfig, dataRange) : null;
 
   return (
     <div 

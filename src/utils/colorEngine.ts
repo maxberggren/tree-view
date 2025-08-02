@@ -6,7 +6,7 @@ export interface ColorResult {
   label: string;
 }
 
-export const getColor = (value: any, config: FieldConfig): ColorResult => {
+export const getColor = (value: any, config: FieldConfig, dataRange?: { min: number; max: number }): ColorResult => {
   const defaultColor = { color: '#6B7280', borderColor: '#4B5563', label: 'Unknown' };
   
   if (!config.colorMode) {
@@ -23,8 +23,8 @@ export const getColor = (value: any, config: FieldConfig): ColorResult => {
       return getCategoricalColor(value, config.colors as CategoricalColors);
     
     case 'gradient':
-      if (!config.colors) return defaultColor;
-      return getGradientColor(value, config.colors as GradientColors, config);
+      if (!config.colors || !dataRange) return defaultColor;
+      return getGradientColor(value, config.colors as GradientColors, config, dataRange);
     
     case 'bins':
       if (!config.bins || config.bins.length === 0) return defaultColor;
@@ -53,13 +53,17 @@ const getCategoricalColor = (value: string, colors: CategoricalColors): ColorRes
   };
 };
 
-const getGradientColor = (value: number, colors: GradientColors, config: FieldConfig): ColorResult => {
-  const t = Math.max(0, Math.min(1, value)); // Clamp between 0 and 1
+const getGradientColor = (value: number, colors: GradientColors, config: FieldConfig, dataRange: { min: number; max: number }): ColorResult => {
+  // Normalize the value based on the actual data range
+  const normalizedValue = dataRange.max === dataRange.min 
+    ? 0 
+    : Math.max(0, Math.min(1, (value - dataRange.min) / (dataRange.max - dataRange.min)));
+  
   const { min, max } = colors;
   
-  const r = Math.round(min.r + (max.r - min.r) * t);
-  const g = Math.round(min.g + (max.g - min.g) * t);
-  const b = Math.round(min.b + (max.b - min.b) * t);
+  const r = Math.round(min.r + (max.r - min.r) * normalizedValue);
+  const g = Math.round(min.g + (max.g - min.g) * normalizedValue);
+  const b = Math.round(min.b + (max.b - min.b) * normalizedValue);
   
   const borderR = Math.max(0, r - 20);
   const borderG = Math.max(0, g - 20);
@@ -68,7 +72,7 @@ const getGradientColor = (value: number, colors: GradientColors, config: FieldCo
   return {
     color: `rgb(${r}, ${g}, ${b})`,
     borderColor: `rgb(${borderR}, ${borderG}, ${borderB})`,
-    label: config.type === 'percentage' ? `${(value * 100).toFixed(1)}%` : value.toString()
+    label: config.type === 'percentage' ? `${(value * 100).toFixed(config.decimals || 1)}%` : value.toFixed(config.decimals || 1)
   };
 };
 

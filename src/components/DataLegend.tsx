@@ -5,9 +5,10 @@ import { getColor } from '@/utils/colorEngine';
 interface DataLegendProps {
   config: ConfigSchema;
   colorField: string;
+  dataRange?: { min: number; max: number };
 }
 
-export const DataLegend: React.FC<DataLegendProps> = ({ config, colorField }) => {
+export const DataLegend: React.FC<DataLegendProps> = ({ config, colorField, dataRange }) => {
   const fieldConfig = config[colorField];
   
   if (!fieldConfig || !fieldConfig.colorMode) {
@@ -48,16 +49,37 @@ export const DataLegend: React.FC<DataLegendProps> = ({ config, colorField }) =>
         }));
       
       case 'gradient':
-        // For gradients, show min/max examples
-        if (!fieldConfig.colors) return [];
+        // For gradients, show multiple points across the scale
+        if (!fieldConfig.colors || !dataRange) return [];
         const gradientColors = fieldConfig.colors as any;
-        const minColor = `rgb(${gradientColors.min.r}, ${gradientColors.min.g}, ${gradientColors.min.b})`;
-        const maxColor = `rgb(${gradientColors.max.r}, ${gradientColors.max.g}, ${gradientColors.max.b})`;
         
-        return [
-          { color: minColor, label: fieldConfig.type === 'percentage' ? '0%' : 'Min' },
-          { color: maxColor, label: fieldConfig.type === 'percentage' ? '100%' : 'Max' }
-        ];
+        // Create 5 points across the gradient (0%, 25%, 50%, 75%, 100%)
+        const steps = [0, 0.25, 0.5, 0.75, 1];
+        
+        return steps.map(step => {
+          // Calculate the color at this step
+          const r = Math.round(gradientColors.min.r + (gradientColors.max.r - gradientColors.min.r) * step);
+          const g = Math.round(gradientColors.min.g + (gradientColors.max.g - gradientColors.min.g) * step);
+          const b = Math.round(gradientColors.min.b + (gradientColors.max.b - gradientColors.min.b) * step);
+          const color = `rgb(${r}, ${g}, ${b})`;
+          
+          // Calculate the actual value at this step
+          const value = dataRange.min + (dataRange.max - dataRange.min) * step;
+          
+          // Format the label based on field type
+          let label: string;
+          if (fieldConfig.type === 'percentage') {
+            label = `${(step * 100).toFixed(0)}%`;
+          } else {
+            const decimals = fieldConfig.decimals || 1;
+            label = value.toFixed(decimals);
+            if (fieldConfig.unit) {
+              label += fieldConfig.unit;
+            }
+          }
+          
+          return { color, label };
+        });
       
       default:
         return [];
@@ -86,9 +108,9 @@ export const DataLegend: React.FC<DataLegendProps> = ({ config, colorField }) =>
           </div>
         ))}
       </div>
-      {fieldConfig.type === 'percentage' && fieldConfig.colorMode === 'gradient' && (
-        <div className="text-xs opacity-75 mt-2">
-          Gradient scale
+      {fieldConfig.colorMode === 'gradient' && (
+        <div className="text-xs opacity-75 mt-1">
+          {fieldConfig.type === 'percentage' ? 'Percentage scale' : 'Continuous scale'}
         </div>
       )}
     </div>
