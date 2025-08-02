@@ -1,5 +1,7 @@
 # Screen Mosaic Visualizer
 
+![Screen Mosaic Visualizer Screenshot](public/screenshot.png)
+
 A dynamic, config-driven treemap visualization tool that can display any dataset with customizable grouping, coloring, and filtering options.
 
 ## 🚀 Quick Start
