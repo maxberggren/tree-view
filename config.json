@@ -1,0 +1,280 @@
+{
+    "id": {
+      "label": "Building ID",
+      "type": "identifier",
+      "visible": true,
+      "searchable": true
+    },
+    "name": {
+      "label": "Building Name", 
+      "type": "text",
+      "visible": true,
+      "searchable": true
+    },
+    "squareMeters": {
+      "label": "Area",
+      "type": "numeric",
+      "unit": "m²",
+      "decimals": 0,
+      "visible": true,
+      "colorMode": "gradient",
+      "colors": {
+        "min": {"r": 200, "g": 230, "b": 255},
+        "max": {"r": 30, "g": 100, "b": 200}
+      }
+    },
+    "temperature": {
+      "label": "Temperature",
+      "type": "numeric", 
+      "unit": "°C",
+      "decimals": 1,
+      "visible": true,
+      "colorMode": "bins",
+      "bins": [
+        {"min": 0, "max": 10, "label": "Cold (<10°C)", "color": "#3B82F6", "borderColor": "#1D4ED8"},
+        {"min": 10, "max": 18, "label": "Cool (10-18°C)", "color": "#06B6D4", "borderColor": "#0891B2"},
+        {"min": 18, "max": 25, "label": "Comfort (18-25°C)", "color": "#10B981", "borderColor": "#059669"},
+        {"min": 25, "max": 30, "label": "Warm (25-30°C)", "color": "#F59E0B", "borderColor": "#D97706"},
+        {"min": 30, "max": 100, "label": "Hot (>30°C)", "color": "#EF4444", "borderColor": "#DC2626"}
+      ]
+    },
+    "client": {
+      "label": "Client",
+      "type": "categorical",
+      "visible": true,
+      "colorMode": "categorical",
+      "colors": {
+        "WEESAB": {"bg": "#8B5CF6", "border": "#7C3AED"},
+        "Siemens": {"bg": "#06B6D4", "border": "#0891B2"},
+        "Framfab": {"bg": "#10B981", "border": "#059669"},
+        "default": {"bg": "#6B7280", "border": "#4B5563"}
+      }
+    },
+    "country": {
+      "label": "Country",
+      "type": "categorical", 
+      "visible": true,
+      "colorMode": "categorical",
+      "colors": {
+        "Sweden": {"bg": "#FFD700", "border": "#DAA520"},
+        "Denmark": {"bg": "#DC143C", "border": "#B22222"},
+        "Finland": {"bg": "#4169E1", "border": "#1E3A8A"},
+        "USA": {"bg": "#FF0000", "border": "#DC2626"},
+        "Argentina": {"bg": "#87CEEB", "border": "#4682B4"},
+        "default": {"bg": "#6B7280", "border": "#4B5563"}
+      }
+    },
+    "isOnline": {
+      "label": "Online Status",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#10B981", "border": "#059669", "label": "Online"},
+        "false": {"bg": "#EF4444", "border": "#DC2626", "label": "Offline"}
+      }
+    },
+    "adaptiveMin": {
+      "label": "Adaptive Min",
+      "type": "percentage",
+      "decimals": 1,
+      "visible": true,
+      "colorMode": "gradient",
+      "colors": {
+        "min": {"r": 251, "g": 191, "b": 36},
+        "max": {"r": 107, "g": 116, "b": 128}
+      }
+    },
+    "adaptiveMax": {
+      "label": "Adaptive Max", 
+      "type": "percentage",
+      "decimals": 1,
+      "visible": true,
+      "colorMode": "gradient",
+      "colors": {
+        "min": {"r": 139, "g": 92, "b": 246},
+        "max": {"r": 107, "g": 116, "b": 128}
+      }
+    },
+    "hasClimateBaseline": {
+      "label": "Climate Baseline",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#059669", "border": "#047857", "label": "Yes"},
+        "false": {"bg": "#6B7280", "border": "#4B5563", "label": "No"}
+      }
+    },
+    "hasReadWriteDiscrepancies": {
+      "label": "Read/Write Issues",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#EA580C", "border": "#C2410C", "label": "Issues"},
+        "false": {"bg": "#10B981", "border": "#059669", "label": "Good"}
+      }
+    },
+    "hasZoneAssets": {
+      "label": "Zone Assets",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#7C3AED", "border": "#6D28D9", "label": "Yes"},
+        "false": {"bg": "#6B7280", "border": "#4B5563", "label": "No"}
+      }
+    },
+    "hasHeatingCircuit": {
+      "label": "Heating Circuit",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#DC2626", "border": "#991B1B", "label": "Yes"},
+        "false": {"bg": "#6B7280", "border": "#4B5563", "label": "No"}
+      }
+    },
+    "hasVentilation": {
+      "label": "Ventilation",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#0EA5E9", "border": "#0284C7", "label": "Yes"},
+        "false": {"bg": "#6B7280", "border": "#4B5563", "label": "No"}
+      }
+    },
+    "missingVSGTOVConnections": {
+      "label": "Missing VSGT OV",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#F59E0B", "border": "#D97706", "label": "Missing"},
+        "false": {"bg": "#10B981", "border": "#059669", "label": "Connected"}
+      }
+    },
+    "missingLBGPOVConnections": {
+      "label": "Missing LBGP OV",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#EF4444", "border": "#DC2626", "label": "Missing"},
+        "false": {"bg": "#10B981", "border": "#059669", "label": "Connected"}
+      }
+    },
+    "missingLBGTOVConnections": {
+      "label": "Missing LBGT OV",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#F97316", "border": "#EA580C", "label": "Missing"},
+        "false": {"bg": "#10B981", "border": "#059669", "label": "Connected"}
+      }
+    },
+    "savingEnergy": {
+      "label": "Energy Saving",
+      "type": "percentage",
+      "decimals": 1,
+      "visible": true,
+      "colorMode": "bins",
+      "bins": [
+        {"min": -1, "max": -0.1, "label": "Wasting (-10% or more)", "color": "#DC2626", "borderColor": "#991B1B"},
+        {"min": -0.1, "max": -0.05, "label": "Slight waste (-5% to -10%)", "color": "#EF4444", "borderColor": "#DC2626"},
+        {"min": -0.05, "max": 0.05, "label": "Neutral (-5% to +5%)", "color": "#6B7280", "borderColor": "#4B5563"},
+        {"min": 0.05, "max": 0.1, "label": "Saving (5% to 10%)", "color": "#FBBF24", "borderColor": "#F59E0B"},
+        {"min": 0.1, "max": 0.2, "label": "Good saving (10% to 20%)", "color": "#10B981", "borderColor": "#059669"},
+        {"min": 0.2, "max": 1, "label": "Excellent saving (20%+)", "color": "#059669", "borderColor": "#047857"}
+      ]
+    },
+    "automaticComfortScheduleActive": {
+      "label": "Auto Comfort Schedule",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#16A34A", "border": "#15803D", "label": "Active"},
+        "false": {"bg": "#6B7280", "border": "#4B5563", "label": "Inactive"}
+      }
+    },
+    "manualComfortScheduleActive": {
+      "label": "Manual Comfort Schedule",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#CA8A04", "border": "#A16207", "label": "Active"},
+        "false": {"bg": "#6B7280", "border": "#4B5563", "label": "Inactive"}
+      }
+    },
+    "componentsErrors": {
+      "label": "Component Errors",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#DC2626", "border": "#991B1B", "label": "Errors"},
+        "false": {"bg": "#10B981", "border": "#059669", "label": "No Errors"}
+      }
+    },
+    "modelTrainingTestR2Score": {
+      "label": "Model R² Score",
+      "type": "percentage",
+      "decimals": 2,
+      "visible": true,
+      "colorMode": "bins",
+      "bins": [
+        {"min": 0, "max": 0.3, "label": "Poor (0.0-0.3)", "color": "#DC2626", "borderColor": "#991B1B"},
+        {"min": 0.3, "max": 0.6, "label": "Fair (0.3-0.6)", "color": "#F59E0B", "borderColor": "#D97706"},
+        {"min": 0.6, "max": 0.8, "label": "Good (0.6-0.8)", "color": "#FBBF24", "borderColor": "#F59E0B"},
+        {"min": 0.8, "max": 1, "label": "Excellent (0.8-1.0)", "color": "#10B981", "borderColor": "#059669"}
+      ]
+    },
+    "hasDistrictHeatingMeter": {
+      "label": "District Heating Meter",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#BE123C", "border": "#9F1239", "label": "Yes"},
+        "false": {"bg": "#6B7280", "border": "#4B5563", "label": "No"}
+      }
+    },
+    "hasDistrictCoolingMeter": {
+      "label": "District Cooling Meter",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#0891B2", "border": "#0E7490", "label": "Yes"},
+        "false": {"bg": "#6B7280", "border": "#4B5563", "label": "No"}
+      }
+    },
+    "hasElectricityMeter": {
+      "label": "Electricity Meter",
+      "type": "boolean",
+      "visible": true,
+      "colorMode": "boolean",
+      "colors": {
+        "true": {"bg": "#7C2D12", "border": "#92400E", "label": "Yes"},
+        "false": {"bg": "#6B7280", "border": "#4B5563", "label": "No"}
+      }
+    },
+    "lastWeekUptime": {
+      "label": "Last Week Uptime",
+      "type": "percentage",
+      "decimals": 1,
+      "visible": true,
+      "colorMode": "bins",
+      "bins": [
+        {"min": 0, "max": 0.80, "label": "Poor (<80%)", "color": "#EF4444", "borderColor": "#DC2626"},
+        {"min": 0.80, "max": 0.90, "label": "Fair (80-90%)", "color": "#FBBF24", "borderColor": "#F59E0B"},
+        {"min": 0.90, "max": 0.95, "label": "Good (90-95%)", "color": "#10B981", "borderColor": "#059669"},
+        {"min": 0.95, "max": 1, "label": "Excellent (95%+)", "color": "#059669", "borderColor": "#047857"}
+      ]
+    }
+}
