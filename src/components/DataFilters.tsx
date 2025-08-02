@@ -9,6 +9,8 @@ interface TreemapFilterState {
   groupBy: string;
   colorBy: string;
   filters: Record<string, any>;
+  cycleColors?: boolean;
+  cycleInterval?: number;
 }
 
 interface DataFiltersProps {
@@ -129,7 +131,7 @@ export const DataFilters: React.FC<DataFiltersProps> = ({
                 <select
                   value={state.groupBy}
                   onChange={(e) => handleGroupByChange(e.target.value)}
-                  className="w-full px-2 py-1.5 pr-7 bg-gray-800 border border-gray-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                  className="w-full px-3 py-2.5 pr-8 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
                 >
                   <option value="">No Grouping</option>
                   {groupableFields.map(({ field, label }) => (
@@ -139,8 +141,8 @@ export const DataFilters: React.FC<DataFiltersProps> = ({
                   ))}
                 </select>
                 <ChevronDownIcon 
-                  size={14} 
-                  className="absolute right-1.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                  size={16} 
+                  className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
                 />
               </div>
             </div>
@@ -154,7 +156,7 @@ export const DataFilters: React.FC<DataFiltersProps> = ({
                 <select
                   value={state.colorBy}
                   onChange={(e) => handleColorByChange(e.target.value)}
-                  className="w-full px-2 py-1.5 pr-7 bg-gray-800 border border-gray-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                  className="w-full px-3 py-2.5 pr-8 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
                 >
                   {colorableFields.map(({ field, label }) => (
                     <option key={field} value={field}>
@@ -163,8 +165,8 @@ export const DataFilters: React.FC<DataFiltersProps> = ({
                   ))}
                 </select>
                 <ChevronDownIcon 
-                  size={14} 
-                  className="absolute right-1.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                  size={16} 
+                  className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
                 />
               </div>
             </div>
@@ -175,14 +177,14 @@ export const DataFilters: React.FC<DataFiltersProps> = ({
                 {state.groupBy ? config[state.groupBy]?.label || state.groupBy : 'Groups'}
               </label>
               {state.groupBy && (
-                <div className="space-y-0.5 max-h-24 overflow-y-auto custom-scrollbar">
+                <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
                   {(() => {
                     // Get unique values for the current group field
                     const uniqueValues = [...new Set(data.map(item => item[state.groupBy]).filter(Boolean))];
                     const selectedGroups = state.filters[`_group_${state.groupBy}`] || [];
                     
                     return uniqueValues.map((value) => (
-                      <label key={value} className="flex items-center space-x-1.5 text-xs">
+                      <label key={value} className="flex items-center space-x-2.5 text-sm">
                         <input
                           type="checkbox"
                           checked={selectedGroups.includes(value)}
@@ -196,9 +198,9 @@ export const DataFilters: React.FC<DataFiltersProps> = ({
                             }
                             handleFilterChange(`_group_${state.groupBy}`, newSelected.length === 0 ? undefined : newSelected);
                           }}
-                          className="rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-0 scale-75"
+                          className="h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
                         />
-                        <span className="text-white truncate flex-1 text-xs">{String(value)}</span>
+                        <span className="text-white truncate flex-1 text-sm">{String(value)}</span>
                         <span className="text-gray-400 pr-2" style={{ fontSize: '10px' }}>
                           ({data.filter(item => item[state.groupBy] === value).length})
                         </span>
@@ -214,6 +216,59 @@ export const DataFilters: React.FC<DataFiltersProps> = ({
               )}
             </div>
           </div>
+
+          {/* Auto Cycle Section */}
+          <div className="mt-3 flex items-center justify-between px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <div className="flex flex-col space-y-0.5">
+                <div className="w-3 h-0.5 bg-gray-400 rounded"></div>
+                <div className="w-3 h-0.5 bg-gray-400 rounded"></div>
+                <div className="w-3 h-0.5 bg-gray-400 rounded"></div>
+              </div>
+              <span className="text-white text-sm">
+                Cycle every {state.cycleColors ? (state.cycleInterval || 3) : 'X'}
+              </span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={state.cycleColors || false}
+                onChange={(e) => {
+                  onStateChange({
+                    ...state,
+                    cycleColors: e.target.checked,
+                    cycleInterval: e.target.checked ? (state.cycleInterval || 3) : undefined
+                  });
+                }}
+                className="sr-only peer"
+              />
+              <div className="relative w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+          
+          {/* Cycle Interval Input */}
+          {state.cycleColors && (
+            <div className="mt-2 flex items-center space-x-2">
+              <span className="text-sm text-gray-400">Every</span>
+              <input
+                type="number"
+                min="1"
+                max="30"
+                value={state.cycleInterval || 3}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value) && value > 0) {
+                    onStateChange({
+                      ...state,
+                      cycleInterval: value
+                    });
+                  }
+                }}
+                className="w-14 px-2 py-1.5 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <span className="text-sm text-gray-400">seconds</span>
+            </div>
+          )}
         </div>
       )}
     </div>

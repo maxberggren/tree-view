@@ -21,6 +21,8 @@ interface TreemapFilterState {
   groupBy: string;
   colorBy: string;
   filters: FilterState;
+  cycleColors?: boolean;
+  cycleInterval?: number;
 }
 
 export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
@@ -80,6 +82,27 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     
     setSearchParams(newParams, { replace: true });
   }, [treeState, setSearchParams]);
+
+  // Color cycling logic
+  useEffect(() => {
+    if (!treeState.cycleColors || !colorableFields.length || colorableFields.length <= 1) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTreeState(prev => {
+        const currentIndex = colorableFields.findIndex(field => field.field === prev.colorBy);
+        const nextIndex = (currentIndex + 1) % colorableFields.length;
+        
+        return {
+          ...prev,
+          colorBy: colorableFields[nextIndex].field
+        };
+      });
+    }, (treeState.cycleInterval || 3) * 1000);
+
+    return () => clearInterval(interval);
+  }, [treeState.cycleColors, treeState.cycleInterval, colorableFields]);
 
   // Process data with filters
   const processedData = useMemo(() => {

@@ -16,7 +16,12 @@ export const getColor = (value: any, config: FieldConfig, dataRange?: { min: num
   switch (config.colorMode) {
     case 'boolean':
       if (!config.colors) return defaultColor;
-      return getBooleanColor(value, config.colors as BooleanColors);
+      // Explicitly handle boolean values, including false
+      if (value === true || value === false || value === 'true' || value === 'false') {
+        const boolValue = value === true || value === 'true';
+        return getBooleanColor(boolValue, config.colors as BooleanColors);
+      }
+      return defaultColor;
     
     case 'categorical':
       if (!config.colors) return defaultColor;

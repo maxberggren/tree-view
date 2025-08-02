@@ -24,7 +24,7 @@ export const getFilterableFields = (config: ConfigSchema, data: DataItem[]): Fil
 
       // For categorical fields, extract unique values
       if (fieldConfig.type === 'categorical') {
-        const uniqueValues = [...new Set(data.map(item => item[field]).filter(Boolean))];
+        const uniqueValues = [...new Set(data.map(item => item[field]).filter(val => val !== undefined && val !== null))];
         filterOption.options = uniqueValues.map(String).sort();
       }
 
@@ -53,7 +53,10 @@ export const applyFilters = (data: DataItem[], filters: FilterState, config: Con
 
       switch (fieldConfig.type) {
         case 'boolean':
-          return Boolean(itemValue) === Boolean(filterValue);
+          // Handle boolean comparison explicitly to support false values
+          const itemBool = itemValue === true || itemValue === 'true';
+          const filterBool = filterValue === true || filterValue === 'true';
+          return itemBool === filterBool;
         
         case 'categorical':
           return String(itemValue) === String(filterValue);
