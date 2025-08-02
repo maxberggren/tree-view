@@ -1,10 +1,15 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { treemap, hierarchy } from 'd3-hierarchy';
-import { BuildingCell } from './BuildingCell';
-import { BuildingFilters } from './BuildingFilters';
-import { StatsCard } from './StatsCard';
-import { TreemapNode, ColorMode, GroupMode, BuildingData } from '@/types/TreemapData';
-import { mockBuildingData } from '@/data/mockBuildingData';
+import { DataCell } from './DataCell';
+import { DataFilters } from './DataFilters';
+import { DataTooltip } from './DataTooltip';
+import { DataLegend } from './DataLegend';
+import { TreemapNode, DataItem, GroupedData } from '@/types/DataTypes';
+import { ConfigSchema } from '@/types/ConfigTypes';
+import { useConfig } from '@/hooks/useConfig';
+import { useData } from '@/hooks/useData';
+import { groupData, getGroupableFields, getSizeField } from '@/utils/groupingEngine';
+import { applyFilters, searchData, getFilterableFields, FilterState } from '@/utils/filterEngine';
 import { useSearchParams } from 'react-router-dom';
 
 interface TreemapProps {
@@ -12,429 +17,228 @@ interface TreemapProps {
   height: number;
 }
 
-interface FilterState {
-  clients: string[];
-  onlineOnly: boolean;
-  selectedOptions: string[]; // New: unified selection system
-  features: {
-    hasClimateBaseline: boolean;
-    hasReadWriteDiscrepancies: boolean;
-    hasZoneAssets: boolean;
-    hasHeatingCircuit: boolean;
-    hasVentilation: boolean;
-    missingVSGTOVConnections: boolean;
-    missingLBGPOVConnections: boolean;
-    missingLBGTOVConnections: boolean;
-    automaticComfortScheduleActive: boolean;
-    manualComfortScheduleActive: boolean;
-    componentsErrors: boolean;
-    hasDistrictHeatingMeter: boolean;
-    hasDistrictCoolingMeter: boolean;
-    hasElectricityMeter: boolean;
-    lastWeekUptime: boolean;
-  };
-  temperatureRange: [number, number];
-  colorMode: ColorMode;
-  groupMode: GroupMode;
-  cycleEnabled: boolean;
-  cycleInterval: number;
+interface TreemapFilterState {
+  groupBy: string;
+  colorBy: string;
+  filters: FilterState;
+  cycleColors?: boolean;
+  cycleInterval?: number;
 }
 
-const initialFilters: FilterState = {
-  clients: [],
-  onlineOnly: false,
-  selectedOptions: [],
-  features: {
-    hasClimateBaseline: false,
-    hasReadWriteDiscrepancies: false,
-    hasZoneAssets: false,
-    hasHeatingCircuit: false,
-    hasVentilation: false,
-    missingVSGTOVConnections: false,
-    missingLBGPOVConnections: false,
-    missingLBGTOVConnections: false,
-    automaticComfortScheduleActive: false,
-    manualComfortScheduleActive: false,
-    componentsErrors: false,
-    hasDistrictHeatingMeter: false,
-    hasDistrictCoolingMeter: false,
-    hasElectricityMeter: false,
-    lastWeekUptime: false,
-  },
-  temperatureRange: [5, 35],
-  colorMode: 'temperature',
-  groupMode: 'client',
-  cycleEnabled: false,
-  cycleInterval: 5,
-};
-
-// All available color modes for cycling
-const colorModes: ColorMode[] = [
-  'temperature',
-  'comfort',
-  'adaptiveMin',
-  'adaptiveMax',
-  'hasClimateBaseline',
-  'hasReadWriteDiscrepancies',
-  'hasZoneAssets',
-  'hasHeatingCircuit',
-  'hasVentilation',
-  'missingVSGTOVConnections',
-  'missingLBGPOVConnections',
-  'missingLBGTOVConnections',
-  'savingEnergy',
-  'automaticComfortScheduleActive',
-  'manualComfortScheduleActive',
-  'componentsErrors',
-  'modelTrainingTestR2Score',
-  'hasDistrictHeatingMeter',
-  'hasDistrictCoolingMeter',
-  'hasElectricityMeter',
-  'lastWeekUptime',
-];
-
 export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
+  const { config, loading: configLoading, error: configError } = useConfig();
+  const { data, loading: dataLoading, error: dataError } = useData();
+  
   const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const cycleIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize filters from URL params
-  const [filters, setFilters] = useState<FilterState>(() => {
-    const urlColorMode = searchParams.get('colorMode') as ColorMode;
-    const urlGroupMode = searchParams.get('groupMode') as GroupMode;
-    const urlClients = searchParams.get('clients')?.split(',').filter(Boolean) || [];
-    const urlSelectedOptions = searchParams.get('selectedOptions')?.split(',').filter(Boolean) || [];
-    const urlOnlineOnly = searchParams.get('onlineOnly') === 'true';
-    const urlCycleEnabled = searchParams.get('cycleEnabled') === 'true';
-    const urlCycleInterval = parseInt(searchParams.get('cycleInterval') || '5');
+  // Get dynamic options from config
+  const groupableFields = useMemo(() => 
+    config ? getGroupableFields(config) : [], [config]
+  );
+  
+  const colorableFields = useMemo(() => 
+    config ? Object.entries(config)
+      .filter(([_, fieldConfig]) => fieldConfig.colorMode)
+      .map(([field, fieldConfig]) => ({ field, label: fieldConfig.label })) : [], 
+    [config]
+  );
+
+  const sizeField = useMemo(() => 
+    config ? getSizeField(config) : 'id', [config]
+  );
+
+    // Initialize state from URL params
+  const [treeState, setTreeState] = useState<TreemapFilterState>(() => {
+    const groupBy = searchParams.get('groupBy') || '';
+    const colorBy = searchParams.get('colorBy') || '';
     
-    // Parse feature filters from URL
-    const urlFeatures = { ...initialFilters.features };
-    Object.keys(initialFilters.features).forEach(key => {
-      const urlValue = searchParams.get(key);
-      if (urlValue === 'true') {
-        urlFeatures[key as keyof FilterState['features']] = true;
-      }
-    });
-
     return {
-      ...initialFilters,
-      colorMode: urlColorMode && colorModes.includes(urlColorMode) ? urlColorMode : initialFilters.colorMode,
-      groupMode: urlGroupMode || initialFilters.groupMode,
-      clients: urlClients,
-      selectedOptions: urlSelectedOptions.length > 0 ? urlSelectedOptions : urlClients, // Use selectedOptions or fallback to clients for backward compatibility
-      onlineOnly: urlOnlineOnly,
-      features: urlFeatures,
-      cycleEnabled: urlCycleEnabled,
-      cycleInterval: isNaN(urlCycleInterval) ? 5 : urlCycleInterval,
+      groupBy,
+      colorBy,
+      filters: {}
     };
   });
 
-  // Cycle through color modes
+  // Set defaults after config loads
   useEffect(() => {
-    if (filters.cycleEnabled) {
-      cycleIntervalRef.current = setInterval(() => {
-        setFilters(prevFilters => {
-          const currentIndex = colorModes.indexOf(prevFilters.colorMode);
-          const nextIndex = (currentIndex + 1) % colorModes.length;
-          return {
-            ...prevFilters,
-            colorMode: colorModes[nextIndex]
-          };
-        });
-      }, filters.cycleInterval * 1000);
-
-      return () => {
-        if (cycleIntervalRef.current) {
-          clearInterval(cycleIntervalRef.current);
-        }
-      };
-    } else {
-      if (cycleIntervalRef.current) {
-        clearInterval(cycleIntervalRef.current);
-        cycleIntervalRef.current = null;
-      }
+    if (config && groupableFields.length > 0 && colorableFields.length > 0) {
+      setTreeState(prev => ({
+        ...prev,
+        groupBy: prev.groupBy || groupableFields[0]?.field || '',
+        colorBy: prev.colorBy || colorableFields[0]?.field || ''
+      }));
     }
-  }, [filters.cycleEnabled, filters.cycleInterval]);
+  }, [config, groupableFields, colorableFields]);
 
-  // Update URL when filters change
+  // Update URL when state changes
   useEffect(() => {
     const newParams = new URLSearchParams();
     
-    // Add color mode
-    if (filters.colorMode !== initialFilters.colorMode) {
-      newParams.set('colorMode', filters.colorMode);
-    }
-
-    // Add group mode
-    if (filters.groupMode !== initialFilters.groupMode) {
-      newParams.set('groupMode', filters.groupMode);
-    }
+    if (treeState.groupBy) newParams.set('groupBy', treeState.groupBy);
+    if (treeState.colorBy) newParams.set('colorBy', treeState.colorBy);
     
-    // Add selectedOptions (new unified system)
-    if (filters.selectedOptions.length > 0) {
-      newParams.set('selectedOptions', filters.selectedOptions.join(','));
-    }
-    
-    // Keep clients for backward compatibility
-    if (filters.clients.length > 0) {
-      newParams.set('clients', filters.clients.join(','));
-    }
-    
-    // Add online only
-    if (filters.onlineOnly !== initialFilters.onlineOnly) {
-      newParams.set('onlineOnly', filters.onlineOnly.toString());
-    }
-
-    // Add cycle settings
-    if (filters.cycleEnabled !== initialFilters.cycleEnabled) {
-      newParams.set('cycleEnabled', filters.cycleEnabled.toString());
-    }
-
-    if (filters.cycleInterval !== initialFilters.cycleInterval) {
-      newParams.set('cycleInterval', filters.cycleInterval.toString());
-    }
-    
-    // Add feature filters
-    Object.entries(filters.features).forEach(([key, value]) => {
-      if (value !== initialFilters.features[key as keyof FilterState['features']]) {
-        newParams.set(key, value.toString());
-      }
-    });
-
     setSearchParams(newParams, { replace: true });
-  }, [filters, setSearchParams]);
+  }, [treeState, setSearchParams]);
 
-  const availableClients = useMemo(() => {
-    return [...new Set(mockBuildingData.map(building => building.client))];
-  }, []);
+  // Color cycling logic
+  useEffect(() => {
+    if (!treeState.cycleColors || !colorableFields.length || colorableFields.length <= 1) {
+      return;
+    }
 
-  const filteredData = useMemo(() => {
-    return mockBuildingData.filter(building => {
-      // If no specific options are selected, show all buildings (like client filtering)
-      if (filters.selectedOptions.length === 0) {
-        // Only apply online filter if it's set
-        if (filters.onlineOnly && !building.isOnline) {
-          return false;
-        }
-        return true;
-      }
+    const interval = setInterval(() => {
+      setTreeState(prev => {
+        const currentIndex = colorableFields.findIndex(field => field.field === prev.colorBy);
+        const nextIndex = (currentIndex + 1) % colorableFields.length;
+        
+        return {
+          ...prev,
+          colorBy: colorableFields[nextIndex].field
+        };
+      });
+    }, (treeState.cycleInterval || 3) * 1000);
 
-      // Apply selection-based filtering
-      let matchesSelection = false;
+    return () => clearInterval(interval);
+  }, [treeState.cycleColors, treeState.cycleInterval, colorableFields]);
 
-      switch (filters.groupMode) {
-        case 'client':
-          matchesSelection = filters.selectedOptions.includes(building.client);
-          break;
-        case 'country':
-          matchesSelection = filters.selectedOptions.includes(building.country);
-          break;
-        case 'isOnline':
-          const onlineStatus = building.isOnline ? 'Online' : 'Offline';
-          matchesSelection = filters.selectedOptions.includes(onlineStatus);
-          break;
-        case 'lastWeekUptime':
-          const uptime = building.lastWeekUptime;
-          let uptimeRange;
-          if (uptime >= 0.95) uptimeRange = 'Excellent (95%+)';
-          else if (uptime >= 0.90) uptimeRange = 'Good (90-95%)';
-          else if (uptime >= 0.80) uptimeRange = 'Fair (80-90%)';
-          else uptimeRange = 'Poor (<80%)';
-          matchesSelection = filters.selectedOptions.includes(uptimeRange);
-          break;
-        default:
-          // For feature-based grouping
-          if (filters.groupMode in building) {
-            const featureValue = building[filters.groupMode as keyof BuildingData];
-            const featureStatus = typeof featureValue === 'boolean' 
-              ? (featureValue ? 'Yes' : 'No')
-              : featureValue.toString();
-            matchesSelection = filters.selectedOptions.includes(featureStatus);
-          }
-          break;
-      }
+  // Process data with filters
+  const processedData = useMemo(() => {
+    if (!data || !config) return [];
+    
+    let filtered = data;
+    
+    // Apply filters
+    filtered = applyFilters(filtered, treeState.filters, config);
+    
+    return filtered;
+  }, [data, config, treeState.filters]);
 
-      if (!matchesSelection) {
-        return false;
-      }
-
-      // Online filter (only if not already handled by isOnline group mode)
-      if (filters.groupMode !== 'isOnline' && filters.onlineOnly && !building.isOnline) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [filters]);
-
-  // Group buildings based on the selected group mode
+  // Group data
   const groupedData = useMemo(() => {
-    const buildings = filteredData;
+    if (!processedData.length) return [];
+    return groupData(processedData, treeState.groupBy);
+  }, [processedData, treeState.groupBy]);
+
+  // Calculate data range for gradient fields
+  const dataRange = useMemo(() => {
+    if (!processedData.length || !config || !treeState.colorBy) return null;
     
-    // Group by selected attribute
-    const groups = new Map<string, BuildingData[]>();
+    const fieldConfig = config[treeState.colorBy];
+    if (!fieldConfig || fieldConfig.colorMode !== 'gradient') return null;
     
-    buildings.forEach(building => {
-      let groupKey: string;
+    const values = processedData
+      .map(item => Number(item[treeState.colorBy]))
+      .filter(val => !isNaN(val));
+    
+    if (values.length === 0) return null;
+    
+    return {
+      min: Math.min(...values),
+      max: Math.max(...values)
+    };
+  }, [processedData, config, treeState.colorBy]);
+
+  // Calculate filter bar dimensions
+  const filterBarDimensions = useMemo(() => {    
+    // Simple height calculation since active filters summary is removed
+    const filterBarHeight = filtersExpanded ? 100 : 32; // Expanded vs collapsed
       
-      switch (filters.groupMode) {
-        case 'client':
-          groupKey = building.client;
-          break;
-        case 'country':
-          groupKey = building.country;
-          break;
-        case 'isOnline':
-          groupKey = building.isOnline ? 'Online' : 'Offline';
-          break;
-        case 'lastWeekUptime':
-          // Group by uptime ranges
-          const uptime = building.lastWeekUptime;
-          if (uptime >= 0.95) groupKey = 'Excellent (95%+)';
-          else if (uptime >= 0.90) groupKey = 'Good (90-95%)';
-          else if (uptime >= 0.80) groupKey = 'Fair (80-90%)';
-          else groupKey = 'Poor (<80%)';
-          break;
-        default:
-          // For feature-based grouping - now accessing directly from building
-          if (filters.groupMode in building) {
-            const featureValue = building[filters.groupMode as keyof BuildingData];
-            groupKey = typeof featureValue === 'boolean' 
-              ? (featureValue ? 'Yes' : 'No')
-              : featureValue.toString();
-          } else {
-            groupKey = 'Unknown';
-          }
-          break;
-      }
-      
-      if (!groups.has(groupKey)) {
-        groups.set(groupKey, []);
-      }
-      groups.get(groupKey)!.push(building);
-    });
+    return {
+      height: filterBarHeight,
+      availableHeight: height - filterBarHeight
+    };
+  }, [height, filtersExpanded]);
 
-    return Array.from(groups.entries()).map(([groupName, children]) => ({
-      name: groupName,
-      children
-    }));
-  }, [filteredData, filters.groupMode]);
+  const availableHeight = filterBarDimensions.availableHeight;
 
-  // Use fixed height for filter bar and add space for client tags
-  const filterBarHeight = 25; // Fixed height for the toggle bar
-  const clientTagSpacing = 20; // Space for client tags above the grid
-  const treemapHeight = height - filterBarHeight - clientTagSpacing;
-  const treemapTop = filterBarHeight + clientTagSpacing;
-
+  // Create treemap data
   const treemapData = useMemo(() => {
-    if (groupedData.length === 0) return null;
+    if (!groupedData.length || !config) return null;
 
     const rootData = {
-      name: 'Buildings',
-      children: groupedData.map(group => ({
-        name: group.name,
-        children: group.children
-      }))
+      name: 'Data',
+      children: groupedData
     };
 
     const root = hierarchy(rootData)
-      .sum((d: any) => d.squareMeters || 0)
+      .sum((d: any) => d[sizeField] || 1)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
+    // Reserve space at the top for group labels (25px for label height)
+    const labelSpacing = 25;
     const treemapLayout = treemap<any>()
-      .size([width, treemapHeight])
+      .size([width, availableHeight - labelSpacing])
       .padding(3)
       .round(true);
 
-    return treemapLayout(root);
-  }, [width, treemapHeight, groupedData]);
+    const layout = treemapLayout(root);
+    
+    // Offset all nodes down by the label spacing
+    const offsetNodes = (node: any) => {
+      node.x0 = node.x0;
+      node.y0 = node.y0 + labelSpacing;
+      node.x1 = node.x1;
+      node.y1 = node.y1 + labelSpacing;
+      
+      if (node.children) {
+        node.children.forEach(offsetNodes);
+      }
+    };
+    
+    offsetNodes(layout);
+    return layout;
+  }, [width, availableHeight, groupedData, sizeField, config]);
 
   const handleNodeHover = (node: TreemapNode | null) => {
-    // Clear any existing timeout
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
       hoverTimeoutRef.current = null;
     }
 
     if (node) {
-      // Immediately show the tooltip when hovering
       setHoveredNode(node);
     } else {
-      // Add a small delay before hiding the tooltip
       hoverTimeoutRef.current = setTimeout(() => {
         setHoveredNode(null);
-      }, 150); // 150ms delay
+      }, 150);
     }
   };
 
-  const handleClientClick = (clientName: string) => {
-    setFilters({
-      ...filters,
-      clients: [clientName]
-    });
-  };
-
-  const handleGroupClick = (groupName: string) => {
-    // Use the unified selectedOptions system
-    const isSelected = filters.selectedOptions.includes(groupName);
-    let newSelectedOptions;
+  const handleGroupClick = (groupValue: string) => {
+    if (!treeState.groupBy) return;
     
-    if (isSelected) {
-      // Remove the option
-      newSelectedOptions = filters.selectedOptions.filter(opt => opt !== groupName);
+    const filterKey = `_group_${treeState.groupBy}`;
+    const currentFilter = treeState.filters[filterKey];
+    const isCurrentlyFiltered = Array.isArray(currentFilter) && currentFilter.includes(groupValue);
+    
+    if (isCurrentlyFiltered) {
+      // Clear the filter if this group is already filtered
+      const newFilters = { ...treeState.filters };
+      delete newFilters[filterKey];
+      setTreeState(prev => ({
+        ...prev,
+        filters: newFilters
+      }));
     } else {
-      // Add the option
-      newSelectedOptions = [...filters.selectedOptions, groupName];
+      // Set filter to show only this group
+      setTreeState(prev => ({
+        ...prev,
+        filters: {
+          ...prev.filters,
+          [filterKey]: [groupValue]
+        }
+      }));
     }
-    
-    setFilters({
-      ...filters,
-      selectedOptions: newSelectedOptions,
-      // Keep clients in sync for backward compatibility
-      clients: filters.groupMode === 'client' ? newSelectedOptions : filters.clients
-    });
-  };
-
-  const handleGridClick = () => {
-    if (filtersExpanded) {
-      setFiltersExpanded(false);
-    }
-  };
-
-  const getGroupLabel = (groupName: string) => {
-    const groupModeLabels: Record<GroupMode, string> = {
-      'client': 'Client',
-      'country': 'Country',
-      'isOnline': 'Status',
-      'hasClimateBaseline': 'Climate Baseline',
-      'hasReadWriteDiscrepancies': 'R/W Issues',
-      'hasZoneAssets': 'Zone Assets',
-      'hasHeatingCircuit': 'Heating Circuit',
-      'hasVentilation': 'Ventilation',
-      'missingVSGTOVConnections': 'Missing VSGT OV',
-      'missingLBGPOVConnections': 'Missing LBGP OV',
-      'missingLBGTOVConnections': 'Missing LBGT OV',
-      'automaticComfortScheduleActive': 'Auto Schedule',
-      'manualComfortScheduleActive': 'Manual Schedule',
-      'componentsErrors': 'Component Errors',
-      'hasDistrictHeatingMeter': 'Heating Meter',
-      'hasDistrictCoolingMeter': 'Cooling Meter',
-      'hasElectricityMeter': 'Electricity Meter',
-      'lastWeekUptime': 'Last Week Uptime',
-    };
-
-    const prefix = groupModeLabels[filters.groupMode] || filters.groupMode;
-    return `${prefix}: ${groupName}`;
   };
 
   const renderNodes = (node: any): React.ReactNode[] => {
     const nodes: React.ReactNode[] = [];
     
     if (node.children) {
-      // Render group border for grouping
+      // Render group border
       if (node.depth === 1) {
         const groupWidth = node.x1 - node.x0;
         const groupHeight = node.y1 - node.y0;
@@ -442,7 +246,7 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
         nodes.push(
           <div
             key={`group-${node.data.name}`}
-            className="absolute border-2 border-blue-600 border-opacity-50"
+            className="absolute border-2 border-blue-600 border-opacity-50 transition-all duration-75"
             style={{
               left: node.x0,
               top: node.y0,
@@ -451,32 +255,44 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
             }}
           >
             <div 
-              className="absolute text-white text-sm font-medium px-2 rounded cursor-pointer hover:text-gray-200 transition-colors z-10"
+              className="absolute text-white text-xs font-medium px-2 py-1 rounded cursor-pointer hover:text-gray-200 transition-colors z-10"
               style={{
-                left: '6px',
-                top: '-22px',
+                left: '0px',
+                top: '-26px',
                 backgroundColor: '#06112d',
               }}
               onClick={() => handleGroupClick(node.data.name)}
-              title={`Filter by ${node.data.name}`}
+              title={(() => {
+                const filterKey = `_group_${treeState.groupBy}`;
+                const currentFilter = treeState.filters[filterKey];
+                const isFiltered = Array.isArray(currentFilter) && currentFilter.includes(node.data.name);
+                return isFiltered 
+                  ? `Currently filtered to ${node.data.name} - click to clear filter`
+                  : `Click to filter to only ${node.data.name}`;
+              })()}
             >
-              {getGroupLabel(node.data.name)}
+              {config && treeState.groupBy && config[treeState.groupBy] 
+                ? `${config[treeState.groupBy].label}: ${node.data.name}`
+                : node.data.name}
             </div>
           </div>
         );
       }
 
       // Render children recursively
-      node.children.forEach((child: any, index: number) => {  
+      node.children.forEach((child: any) => {  
         nodes.push(...renderNodes(child));
       });
     } else {
-      // Render leaf node (building) without any offset
+      // Render leaf node
       nodes.push(
-        <BuildingCell
-          key={`${node.data.id}-${node.x0}-${node.y0}`}
+        <DataCell
+          key={`${node.data[sizeField]}-${node.x0}-${node.y0}`}
           node={node}
-          colorMode={filters.colorMode}
+          config={config!}
+          colorField={treeState.colorBy}
+          dataRange={dataRange || undefined}
+          onHover={handleNodeHover}
         />
       );
     }
@@ -484,191 +300,50 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
     return nodes;
   };
 
-  const getFeatureValue = (building: any, feature: string) => {
-    switch (feature) {
-      case 'adaptiveMin':
-        return `${(building.adaptiveMin * 100).toFixed(1)}%`;
-      case 'adaptiveMax':
-        return `${(building.adaptiveMax * 100).toFixed(1)}%`;
-      case 'savingEnergy':
-        return `${(building.savingEnergy * 100).toFixed(1)}%`;
-      case 'modelTrainingTestR2Score':
-        return `${(building.modelTrainingTestR2Score * 100).toFixed(1)}%`;
-      case 'lastWeekUptime':
-        return `${(building.lastWeekUptime * 100).toFixed(1)}%`;
-      default:
-        return building[feature] ? 'Yes' : 'No';
-    }
-  };
+  // Loading and error states
+  if (configLoading || dataLoading) {
+    return (
+      <div className="flex items-center justify-center h-full bg-gray-900 text-white">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
-  const getLegendItems = () => {
-    switch (filters.colorMode) {
-      case 'temperature':
-        return [
-          { color: '#3B82F6', label: 'Cold (<10°C)' },
-          { color: '#06B6D4', label: 'Cool (10-18°C)' },
-          { color: '#10B981', label: 'Comfort (18-25°C)' },
-          { color: '#F59E0B', label: 'Warm (25-30°C)' },
-          { color: '#EF4444', label: 'Hot (>30°C)' },
-        ];
-      case 'comfort':
-        return [
-          { color: '#22C55E', label: 'Comfortable (20-25°C)' },
-          { color: '#F97316', label: 'Too Hot (>28°C)' },
-          { color: '#3B82F6', label: 'Too Cold (<18°C)' },
-          { color: '#A3A3A3', label: 'Mild' },
-        ];
-      case 'adaptiveMin':
-        return [
-          { color: '#FBBF24', label: 'Low (0.0)' },
-          { color: '#D4D4AA', label: 'Medium (0.5)' },
-          { color: '#A3A3A3', label: 'High (1.0)' },
-        ];
-      case 'adaptiveMax':
-        return [
-          { color: '#8B5CF6', label: 'Low (0.0)' },
-          { color: '#A78BFA', label: 'Medium (0.5)' },
-          { color: '#A3A3A3', label: 'High (1.0)' },
-        ];
-      case 'hasClimateBaseline':
-        return [
-          { color: '#059669', label: 'Climate Baseline Active' },
-          { color: '#6B7280', label: 'No Climate Baseline' },
-        ];
-      case 'hasReadWriteDiscrepancies':
-        return [
-          { color: '#EA580C', label: 'Has R/W Issues' },
-          { color: '#6B7280', label: 'No R/W Issues' },
-        ];
-      case 'hasZoneAssets':
-        return [
-          { color: '#7C3AED', label: 'Has Zone Assets' },
-          { color: '#6B7280', label: 'No Zone Assets' },
-        ];
-      case 'hasHeatingCircuit':
-        return [
-          { color: '#DC2626', label: 'Has Heating Circuit' },
-          { color: '#6B7280', label: 'No Heating Circuit' },
-        ];
-      case 'hasVentilation':
-        return [
-          { color: '#0EA5E9', label: 'Has Ventilation' },
-          { color: '#6B7280', label: 'No Ventilation' },
-        ];
-      case 'missingVSGTOVConnections':
-        return [
-          { color: '#F59E0B', label: 'Missing VSGT OV' },
-          { color: '#6B7280', label: 'VSGT OV Connected' },
-        ];
-      case 'missingLBGPOVConnections':
-        return [
-          { color: '#EF4444', label: 'Missing LBGP OV' },
-          { color: '#6B7280', label: 'LBGP OV Connected' },
-        ];
-      case 'missingLBGTOVConnections':
-        return [
-          { color: '#F97316', label: 'Missing LBGT OV' },
-          { color: '#6B7280', label: 'LBGT OV Connected' },
-        ];
-      case 'savingEnergy':
-        return [
-          { color: '#DC2626', label: 'Wasting (-10% or more)' },
-          { color: '#EF4444', label: 'Slight waste (-5% to -10%)' },
-          { color: '#6B7280', label: 'Neutral (-5% to +5%)' },
-          { color: '#FBBF24', label: 'Saving (5% to 10%)' },
-          { color: '#10B981', label: 'Good saving (10% to 20%)' },
-          { color: '#059669', label: 'Excellent saving (20%+)' },
-        ];
-      case 'automaticComfortScheduleActive':
-        return [
-          { color: '#16A34A', label: 'Auto Schedule Active' },
-          { color: '#6B7280', label: 'Auto Schedule Inactive' },
-        ];
-      case 'manualComfortScheduleActive':
-        return [
-          { color: '#CA8A04', label: 'Manual Schedule Active' },
-          { color: '#6B7280', label: 'Manual Schedule Inactive' },
-        ];
-      case 'componentsErrors':
-        return [
-          { color: '#DC2626', label: 'Component Errors' },
-          { color: '#6B7280', label: 'No Component Errors' },
-        ];
-      case 'modelTrainingTestR2Score':
-        return [
-          { color: '#DC2626', label: 'Poor (0.0-0.3)' },
-          { color: '#F59E0B', label: 'Fair (0.3-0.6)' },
-          { color: '#FBBF24', label: 'Good (0.6-0.8)' },
-          { color: '#10B981', label: 'Excellent (0.8-1.0)' },
-        ];
-      case 'hasDistrictHeatingMeter':
-        return [
-          { color: '#BE123C', label: 'Has Heating Meter' },
-          { color: '#6B7280', label: 'No Heating Meter' },
-        ];
-      case 'hasDistrictCoolingMeter':
-        return [
-          { color: '#0891B2', label: 'Has Cooling Meter' },
-          { color: '#6B7280', label: 'No Cooling Meter' },
-        ];
-      case 'hasElectricityMeter':
-        return [
-          { color: '#7C2D12', label: 'Has Electricity Meter' },
-          { color: '#6B7280', label: 'No Electricity Meter' },
-        ];
-      case 'lastWeekUptime':
-        return [
-          { color: '#059669', label: 'Excellent (95%+)' },
-          { color: '#10B981', label: 'Good (90-95%)' },
-          { color: '#FBBF24', label: 'Fair (80-90%)' },
-          { color: '#EF4444', label: 'Poor (<80%)' },
-        ];
-      default:
-        return [];
-    }
-  };
+  if (configError || dataError) {
+    return (
+      <div className="flex items-center justify-center h-full bg-gray-900 text-white">
+        <p>Error: {configError || dataError}</p>
+      </div>
+    );
+  }
 
-  const getLegendTitle = () => {
-    switch (filters.colorMode) {
-      case 'temperature': return 'Temperature Scale';
-      case 'comfort': return 'Comfort Zones';
-      case 'adaptiveMin': return 'Adaptive Min (0-1)';
-      case 'adaptiveMax': return 'Adaptive Max (0-1)';
-      case 'hasClimateBaseline': return 'Climate Baseline Active';
-      case 'hasReadWriteDiscrepancies': return 'Read/Write Issues';
-      case 'hasZoneAssets': return 'Zone Assets';
-      case 'hasHeatingCircuit': return 'Heating Circuit';
-      case 'hasVentilation': return 'Ventilation';
-      case 'missingVSGTOVConnections': return 'VSGT OV Connections';
-      case 'missingLBGPOVConnections': return 'LBGP OV Connections';
-      case 'missingLBGTOVConnections': return 'LBGT OV Connections';
-      case 'savingEnergy': return 'Energy Saving';
-      case 'automaticComfortScheduleActive': return 'Automatic Comfort Schedule';
-      case 'manualComfortScheduleActive': return 'Manual Comfort Schedule';
-      case 'componentsErrors': return 'Component Errors';
-      case 'modelTrainingTestR2Score': return 'Model R2 Score';
-      case 'hasDistrictHeatingMeter': return 'Heating Meter';
-      case 'hasDistrictCoolingMeter': return 'Cooling Meter';
-      case 'hasElectricityMeter': return 'Electricity Meter';
-      case 'lastWeekUptime': return 'Last Week Uptime';
-      default: return 'Legend';
-    }
-  };
+  if (!config || !data) {
+    return (
+      <div className="flex items-center justify-center h-full bg-gray-900 text-white">
+        <p>No configuration or data available</p>
+      </div>
+    );
+  }
 
   if (!treemapData) {
     return (
       <div className="relative w-full h-full bg-gray-900 overflow-hidden">
-        <BuildingFilters
+        <DataFilters
+          config={config}
+          data={data}
+          state={treeState}
+          onStateChange={setTreeState}
           isExpanded={filtersExpanded}
           onToggle={() => setFiltersExpanded(!filtersExpanded)}
-          filters={filters}
-          onFiltersChange={setFilters}
-          availableClients={availableClients}
-          filteredData={filteredData}
         />
-        <StatsCard filteredBuildings={filteredData} />
-        <div className="flex items-center justify-center h-full text-white">
-          <p>No buildings match the current filters</p>
+        <div 
+          className="absolute w-full flex items-center justify-center text-white transition-all duration-300 ease-out"
+          style={{
+            top: filterBarDimensions.height,
+            height: availableHeight
+          }}
+        >
+          <p>No data matches the current filters</p>
         </div>
       </div>
     );
@@ -676,221 +351,46 @@ export const Treemap: React.FC<TreemapProps> = ({ width, height }) => {
 
   return (
     <div className="relative w-full h-full bg-gray-900 overflow-hidden">
-      {/* Filter Panel - positioned absolutely at top */}
-      <BuildingFilters
+      {/* Filter Panel */}
+      <DataFilters
+        config={config}
+        data={data}
+        state={treeState}
+        onStateChange={setTreeState}
         isExpanded={filtersExpanded}
         onToggle={() => setFiltersExpanded(!filtersExpanded)}
-        filters={filters}
-        onFiltersChange={setFilters}
-        availableClients={availableClients}
-        filteredData={filteredData}
       />
 
-      {/* Main treemap - positioned below filter bar with spacing */}
+      {/* Main treemap with smooth transitions */}
       <div 
-        className="absolute w-full cursor-pointer"
+        className="absolute w-full transition-all duration-300 ease-out"
         style={{
-          top: treemapTop,
-          height: treemapHeight
+          top: filterBarDimensions.height,
+          height: availableHeight
         }}
-        onClick={handleGridClick}
+        onClick={() => setFiltersExpanded(false)}
       >
         {renderNodes(treemapData)}
       </div>
       
-      {/* Hover tooltip - updated to work with flattened structure */}
-      {hoveredNode && 'id' in hoveredNode.data && (
-        <div 
-          className="absolute bg-black bg-opacity-95 text-white p-4 rounded-lg pointer-events-none z-50 max-w-md transition-opacity duration-150"
-          style={{
-            top: '40px',
-            left: '16px'
-          }}
-        >
-          <div className="font-bold text-lg">{(hoveredNode.data as any).name}</div>
-          <div className="text-sm opacity-90 mb-2">Building id: {(hoveredNode.data as any).id.replace(/^BLD-/, '')}</div>
-          
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mb-3">
-            <div>
-              <span className="opacity-75">Client: </span>
-              <span className="text-blue-400">{(hoveredNode.data as any).client}</span>
-            </div>
-            <div>
-              <span className="opacity-75">Country: </span>
-              <span className="text-yellow-400">{(hoveredNode.data as any).country}</span>
-            </div>
-            <div>
-              <span className="opacity-75">Status: </span>
-              <span className={(hoveredNode.data as any).isOnline ? 'text-green-400' : 'text-red-400'}>
-                {(hoveredNode.data as any).isOnline ? 'Online' : 'Offline'}
-              </span>
-            </div>
-            <div>
-              <span className="opacity-75">Temperature: </span>
-              <span className="text-blue-400">{(hoveredNode.data as any).temperature}°C</span>
-            </div>
-            <div>
-              <span className="opacity-75">Size: </span>
-              <span>{(hoveredNode.data as any).squareMeters.toLocaleString()} m²</span>
-            </div>
-          </div>
-
-          {/* All Features - now accessing directly from building */}
-          <div className="text-xs">
-            <div className="opacity-75 mb-2 font-semibold">All Features:</div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-              <div>
-                <span className="opacity-75">Adaptive Min: </span>
-                <span className="text-yellow-400">{getFeatureValue(hoveredNode.data, 'adaptiveMin')}</span>
-              </div>
-              <div>
-                <span className="opacity-75">Adaptive Max: </span>
-                <span className="text-purple-400">{getFeatureValue(hoveredNode.data, 'adaptiveMax')}</span>
-              </div>
-              <div>
-                <span className="opacity-75">Climate Baseline: </span>
-                <span className={(hoveredNode.data as any).hasClimateBaseline ? 'text-green-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasClimateBaseline')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">R/W Issues: </span>
-                <span className={(hoveredNode.data as any).hasReadWriteDiscrepancies ? 'text-red-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasReadWriteDiscrepancies')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Zone Assets: </span>
-                <span className={(hoveredNode.data as any).hasZoneAssets ? 'text-purple-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasZoneAssets')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Heating Circuit: </span>
-                <span className={(hoveredNode.data as any).hasHeatingCircuit ? 'text-red-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasHeatingCircuit')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Ventilation: </span>
-                <span className={(hoveredNode.data as any).hasVentilation ? 'text-cyan-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasVentilation')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Missing VSGT OV: </span>
-                <span className={(hoveredNode.data as any).missingVSGTOVConnections ? 'text-amber-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'missingVSGTOVConnections')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Missing LBGP OV: </span>
-                <span className={(hoveredNode.data as any).missingLBGPOVConnections ? 'text-red-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'missingLBGPOVConnections')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Missing LBGT OV: </span>
-                <span className={(hoveredNode.data as any).missingLBGTOVConnections ? 'text-orange-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'missingLBGTOVConnections')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Energy Saving: </span>
-                <span className={
-                  (hoveredNode.data as any).savingEnergy <= -0.1 ? 'text-red-400' :
-                  (hoveredNode.data as any).savingEnergy <= -0.05 ? 'text-red-300' :
-                  (hoveredNode.data as any).savingEnergy <= 0.05 ? 'text-gray-400' :
-                  (hoveredNode.data as any).savingEnergy <= 0.1 ? 'text-yellow-400' :
-                  (hoveredNode.data as any).savingEnergy <= 0.2 ? 'text-green-400' : 'text-green-500'
-                }>
-                  {getFeatureValue(hoveredNode.data, 'savingEnergy')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Auto Schedule: </span>
-                <span className={(hoveredNode.data as any).automaticComfortScheduleActive ? 'text-green-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'automaticComfortScheduleActive')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Manual Schedule: </span>
-                <span className={(hoveredNode.data as any).manualComfortScheduleActive ? 'text-yellow-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'manualComfortScheduleActive')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Component Errors: </span>
-                <span className={(hoveredNode.data as any).componentsErrors ? 'text-red-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'componentsErrors')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Model R2 Score: </span>
-                <span className={
-                  (hoveredNode.data as any).modelTrainingTestR2Score < 0.3 ? 'text-red-400' :
-                  (hoveredNode.data as any).modelTrainingTestR2Score < 0.6 ? 'text-amber-400' :
-                  (hoveredNode.data as any).modelTrainingTestR2Score < 0.8 ? 'text-yellow-400' : 'text-green-400'
-                }>
-                  {getFeatureValue(hoveredNode.data, 'modelTrainingTestR2Score')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Heating Meter: </span>
-                <span className={(hoveredNode.data as any).hasDistrictHeatingMeter ? 'text-rose-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasDistrictHeatingMeter')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Cooling Meter: </span>
-                <span className={(hoveredNode.data as any).hasDistrictCoolingMeter ? 'text-cyan-400' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasDistrictCoolingMeter')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Electricity Meter: </span>
-                <span className={(hoveredNode.data as any).hasElectricityMeter ? 'text-amber-600' : 'text-gray-400'}>
-                  {getFeatureValue(hoveredNode.data, 'hasElectricityMeter')}
-                </span>
-              </div>
-              <div>
-                <span className="opacity-75">Last Week Uptime: </span>
-                <span className={
-                  (hoveredNode.data as any).lastWeekUptime >= 0.95 ? 'text-green-500' :
-                  (hoveredNode.data as any).lastWeekUptime >= 0.90 ? 'text-green-400' :
-                  (hoveredNode.data as any).lastWeekUptime >= 0.80 ? 'text-yellow-400' : 'text-red-400'
-                }>
-                  {getFeatureValue(hoveredNode.data, 'lastWeekUptime')}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Dynamic tooltip */}
+      {hoveredNode && config && treeState.colorBy && (
+        <DataTooltip
+          node={hoveredNode}
+          config={config}
+          colorField={treeState.colorBy}
+          dataRange={dataRange || undefined}
+        />
       )}
 
-      {/* Stats Card - positioned at bottom left */}
-      <StatsCard filteredBuildings={filteredData} />
-
       {/* Dynamic Legend */}
-      <div className="absolute bottom-4 right-4 bg-black bg-opacity-90 text-white p-3 rounded-lg max-w-xs z-20">
-        <div className="text-xs font-bold mb-2">
-          {getLegendTitle()}
-          {filters.cycleEnabled && (
-            <span className="text-blue-400 ml-2">(Auto-cycling)</span>
-          )}
-        </div>
-        <div className="flex flex-col gap-1 text-xs mb-3">
-          {getLegendItems().map((item, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
-              <span>{item.label}</span>
-            </div>
-          ))}
-        </div>
-        <div className="text-xs opacity-75">
-          Offline buildings are dimmed
-        </div>
-      </div>
+      {config && treeState.colorBy && (
+        <DataLegend
+          config={config}
+          colorField={treeState.colorBy}
+          dataRange={dataRange || undefined}
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,14 @@
+#!/usr/bin/env node
 
-import { BuildingData } from "@/types/TreemapData";
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { writeFileSync } from 'fs';
 
+// Get the directory of this script
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Mock data directly embedded (since we can't import TS files directly)
 const buildingNames = [
   "Central Plaza", "Tech Tower", "Medical Center", "Shopping Mall", "Office Complex",
   "University Hall", "Conference Center", "Data Center", "Manufacturing Plant", "Warehouse",
@@ -17,7 +25,10 @@ const clients = [
 
 const countries = ["Sweden", "Denmark", "Finland", "USA", "Argentina"];
 
-const generateRandomBuilding = (index: number, forcedClient?: string): BuildingData => {
+
+
+// Generate building data
+const generateRandomBuilding = (index, forcedClient) => {
   const clientIndex = forcedClient ? clients.indexOf(forcedClient) : Math.floor(Math.random() * clients.length);
   const nameIndex = Math.floor(Math.random() * buildingNames.length);
   const countryIndex = Math.floor(Math.random() * countries.length);
@@ -84,29 +95,43 @@ const generateRandomBuilding = (index: number, forcedClient?: string): BuildingD
   };
 };
 
-// Generate buildings with SISAB getting 3x more
-const allBuildings: BuildingData[] = [];
+// Generate exactly 250 buildings with WEESAB getting more
+const allBuildings = [];
 let buildingIndex = 0;
 
-// First, generate normal distribution for non-SISAB clients
-const otherClients = clients.filter(client => client !== "SISAB");
-const buildingsPerOtherClient = Math.floor(200 / otherClients.length); // Reserve 50 extra for SISAB
+// Simple approach: distribute 250 buildings with WEESAB getting about 3x more
+const otherClients = clients.filter(client => client !== "WEESAB");
+const totalWeight = otherClients.length + 3; // 9 other clients + 3 weight for WEESAB
+const buildingsPerWeight = Math.floor(250 / totalWeight); // ~20 buildings per weight
 
+// Generate buildings for other clients
 otherClients.forEach(client => {
-  for (let i = 0; i < buildingsPerOtherClient; i++) {
+  for (let i = 0; i < buildingsPerWeight; i++) {
     allBuildings.push(generateRandomBuilding(buildingIndex++, client));
   }
 });
 
-// Generate 3x more buildings for SISAB
-const sisabBuildingCount = buildingsPerOtherClient * 3;
-for (let i = 0; i < sisabBuildingCount; i++) {
-  allBuildings.push(generateRandomBuilding(buildingIndex++, "SISAB"));
+// Generate 3x buildings for WEESAB
+for (let i = 0; i < buildingsPerWeight * 3; i++) {
+  allBuildings.push(generateRandomBuilding(buildingIndex++, "WEESAB"));
 }
 
-// Fill remaining slots with random assignments to reach 250 total
+// Fill remaining slots to reach exactly 250
 while (allBuildings.length < 250) {
   allBuildings.push(generateRandomBuilding(buildingIndex++));
 }
 
-export const mockBuildingData: BuildingData[] = allBuildings;
+// Create flat data structure with only buildings
+const flatData = allBuildings;
+
+// Write to JSON file
+const outputPath = join(__dirname, 'data.json');
+try {
+  writeFileSync(outputPath, JSON.stringify(flatData, null, 2), 'utf8');
+  console.log('✅ Data generated successfully!');
+  console.log(`📄 Output file: ${outputPath}`);
+  console.log(`📊 Generated ${flatData.length} buildings`);
+} catch (error) {
+  console.error('❌ Error writing data file:', error);
+  process.exit(1);
+}
