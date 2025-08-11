@@ -9,7 +9,8 @@ export const useData = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch('/data.json');
+        const dataUrl = `${import.meta.env.BASE_URL}data.json`;
+        const response = await fetch(dataUrl, { cache: 'no-cache' });
         if (!response.ok) {
           throw new Error(`Failed to load data: ${response.statusText}`);
         }

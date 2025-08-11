@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node generateData.js",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "vite preview --host 0.0.0.0 --port 8080",
+    "start": "vite preview --host 0.0.0.0 --port 8080",
     "generate-data": "node generateData.js"
   },
   "dependencies": {

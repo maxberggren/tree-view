@@ -124,8 +124,8 @@ while (allBuildings.length < 250) {
 // Create flat data structure with only buildings
 const flatData = allBuildings;
 
-// Write to JSON file
-const outputPath = join(__dirname, 'data.json');
+// Write to JSON file inside public so it gets deployed with the app
+const outputPath = join(__dirname, 'public', 'data.json');
 try {
   writeFileSync(outputPath, JSON.stringify(flatData, null, 2), 'utf8');
   console.log('✅ Data generated successfully!');
