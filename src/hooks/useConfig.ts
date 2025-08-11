@@ -10,7 +10,8 @@ export const useConfig = () => {
     const loadConfig = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/config.json');
+        const configUrl = `${import.meta.env.BASE_URL}config.json`;
+        const response = await fetch(configUrl, { cache: 'no-cache' });
         if (!response.ok) {
           throw new Error(`Failed to load config: ${response.statusText}`);
         }
