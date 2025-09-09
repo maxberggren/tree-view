@@ -7,7 +7,13 @@ export interface ColorResult {
 }
 
 export const getColor = (value: any, config: FieldConfig, dataRange?: { min: number; max: number }): ColorResult => {
+  const naColor = { color: '#6B7280', borderColor: '#4B5563', label: 'N/A' };
   const defaultColor = { color: '#6B7280', borderColor: '#4B5563', label: 'Unknown' };
+  
+  // Explicitly handle null, undefined, and N/A values
+  if (value === null || value === undefined || value === 'N/A' || value === '') {
+    return naColor;
+  }
   
   if (!config.colorMode) {
     return defaultColor;
@@ -21,7 +27,7 @@ export const getColor = (value: any, config: FieldConfig, dataRange?: { min: num
         const boolValue = value === true || value === 'true';
         return getBooleanColor(boolValue, config.colors as BooleanColors);
       }
-      return defaultColor;
+      return naColor;
     
     case 'categorical':
       if (!config.colors) return defaultColor;
@@ -29,10 +35,18 @@ export const getColor = (value: any, config: FieldConfig, dataRange?: { min: num
     
     case 'gradient':
       if (!config.colors || !dataRange) return defaultColor;
+      // Check if value is a valid number for gradient calculation
+      if (typeof value !== 'number' || isNaN(value)) {
+        return naColor;
+      }
       return getGradientColor(value, config.colors as GradientColors, config, dataRange);
     
     case 'bins':
       if (!config.bins || config.bins.length === 0) return defaultColor;
+      // Check if value is a valid number for bin calculation
+      if (typeof value !== 'number' || isNaN(value)) {
+        return naColor;
+      }
       return getBinColor(value, config.bins, config);
     
     default:
@@ -50,6 +64,11 @@ const getBooleanColor = (value: boolean, colors: BooleanColors): ColorResult => 
 };
 
 const getCategoricalColor = (value: string, colors: CategoricalColors): ColorResult => {
+  // Handle N/A values for categorical
+  if (value === null || value === undefined || value === 'N/A' || value === '') {
+    return { color: '#6B7280', borderColor: '#4B5563', label: 'N/A' };
+  }
+  
   const colorConfig = colors[value] || colors.default;
   return {
     color: colorConfig.bg,

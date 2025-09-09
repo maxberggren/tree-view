@@ -16,6 +16,8 @@ export const DataLegend: React.FC<DataLegendProps> = ({ config, colorField, data
   }
 
   const getLegendItems = () => {
+    const naItem = { color: '#6B7280', label: 'N/A' };
+    
     switch (fieldConfig.colorMode) {
       case 'boolean':
         if (!fieldConfig.colors) return [];
@@ -28,25 +30,28 @@ export const DataLegend: React.FC<DataLegendProps> = ({ config, colorField, data
           { 
             color: booleanColors.false.bg, 
             label: booleanColors.false.label || 'No' 
-          }
+          },
+          naItem
         ];
       
       case 'categorical':
         if (!fieldConfig.colors) return [];
         const categoricalColors = fieldConfig.colors as any;
-        return Object.entries(categoricalColors)
+        const categoricalItems = Object.entries(categoricalColors)
           .filter(([key]) => key !== 'default')
           .map(([key, colorConfig]: [string, any]) => ({
             color: colorConfig.bg,
             label: key
           }));
+        return [...categoricalItems, naItem];
       
       case 'bins':
         if (!fieldConfig.bins) return [];
-        return fieldConfig.bins.map(bin => ({
+        const binItems = fieldConfig.bins.map(bin => ({
           color: bin.color,
           label: bin.label
         }));
+        return [...binItems, naItem];
       
       case 'gradient':
         // For gradients, show multiple points across the scale
@@ -56,7 +61,7 @@ export const DataLegend: React.FC<DataLegendProps> = ({ config, colorField, data
         // Create 5 points across the gradient (0%, 25%, 50%, 75%, 100%)
         const steps = [0, 0.25, 0.5, 0.75, 1];
         
-        return steps.map(step => {
+        const gradientItems = steps.map(step => {
           // Calculate the color at this step
           const r = Math.round(gradientColors.min.r + (gradientColors.max.r - gradientColors.min.r) * step);
           const g = Math.round(gradientColors.min.g + (gradientColors.max.g - gradientColors.min.g) * step);
@@ -80,6 +85,7 @@ export const DataLegend: React.FC<DataLegendProps> = ({ config, colorField, data
           
           return { color, label };
         });
+        return [...gradientItems, naItem];
       
       default:
         return [];
